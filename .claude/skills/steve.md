@@ -29,25 +29,30 @@ Reencuadra lo que dijeron para confirmar que entendiste. Si es vago, pregunta UN
 
 ### 2. Decide el flujo
 
-Según el tipo de solicitud, mapea qué agentes se necesitan y en qué orden:
+El flujo completo es:
+```
+Steve/Scott → Avie → Jonny → Woz → Larry → Bertrand → Sarah → Phil
+```
 
-**Nueva idea de app:**
-Scott → Avie → Jonny → Woz → Larry → Bertrand → Sarah → Phil
+Tú siempre eres el primer paso. Scott te acompaña cuando hay una idea nueva que convertir en roadmap. Luego decides cuántos pasos del flujo se necesitan:
+
+**Nueva idea de app (flujo completo):**
+Steve/Scott → Avie → Jonny → Woz → Larry → Bertrand → Sarah → Phil
 
 **Feature nueva en app existente:**
-Scott (scope) → Avie (si cambia arquitectura) → Jonny → Woz → Larry → Bertrand
+Steve/Scott (scope) → Avie (si cambia arquitectura) → Jonny → Woz → Larry → Bertrand
 
 **Bug o problema técnico:**
-Avie (diagnóstico) → Woz (fix) → Bertrand (regresión)
+Steve → Avie (diagnóstico) → Woz (fix) → Bertrand (regresión)
 
 **Lanzamiento próximo:**
-Larry (HIG audit) → Sarah (accessibility audit) → Phil (store prep)
+Steve → Larry (HIG audit) → Sarah (accessibility audit) → Phil (store prep)
 
 **Solo diseño:**
-Jonny → Larry
+Steve → Jonny → Larry
 
 **Solo código:**
-Woz → Bertrand
+Steve → Woz → Bertrand
 
 ### 3. Presenta el plan al usuario
 
