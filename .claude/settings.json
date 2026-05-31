@@ -1,0 +1,13 @@
+{
+  "skills": [
+    { "name": "steve", "description": "Orquestador — entrada principal para ideas y tareas" },
+    { "name": "scott", "description": "PM — idea a roadmap priorizado (Scott Forstall)" },
+    { "name": "avie", "description": "Arquitecto técnico — decisiones de stack y estructura (Avie Tevanian)" },
+    { "name": "jonny", "description": "Diseño UI/UX — Apple HIG, estética, flujos (Jony Ive)" },
+    { "name": "woz", "description": "SwiftUI/Swift coder — código idiomático Apple (Steve Wozniak)" },
+    { "name": "larry", "description": "HIG Reviewer — auditoría contra Human Interface Guidelines (Larry Tesler)" },
+    { "name": "bertrand", "description": "QA & Testing — Swift Testing, TestFlight, estabilidad (Bertrand Serlet)" },
+    { "name": "sarah", "description": "Accesibilidad — VoiceOver, Dynamic Type, inclusión (Sarah Herrlinger)" },
+    { "name": "phil", "description": "App Store — metadata, screenshots, submission y lanzamiento (Phil Schiller)" }
+  ]
+}
