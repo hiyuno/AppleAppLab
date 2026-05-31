@@ -115,6 +115,297 @@ Para cualquier feature o componente:
 
 ---
 
+## Scaffolding de proyecto — listo para distribución
+
+Cuando crees un proyecto nuevo, **nunca produces un esqueleto genérico**. Produces un proyecto que puede archivarse y distribuirse desde el día uno.
+
+### Preguntas obligatorias antes de crear el proyecto
+
+1. **¿Nombre de la app?** → define el Bundle ID y el nombre del directorio
+2. **¿Bundle ID base?** (ej. `mx.9866`) → si el usuario no lo sabe, usa `com.[apellido]`
+3. **¿iOS, macOS, o ambos?** → define los targets
+4. **¿App Store o distribución directa?** → define entitlements y signing
+
+### Estructura de archivos que produces
+
+```
+AppName/
+├── AppName.xcodeproj/
+│   ├── project.pbxproj           ← Build settings de distribución incluidos
+│   └── xcshareddata/
+│       └── xcschemes/
+│           └── AppName.xcscheme  ← Archive action configurada
+├── AppName/
+│   ├── AppName.entitlements      ← Entitlements mínimos correctos
+│   ├── Info.plist                ← Completo, no genérico
+│   ├── AppNameApp.swift          ← Entry point
+│   ├── ContentView.swift
+│   └── Assets.xcassets/
+│       ├── AppIcon.appiconset/   ← Contents.json listo (no placeholder)
+│       └── AccentColor.colorset/
+├── AppNameTests/
+│   └── AppNameTests.swift        ← Swift Testing, no XCTest
+├── ExportOptions/
+│   ├── ExportOptions-AppStore.plist
+│   └── ExportOptions-Direct.plist
+└── Makefile                      ← Comandos de build, archive y export
+```
+
+---
+
+### Info.plist — completo, no genérico
+
+Produce **siempre** todos los keys relevantes. Nunca dejes el default de Xcode sin revisar.
+
+**iOS:**
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+    <key>UILaunchScreen</key>
+    <dict/>
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    <!-- Agregar NSUsageDescription keys aquí si la app usa cámara, ubicación, etc. -->
+</dict>
+</plist>
+```
+
+**macOS (agrega sobre el base):**
+```xml
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2025 [Nombre]. All rights reserved.</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+```
+
+---
+
+### Entitlements — mínimos y correctos
+
+**iOS — `AppName.entitlements`:**
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Solo agrega lo que la app realmente necesita -->
+    <!-- Ejemplos comunes: -->
+    <!-- <key>com.apple.developer.icloud-container-identifiers</key> -->
+    <!-- <key>com.apple.security.network.client</key> -->
+</dict>
+</plist>
+```
+
+**macOS — `AppName.entitlements`:**
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    <!-- Agrega solo lo necesario: -->
+    <!-- <key>com.apple.security.network.client</key><true/> -->
+    <!-- <key>com.apple.security.files.user-selected.read-write</key><true/> -->
+</dict>
+</plist>
+```
+
+**Regla:** Sandbox activado desde el día uno en macOS. Si no va al App Store, puede desactivarse — pero debe ser una decisión explícita, no un olvido.
+
+---
+
+### Build settings críticos para distribución
+
+En `project.pbxproj`, estos settings deben estar correctos en la config **Release**:
+
+```
+SWIFT_VERSION = 6.0
+IPHONEOS_DEPLOYMENT_TARGET = 17.0     // o el target del proyecto
+MACOSX_DEPLOYMENT_TARGET = 14.0
+SWIFT_COMPILATION_MODE = wholemodule   // Release: optimización completa
+ENABLE_BITCODE = NO                    // Bitcode deprecated desde Xcode 14
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym  // Necesario para crash reports
+DEAD_CODE_STRIPPING = YES
+SWIFT_OPTIMIZATION_LEVEL = -Osize     // Release: optimizar tamaño
+VALIDATE_PRODUCT = YES                 // Valida el bundle antes de archivar
+CODE_SIGN_STYLE = Automatic
+DEVELOPMENT_TEAM = [TEAM_ID]           // Requerido — pedir al usuario
+```
+
+---
+
+### Export options — listos para usar
+
+**`ExportOptions/ExportOptions-AppStore.plist`:**
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>app-store-connect</string>
+    <key>destination</key>
+    <string>upload</string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>stripSwiftSymbols</key>
+    <true/>
+    <key>uploadBitcode</key>
+    <false/>
+    <key>uploadSymbols</key>
+    <true/>
+</dict>
+</plist>
+```
+
+**`ExportOptions/ExportOptions-Direct.plist`** (distribución directa / fuera del App Store):
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>method</key>
+    <string>developer-id</string>
+    <key>signingStyle</key>
+    <string>automatic</string>
+    <key>stripSwiftSymbols</key>
+    <true/>
+    <key>notarize</key>          <!-- macOS únicamente -->
+    <true/>
+</dict>
+</plist>
+```
+
+---
+
+### Makefile — comandos de build y distribución
+
+```makefile
+APP_NAME    = AppName
+SCHEME      = AppName
+WORKSPACE   = $(APP_NAME).xcodeproj
+ARCHIVE_PATH = build/$(APP_NAME).xcarchive
+EXPORT_PATH  = build/export
+
+.PHONY: build archive export-appstore export-direct clean
+
+build:
+	xcodebuild -project $(WORKSPACE) \
+	           -scheme $(SCHEME) \
+	           -configuration Release \
+	           -destination 'generic/platform=iOS' \
+	           build
+
+archive:
+	xcodebuild -project $(WORKSPACE) \
+	           -scheme $(SCHEME) \
+	           -configuration Release \
+	           -destination 'generic/platform=iOS' \
+	           -archivePath $(ARCHIVE_PATH) \
+	           archive
+
+export-appstore: archive
+	xcodebuild -exportArchive \
+	           -archivePath $(ARCHIVE_PATH) \
+	           -exportPath $(EXPORT_PATH) \
+	           -exportOptionsPlist ExportOptions/ExportOptions-AppStore.plist
+
+export-direct: archive
+	xcodebuild -exportArchive \
+	           -archivePath $(ARCHIVE_PATH) \
+	           -exportPath $(EXPORT_PATH) \
+	           -exportOptionsPlist ExportOptions/ExportOptions-Direct.plist
+
+clean:
+	rm -rf build/
+	xcodebuild clean -project $(WORKSPACE) -scheme $(SCHEME)
+```
+
+---
+
+### AppIcon — no dejar vacío
+
+Produce siempre el `Contents.json` del AppIcon con todos los slots requeridos y avisa al usuario que debe reemplazar los assets. Un icono placeholder claro es mejor que un slot vacío que crashea el archive.
+
+```json
+{
+  "images": [
+    { "idiom": "universal", "platform": "ios", "size": "1024x1024", "scale": "1x", "filename": "icon-1024.png" }
+  ],
+  "info": { "author": "xcode", "version": 1 }
+}
+```
+
+Para macOS agrega los tamaños: 16x16@1x, 16x16@2x, 32x32@1x, 32x32@2x, 128x128@1x, 128x128@2x, 256x256@1x, 256x256@2x, 512x512@1x, 512x512@2x.
+
+---
+
+### PrivacyInfo.xcprivacy — obligatorio desde iOS 17.4 / macOS 14.4
+
+Si la app usa cualquiera de estas APIs (UserDefaults, FileManager, CoreLocation, etc.), incluye el archivo:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSPrivacyTracking</key>
+    <false/>
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array/>
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <!-- Agrega solo las APIs que usa la app, ej: -->
+        <!--
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <string>CA92.1</string>
+            </array>
+        </dict>
+        -->
+    </array>
+</dict>
+</plist>
+```
+
+---
+
 ## Cuándo pedir ayuda a otros agentes
 
 - **¿El diseño no está claro?** → Jonny antes de codear
