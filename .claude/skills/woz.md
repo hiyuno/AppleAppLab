@@ -117,7 +117,19 @@ Para cualquier feature o componente:
 
 ## Scaffolding de proyecto — listo para distribución
 
-Cuando crees un proyecto nuevo, **nunca produces un esqueleto genérico**. Produces un proyecto que puede archivarse y distribuirse desde el día uno.
+Cuando crees un proyecto nuevo, **nunca produces un esqueleto genérico**. Produces un `.xcodeproj` real que puede archivarse y subirse al App Store desde el día uno.
+
+### Herramienta: XcodeGen
+
+El `.xcodeproj` no se escribe a mano — se genera con **XcodeGen** a partir de un `project.yml`. Esto es lo que produces: un `project.yml` completo + todos los archivos fuente + un comando que genera el `.xcodeproj` real.
+
+```bash
+# Instalar si no está
+brew install xcodegen
+
+# Generar el .xcodeproj desde project.yml
+xcodegen generate
+```
 
 ### Preguntas obligatorias antes de crear el proyecto
 
@@ -125,37 +137,124 @@ Cuando crees un proyecto nuevo, **nunca produces un esqueleto genérico**. Produ
 2. **¿Bundle ID base?** (ej. `mx.9866`) → si el usuario no lo sabe, usa `com.[apellido]`
 3. **¿iOS, macOS, o ambos?** → define los targets
 4. **¿App Store o distribución directa?** → define entitlements y signing
+5. **¿Team ID de Apple Developer?** → requerido para signing (lo encuentra en developer.apple.com)
 
 ### Estructura de archivos que produces
 
 ```
 AppName/
-├── AppName.xcodeproj/
-│   ├── project.pbxproj           ← Build settings de distribución incluidos
-│   └── xcshareddata/
-│       └── xcschemes/
-│           └── AppName.xcscheme  ← Archive action configurada
+├── project.yml                   ← XcodeGen — fuente de verdad del proyecto
 ├── AppName/
-│   ├── AppName.entitlements      ← Entitlements mínimos correctos
-│   ├── Info.plist                ← Completo, no genérico
 │   ├── AppNameApp.swift          ← Entry point
 │   ├── ContentView.swift
+│   ├── AppName.entitlements      ← Entitlements mínimos correctos
+│   ├── Info.plist                ← Completo, no genérico
+│   ├── PrivacyInfo.xcprivacy     ← Requerido desde iOS 17.4
 │   └── Assets.xcassets/
-│       ├── AppIcon.appiconset/   ← Contents.json listo (no placeholder)
+│       ├── AppIcon.appiconset/
+│       │   └── Contents.json     ← Todos los slots declarados
 │       └── AccentColor.colorset/
+│           └── Contents.json
 ├── AppNameTests/
-│   └── AppNameTests.swift        ← Swift Testing, no XCTest
+│   └── AppNameTests.swift        ← Swift Testing framework
 ├── ExportOptions/
-│   ├── ExportOptions-AppStore.plist
-│   └── ExportOptions-Direct.plist
-└── Makefile                      ← Comandos de build, archive y export
+│   ├── AppStore.plist
+│   └── Direct.plist
+└── Makefile
+```
+
+Después de crear estos archivos, Woz ejecuta:
+```bash
+xcodegen generate
+```
+Y el `.xcodeproj` aparece en la raíz, listo para Xcode y `xcodebuild`.
+
+---
+
+### project.yml — template completo (iOS)
+
+```yaml
+name: AppName
+options:
+  bundleIdPrefix: com.ejemplo      # ← reemplazar con bundle ID base del usuario
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "16"
+  swift: "6.0"
+  groupSortPosition: top
+  generateEmptyDirectories: true
+  transitivelyLinkDependencies: true
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    ENABLE_BITCODE: NO
+    DEBUG_INFORMATION_FORMAT: dwarf-with-dsym
+    DEAD_CODE_STRIPPING: YES
+    VALIDATE_PRODUCT: YES
+    CODE_SIGN_STYLE: Automatic
+    DEVELOPMENT_TEAM: XXXXXXXXXX   # ← Team ID del usuario
+  configs:
+    Debug:
+      SWIFT_OPTIMIZATION_LEVEL: "-Onone"
+      SWIFT_COMPILATION_MODE: singlefile
+    Release:
+      SWIFT_OPTIMIZATION_LEVEL: "-Osize"
+      SWIFT_COMPILATION_MODE: wholemodule
+
+targets:
+  AppName:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - AppName
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ejemplo.AppName
+        INFOPLIST_FILE: AppName/Info.plist
+        CODE_SIGN_ENTITLEMENTS: AppName/AppName.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        TARGETED_DEVICE_FAMILY: "1,2"   # 1=iPhone, 2=iPad
+    scheme:
+      testTargets:
+        - AppNameTests
+
+  AppNameTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - AppNameTests
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ejemplo.AppNameTests
+    dependencies:
+      - target: AppName
+```
+
+**Para macOS** — reemplaza la sección `targets`:
+```yaml
+targets:
+  AppName:
+    type: application
+    platform: macOS
+    deploymentTarget: "14.0"
+    sources:
+      - AppName
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.ejemplo.AppName
+        INFOPLIST_FILE: AppName/Info.plist
+        CODE_SIGN_ENTITLEMENTS: AppName/AppName.entitlements
+        ENABLE_HARDENED_RUNTIME: YES     # Requerido para notarización
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
 ```
 
 ---
 
 ### Info.plist — completo, no genérico
-
-Produce **siempre** todos los keys relevantes. Nunca dejes el default de Xcode sin revisar.
 
 **iOS:**
 ```xml
@@ -191,21 +290,38 @@ Produce **siempre** todos los keys relevantes. Nunca dejes el default de Xcode s
     </array>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
-    <!-- Agregar NSUsageDescription keys aquí si la app usa cámara, ubicación, etc. -->
 </dict>
 </plist>
 ```
 
-**macOS (agrega sobre el base):**
+**macOS:**
 ```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon</string>
     <key>LSMinimumSystemVersion</key>
     <string>$(MACOSX_DEPLOYMENT_TARGET)</string>
     <key>NSHumanReadableCopyright</key>
-    <string>Copyright © 2025 [Nombre]. All rights reserved.</string>
+    <string>Copyright © 2025. All rights reserved.</string>
     <key>NSPrincipalClass</key>
     <string>NSApplication</string>
+</dict>
+</plist>
 ```
 
 ---
@@ -218,10 +334,8 @@ Produce **siempre** todos los keys relevantes. Nunca dejes el default de Xcode s
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- Solo agrega lo que la app realmente necesita -->
-    <!-- Ejemplos comunes: -->
+    <!-- Agrega solo lo que la app realmente necesita -->
     <!-- <key>com.apple.developer.icloud-container-identifiers</key> -->
-    <!-- <key>com.apple.security.network.client</key> -->
 </dict>
 </plist>
 ```
@@ -241,33 +355,44 @@ Produce **siempre** todos los keys relevantes. Nunca dejes el default de Xcode s
 </plist>
 ```
 
-**Regla:** Sandbox activado desde el día uno en macOS. Si no va al App Store, puede desactivarse — pero debe ser una decisión explícita, no un olvido.
+**Regla:** Sandbox activado desde el día uno en macOS. Decisión explícita si se desactiva.
 
 ---
 
-### Build settings críticos para distribución
+### PrivacyInfo.xcprivacy — obligatorio desde iOS 17.4
 
-En `project.pbxproj`, estos settings deben estar correctos en la config **Release**:
-
-```
-SWIFT_VERSION = 6.0
-IPHONEOS_DEPLOYMENT_TARGET = 17.0     // o el target del proyecto
-MACOSX_DEPLOYMENT_TARGET = 14.0
-SWIFT_COMPILATION_MODE = wholemodule   // Release: optimización completa
-ENABLE_BITCODE = NO                    // Bitcode deprecated desde Xcode 14
-DEBUG_INFORMATION_FORMAT = dwarf-with-dsym  // Necesario para crash reports
-DEAD_CODE_STRIPPING = YES
-SWIFT_OPTIMIZATION_LEVEL = -Osize     // Release: optimizar tamaño
-VALIDATE_PRODUCT = YES                 // Valida el bundle antes de archivar
-CODE_SIGN_STYLE = Automatic
-DEVELOPMENT_TEAM = [TEAM_ID]           // Requerido — pedir al usuario
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSPrivacyTracking</key>
+    <false/>
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array/>
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <!-- Agrega solo las APIs que usa la app -->
+        <!-- UserDefaults:
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array><string>CA92.1</string></array>
+        </dict>
+        -->
+    </array>
+</dict>
+</plist>
 ```
 
 ---
 
-### Export options — listos para usar
+### Export options
 
-**`ExportOptions/ExportOptions-AppStore.plist`:**
+**`ExportOptions/AppStore.plist`:**
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -289,7 +414,7 @@ DEVELOPMENT_TEAM = [TEAM_ID]           // Requerido — pedir al usuario
 </plist>
 ```
 
-**`ExportOptions/ExportOptions-Direct.plist`** (distribución directa / fuera del App Store):
+**`ExportOptions/Direct.plist`** (Developer ID / fuera del App Store):
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -301,37 +426,39 @@ DEVELOPMENT_TEAM = [TEAM_ID]           // Requerido — pedir al usuario
     <string>automatic</string>
     <key>stripSwiftSymbols</key>
     <true/>
-    <key>notarize</key>          <!-- macOS únicamente -->
-    <true/>
 </dict>
 </plist>
 ```
 
 ---
 
-### Makefile — comandos de build y distribución
+### Makefile
 
 ```makefile
-APP_NAME    = AppName
-SCHEME      = AppName
-WORKSPACE   = $(APP_NAME).xcodeproj
+APP_NAME     = AppName
+SCHEME       = AppName
+PROJECT      = $(APP_NAME).xcodeproj
 ARCHIVE_PATH = build/$(APP_NAME).xcarchive
 EXPORT_PATH  = build/export
+PLATFORM     = iOS   # o macOS
 
-.PHONY: build archive export-appstore export-direct clean
+.PHONY: gen build archive export-appstore export-direct clean
 
-build:
-	xcodebuild -project $(WORKSPACE) \
+gen:
+	xcodegen generate
+
+build: gen
+	xcodebuild -project $(PROJECT) \
 	           -scheme $(SCHEME) \
 	           -configuration Release \
-	           -destination 'generic/platform=iOS' \
+	           -destination 'generic/platform=$(PLATFORM)' \
 	           build
 
-archive:
-	xcodebuild -project $(WORKSPACE) \
+archive: gen
+	xcodebuild -project $(PROJECT) \
 	           -scheme $(SCHEME) \
 	           -configuration Release \
-	           -destination 'generic/platform=iOS' \
+	           -destination 'generic/platform=$(PLATFORM)' \
 	           -archivePath $(ARCHIVE_PATH) \
 	           archive
 
@@ -339,32 +466,57 @@ export-appstore: archive
 	xcodebuild -exportArchive \
 	           -archivePath $(ARCHIVE_PATH) \
 	           -exportPath $(EXPORT_PATH) \
-	           -exportOptionsPlist ExportOptions/ExportOptions-AppStore.plist
+	           -exportOptionsPlist ExportOptions/AppStore.plist
 
 export-direct: archive
 	xcodebuild -exportArchive \
 	           -archivePath $(ARCHIVE_PATH) \
 	           -exportPath $(EXPORT_PATH) \
-	           -exportOptionsPlist ExportOptions/ExportOptions-Direct.plist
+	           -exportOptionsPlist ExportOptions/Direct.plist
 
 clean:
-	rm -rf build/
-	xcodebuild clean -project $(WORKSPACE) -scheme $(SCHEME)
+	rm -rf build/ $(PROJECT)
 ```
 
 ---
 
-### AppIcon — no dejar vacío
+### AppIcon Contents.json
 
-Produce siempre el `Contents.json` del AppIcon con todos los slots requeridos y avisa al usuario que debe reemplazar los assets. Un icono placeholder claro es mejor que un slot vacío que crashea el archive.
-
+**iOS** (`Assets.xcassets/AppIcon.appiconset/Contents.json`):
 ```json
 {
   "images": [
-    { "idiom": "universal", "platform": "ios", "size": "1024x1024", "scale": "1x", "filename": "icon-1024.png" }
+    {
+      "idiom": "universal",
+      "platform": "ios",
+      "size": "1024x1024",
+      "scale": "1x"
+    }
   ],
   "info": { "author": "xcode", "version": 1 }
 }
+```
+
+**macOS** — agrega estos slots:
+```json
+{
+  "images": [
+    { "idiom": "mac", "size": "16x16",   "scale": "1x" },
+    { "idiom": "mac", "size": "16x16",   "scale": "2x" },
+    { "idiom": "mac", "size": "32x32",   "scale": "1x" },
+    { "idiom": "mac", "size": "32x32",   "scale": "2x" },
+    { "idiom": "mac", "size": "128x128", "scale": "1x" },
+    { "idiom": "mac", "size": "128x128", "scale": "2x" },
+    { "idiom": "mac", "size": "256x256", "scale": "1x" },
+    { "idiom": "mac", "size": "256x256", "scale": "2x" },
+    { "idiom": "mac", "size": "512x512", "scale": "1x" },
+    { "idiom": "mac", "size": "512x512", "scale": "2x" }
+  ],
+  "info": { "author": "xcode", "version": 1 }
+}
+```
+
+Avisa siempre al usuario que debe reemplazar los assets del ícono antes de archivar.
 ```
 
 Para macOS agrega los tamaños: 16x16@1x, 16x16@2x, 32x32@1x, 32x32@2x, 128x128@1x, 128x128@2x, 256x256@1x, 256x256@2x, 512x512@1x, 512x512@2x.
