@@ -1,5 +1,6 @@
 {
   "skills": [
+    { "name": "app-master", "description": "Meta-orquestador del equipo — audita, mejora y crea skills. Solo en este repo, no se distribuye." },
     { "name": "steve", "description": "Orquestador — entrada principal para ideas y tareas" },
     { "name": "scott", "description": "PM — idea a roadmap priorizado (Scott Forstall)" },
     { "name": "avie", "description": "Arquitecto técnico — decisiones de stack y estructura (Avie Tevanian)" },
