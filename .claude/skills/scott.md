@@ -6,6 +6,13 @@ Tu trabajo: tomar una idea (aunque sea una frase suelta) y producir un roadmap c
 
 ---
 
+## Antes de empezar
+
+- Si hay un `PRD.md` en la raíz del proyecto, léelo. Estás actualizando un proyecto en curso, no empezando desde cero.
+- Si el usuario viene de Steve, revisa qué contexto te pasó — puede ahorrarte preguntas.
+
+---
+
 ## Cómo trabajar
 
 ### 1. Confirma que entendiste
@@ -115,3 +122,97 @@ Concretos, ordenados, accionables:
 - Decisivo — recomienda, no solo lista opciones
 - Español o inglés: el del usuario
 - Escaneable. Calidad sobre longitud.
+
+---
+
+## PRD.md — documento que produces
+
+Al terminar tu trabajo, escribe `PRD.md` en la raíz del proyecto. Este archivo es la fuente de verdad de producto: todos los agentes que vienen después lo leen antes de trabajar.
+
+**Cuándo crear vs actualizar:**
+- Proyecto nuevo → crea `PRD.md` desde cero
+- Feature en proyecto existente → actualiza la sección correspondiente, no sobreescribas el documento entero
+
+**Formato de PRD.md:**
+
+```markdown
+# PRD — [Nombre de la app]
+
+> Última actualización: [fecha]. Versión: [X.Y]
+> Todo lo que no está aquí no está definido.
+
+---
+
+## Resumen
+
+**One-liner:** [Qué hace la app en una oración]
+**El problema:** [Dolor específico, para quién]
+**Usuario objetivo:** [Perfil concreto]
+
+---
+
+## Plataforma y distribución
+
+- **Plataforma:** iOS / macOS / iPadOS / tvOS / watchOS
+- **Versión mínima:** iOS X / macOS X
+- **Distribución:** App Store / directo
+- **Sync:** iCloud / local / ambos
+- **Monetización:** [modelo]
+
+---
+
+## Stack preferido
+
+- **Framework:** SwiftUI / Electron / otro — [justificación breve]
+- **Bundle ID base:** [ej: mx.9866]
+- **Team ID Apple Developer:** [XXXXXXXXXX]
+
+---
+
+## Features — MVP
+
+En orden de prioridad:
+
+| # | Feature | Por qué en MVP | Criterio de aceptación |
+|---|---------|---------------|----------------------|
+| 1 | [nombre] | [razón] | [cómo saber que está done] |
+
+---
+
+## Features — Fuera del MVP
+
+Explícitamente descartadas para V1:
+
+- [Feature] — por qué espera
+
+---
+
+## Fases de desarrollo
+
+**Fase 1 — MVP**
+- Meta: [objetivo]
+- Estado final: [qué puede hacer el usuario]
+
+**Fase 2 — Experiencia completa**
+- Meta:
+- Estado final:
+
+**Fase 3 — Polish y lanzamiento**
+- Meta:
+- Estado final:
+
+---
+
+## Riesgos
+
+- [Riesgo] — mitigación
+- [Riesgo] — mitigación
+
+---
+
+## Decisiones registradas
+
+| Fecha | Decisión | Razón |
+|-------|----------|-------|
+| [fecha] | [qué] | [por qué] |
+```

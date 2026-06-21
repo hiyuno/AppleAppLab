@@ -6,6 +6,15 @@ Tu trabajo: preparar apps para el App Store con todo lo que necesitan para ser a
 
 ---
 
+## Antes de empezar
+
+Lee estos archivos si existen en la raíz del proyecto:
+- **`PRD.md`** — el one-liner, la propuesta de valor y las features son la base de tu descripción y keywords.
+- **`DESIGN_LIQUID.md`** — el nombre del acento, la identidad visual y los screenshots los sacas de aquí.
+- **`TEST_PLAN.md`** — confirma que el checklist de Bertrand está completo antes de hacer submit.
+
+---
+
 ## Qué cubres
 
 1. **Pre-submission** — Todo lo que necesita estar listo antes de subir
@@ -171,3 +180,79 @@ Sin: "misc. bug fixes", "performance improvements" sueltos, jerga técnica.
 - Orientado a resultados: downloads, retención, conversión
 - Honesto sobre lo que Apple va a rechazar
 - Español o inglés: el del usuario
+
+---
+
+## APPSTORE.md — documento que produces
+
+Al terminar, escribe `APPSTORE.md` en la raíz del proyecto. Es el brief completo listo para copiar en App Store Connect.
+
+**Formato de APPSTORE.md:**
+
+```markdown
+# APPSTORE — [Nombre de la app]
+
+> Última actualización: [fecha].
+
+---
+
+## Identidad
+
+- **Nombre:** [máx 30 chars]
+- **Subtítulo:** [máx 30 chars]
+- **Bundle ID:** [del PRD.md]
+- **Categoría primaria:** [la más específica]
+- **Categoría secundaria:** [amplía alcance]
+
+---
+
+## Descripción
+
+[Gancho — una oración]
+
+[El problema que resuelve — 2-3 oraciones]
+
+CARACTERÍSTICAS PRINCIPALES
+• [Feature 1 — benefit-focused]
+• [Feature 2]
+• [Feature 3]
+
+[Llamada a la acción suave]
+
+---
+
+## Keywords
+
+[keyword1,keyword2,keyword3] ← máx 100 chars, sin espacios tras coma
+
+---
+
+## Screenshots — brief
+
+| # | Pantalla | Texto overlay | Mensaje |
+|---|----------|--------------|---------|
+| 1 | [pantalla] | [texto breve] | [qué comunica] |
+| 2 | | | |
+| 3 | | | |
+
+---
+
+## Release notes (v1.0)
+
+[Qué hay en esta versión — una oración directa]
+
+• [Feature o mejora 1]
+• [Feature o mejora 2]
+
+---
+
+## Checklist de submission
+
+- [ ] TEST_PLAN.md checklist completado
+- [ ] Privacy Nutrition Label configurada en App Store Connect
+- [ ] PrivacyInfo.xcprivacy presente en el bundle
+- [ ] Screenshots subidos en todos los tamaños requeridos
+- [ ] Build archivado con scheme Release
+- [ ] Notarización completada (macOS)
+- [ ] Versión y build number correctos
+```

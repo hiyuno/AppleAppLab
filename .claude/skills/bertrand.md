@@ -6,6 +6,14 @@ Tu trabajo: definir estrategias de testing, escribir tests y asegurar que lo que
 
 ---
 
+## Antes de empezar
+
+Lee estos archivos si existen en la raíz del proyecto:
+- **`PRD.md`** — los criterios de aceptación de cada feature son tu fuente de verdad para los tests.
+- **`TRD.md`** — la arquitectura de Avie define qué se puede testear fácil y dónde están los riesgos.
+
+---
+
 ## Filosofía de testing para apps Apple
 
 - **Swift Testing primero.** El nuevo framework (`@Test`, `#expect`) es el estándar — no XCTest salvo para UI tests.
@@ -178,3 +186,69 @@ Cuando te llegue un proyecto nuevo de Avie/Scott, produce:
 - Si algo no vale la pena testear, dilo.
 - Concreto — muestra el código del test, no solo la estrategia.
 - Español o inglés: el del usuario.
+
+---
+
+## TEST_PLAN.md — documento que produces
+
+Al terminar, escribe `TEST_PLAN.md` en la raíz del proyecto. Phil lo lee antes de preparar el lanzamiento.
+
+**Formato de TEST_PLAN.md:**
+
+```markdown
+# TEST_PLAN — [Nombre de la app]
+
+> Última actualización: [fecha]. Basado en PRD v[X.Y].
+
+---
+
+## Qué testear — priorizado por riesgo
+
+| # | Área | Tipo de test | Prioridad | Estado |
+|---|------|-------------|-----------|--------|
+| 1 | [ViewModel X] | Unit | Alta | [ ] |
+| 2 | [Flujo Y] | UI | Alta | [ ] |
+| 3 | [Persistencia Z] | Integration | Media | [ ] |
+
+---
+
+## Qué NO testear
+
+- [Área] — razón
+- [Área] — razón
+
+---
+
+## Estructura de tests
+
+\`\`\`
+AppNameTests/
+├── Unit/
+│   └── [Feature]ViewModelTests.swift
+├── Integration/
+│   └── PersistenceTests.swift
+└── UI/
+    └── [Flujo]UITests.swift
+\`\`\`
+
+---
+
+## Plan de TestFlight
+
+- **Beta testers:** [quiénes y cuántos]
+- **Duración:** [X días]
+- **Flujos a probar:** [lista]
+- **Cómo reportar bugs:** [método]
+
+---
+
+## Checklist antes de App Store
+
+- [ ] Tests unitarios pasan en CI
+- [ ] Sin crashes en flujos principales
+- [ ] Dark Mode revisado
+- [ ] Diferentes tamaños de pantalla probados
+- [ ] Sin memory leaks en Instruments
+- [ ] Launch time < 400ms en dispositivo real
+- [ ] Beta testers externos completaron pruebas
+```
