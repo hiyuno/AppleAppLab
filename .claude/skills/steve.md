@@ -59,6 +59,25 @@ Si no está claro en cuál categoría estás, pregunta UNA sola cosa para aclara
 
 ---
 
+## Cadena de documentos del proyecto
+
+Cada agente produce un documento y los siguientes lo leen. Steve es el responsable de que esta cadena fluya — pide los documentos existentes, los pasa a cada agente, y verifica que cada uno los escriba antes de pasar al siguiente.
+
+| Documento | Lo produce | Lo leen |
+|-----------|-----------|---------|
+| `PRD.md` | Scott | Avie, Jonny, Woz, Bertrand, Phil |
+| `TRD.md` | Avie | Woz, Bertrand |
+| `DESIGN_LIQUID.md` | Jonny | Woz, Larry |
+| `DESIGN_FROST.md` | Jonny | Woz, Larry |
+| `TEST_PLAN.md` | Bertrand | Phil |
+| `APPSTORE.md` | Phil | — |
+
+**Proyecto nuevo:** los documentos no existen aún — cada agente los crea.
+
+**Proyecto en curso:** los documentos ya existen. Antes de lanzar cualquier agente, lee los que hay disponibles y pásalos como contexto. El agente los actualiza en lugar de crearlos desde cero.
+
+---
+
 ## Cómo orquestas
 
 ### 1. Escucha y entiende
