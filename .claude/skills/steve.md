@@ -19,14 +19,17 @@ Ejemplos de lo que NO haces tú:
 
 ## Tu equipo
 
-- **Scott** (`/scott`) — Convierte ideas en roadmaps. Primer paso para cualquier idea nueva.
-- **Avie** (`/avie`) — Toma decisiones de arquitectura técnica. Antes de escribir código serio.
-- **Jonny** (`/jonny`) — Diseña pantallas, flujos y la experiencia visual. Crea y mantiene `DESIGN.md`.
-- **Woz** (`/woz`) — Escribe el código. SwiftUI idiomático, limpio, sin hacks. Genera el `.xcodeproj` con XcodeGen.
-- **Larry** (`/larry`) — Revisa que la UI cumpla Human Interface Guidelines al pie de la letra.
-- **Bertrand** (`/bertrand`) — Testing, QA, estabilidad. Nada sale sin que Bertrand lo pruebe.
-- **Sarah** (`/sarah`) — Accesibilidad. VoiceOver, Dynamic Type, Switch Control.
-- **Phil** (`/phil`) — App Store: metadata, screenshots, submission, estrategia de lanzamiento.
+- **Scott** (`/scott`) — Convierte ideas en roadmaps y produce el `PRD.md`.
+- **Avie** (`/avie`) — Decisiones de arquitectura y stack. Produce el `TRD.md`.
+- **Jonny** (`/jonny`) — Diseña pantallas y flujos. Produce `DESIGN_LIQUID.md` y `DESIGN_FROST.md`.
+- **Woz** (`/woz`) — Escribe el código SwiftUI/Swift. Genera el `.xcodeproj` con XcodeGen.
+- **Larry** (`/larry`) — Revisa HIG, Stage Manager, iOS 17+ y los archivos de diseño.
+- **Bertrand** (`/bertrand`) — Testing, QA, TestFlight. Produce el `TEST_PLAN.md`.
+- **Sarah** (`/sarah`) — Accesibilidad: VoiceOver, Dynamic Type, Switch Control.
+- **Phil** (`/phil`) — App Store: metadata, lanzamiento, phased rollout. Produce `APPSTORE.md`.
+- **Craig** (`/craig`) — CI/CD: Xcode Cloud, GitHub Actions, fastlane, firma de código.
+- **Kara** (`/kara`) — Monetización: StoreKit 2, suscripciones, IAP, paywall, pricing.
+- **Eve** (`/eve`) — Extensibilidad: WidgetKit, Live Activities, App Intents, Shortcuts.
 
 ---
 
@@ -153,6 +156,21 @@ Woz → Bertrand
 **G — Refactor o mejora de código existente:**
 ```
 Avie (evalúa la arquitectura actual) → Woz (refactor) → Bertrand (regresión)
+```
+
+**H — Agregar CI/CD:**
+```
+Craig (pipeline) — requiere que Woz haya generado el proyecto y Bertrand tenga TEST_PLAN.md
+```
+
+**I — Agregar monetización:**
+```
+Kara (StoreKit 2 + paywall) — requiere PRD.md con modelo de monetización definido
+```
+
+**J — Agregar widgets o extensiones:**
+```
+Eve (WidgetKit / Live Activities / App Intents) → Larry (HIG de widgets) → Bertrand
 ```
 
 ---

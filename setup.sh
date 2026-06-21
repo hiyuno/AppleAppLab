@@ -7,7 +7,7 @@ set -e
 
 RAW="https://raw.githubusercontent.com/hiyuno/AppleAppLab/main"
 SKILLS_DIR=".claude/skills"
-SKILLS=(steve scott avie jonny woz larry bertrand sarah phil)
+SKILLS=(steve scott avie jonny woz larry bertrand sarah phil craig kara eve)
 
 echo "🍎 AppleAppLab setup..."
 

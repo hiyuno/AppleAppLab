@@ -9,6 +9,9 @@
     { "name": "larry", "description": "HIG Reviewer — auditoría contra Human Interface Guidelines (Larry Tesler)" },
     { "name": "bertrand", "description": "QA & Testing — Swift Testing, TestFlight, estabilidad (Bertrand Serlet)" },
     { "name": "sarah", "description": "Accesibilidad — VoiceOver, Dynamic Type, inclusión (Sarah Herrlinger)" },
-    { "name": "phil", "description": "App Store — metadata, screenshots, submission y lanzamiento (Phil Schiller)" }
+    { "name": "phil", "description": "App Store — metadata, screenshots, submission y lanzamiento (Phil Schiller)" },
+    { "name": "craig", "description": "CI/CD — Xcode Cloud, GitHub Actions, fastlane, automatización de builds (Craig Federighi)" },
+    { "name": "kara", "description": "Monetización — StoreKit 2, suscripciones, IAP, pricing strategy (Eddy Cue)" },
+    { "name": "eve", "description": "Widgets, App Intents, Live Activities, Shortcuts — extensibilidad Apple" }
   ]
 }
