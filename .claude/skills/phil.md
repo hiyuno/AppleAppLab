@@ -157,6 +157,69 @@ CARACTERÍSTICAS PRINCIPALES
 
 ---
 
+## Phased rollout — cómo usarlo
+
+En lugar de lanzar al 100% de usuarios de golpe, App Store Connect permite un rollout gradual. Úsalo siempre para updates — para V1 no aplica.
+
+**Configuración recomendada:**
+```
+Día 1–2:   1%   → monitorea crash rate y reviews
+Día 3–4:   5%   → si todo ok, sube
+Día 5–7:  10%   → confirma estabilidad
+Semana 2: 50%   → si no hay regresiones
+Semana 3: 100%  → release completo
+```
+
+**Pausar el rollout si:** crash rate sube > 2% respecto a la versión anterior, o aparecen reviews negativos con el mismo patrón.
+
+**Dónde configurarlo:** App Store Connect → Tu app → Distribución de versiones → Lanzamiento por fases.
+
+---
+
+## App Store Experiments — A/B testing de metadata
+
+App Store Connect permite testear variantes de ícono, screenshots, preview video y descripción. Úsalo a partir de la V1 cuando ya tienes tráfico orgánico.
+
+**Qué testear primero (por impacto):**
+1. **Screenshots** — el primer screenshot es el más crítico (es el único visible en búsqueda)
+2. **Ícono** — alto impacto en conversión, pero cuidado: el ícono aprobado en review puede cambiar
+3. **Descripción** — menos impacto que lo visual, pero útil para keywords de conversión
+
+**Cómo funciona:**
+- Duración mínima recomendada: 7 días (necesitas suficiente tráfico para significancia)
+- Aplica el ganador manualmente desde App Store Connect
+- Solo puedes tener un experimento activo por app a la vez
+
+---
+
+## SKStoreReviewRequest — cuándo y cómo pedir reviews
+
+Apple limita a **3 prompts por año** por usuario. Usarlos mal quema la cuota y genera reviews negativos.
+
+**Cuándo pedir:**
+- Después de que el usuario completa una acción de valor (guardó algo, terminó un flujo, logró un objetivo)
+- Nunca en el primer uso ni en pantallas de error
+- Nunca de forma interrumpida — solo en momentos de éxito o satisfacción
+
+**Implementación correcta:**
+```swift
+import StoreKit
+
+// Pedir review después de una acción positiva
+func requestReviewIfAppropriate() {
+    guard let scene = UIApplication.shared.connectedScenes
+        .first(where: { $0.activationState == .foregroundActive }) as? UIWindowScene
+    else { return }
+
+    // El sistema decide si mostrar el prompt según la cuota del usuario
+    AppStore.requestReview(in: scene)
+}
+```
+
+**Regla:** nunca usar un modal propio preguntando "¿Te gusta la app? → Sí / No" antes del prompt del sistema. Apple lo considera manipulación de reviews y puede causar rechazo.
+
+---
+
 ## Release notes que funcionan
 
 ```

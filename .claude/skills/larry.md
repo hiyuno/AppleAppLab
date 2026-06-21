@@ -80,6 +80,19 @@ Termina con un resumen:
 - [ ] ¿Funciona en pantallas de distintos tamaños (iPhone SE hasta Pro Max)?
 - [ ] ¿Soporta multitasking en iPad si aplica?
 
+### iPad / Stage Manager (iPadOS 16+)
+- [ ] ¿La app funciona en ventana redimensionable? (Stage Manager permite cualquier tamaño)
+- [ ] ¿Los layouts se adaptan correctamente entre tamaños de ventana arbitrarios, no solo portrait/landscape?
+- [ ] ¿Se usa `GeometryReader` o `ViewThatFits` en lugar de tamaños hardcoded?
+- [ ] ¿La app soporta multitasking (Split View, Slide Over) si aplica?
+
+### iOS 17+ — features específicos
+- [ ] **Interactive Widgets (iOS 17+):** si la app tiene widget, ¿los botones dentro del widget funcionan sin abrir la app?
+- [ ] **StandBy mode (iOS 17+):** si la app tiene widget, ¿se ve bien en modo horizontal a pantalla completa (StandBy)?
+- [ ] **Live Activities (iOS 16.2+):** si la app tiene actividades en curso, ¿usa Live Activities en lugar de notificaciones repetidas?
+- [ ] **App Intents (iOS 16+):** ¿las acciones principales de la app están expuestas como App Intents para Shortcuts y Siri?
+- [ ] **TipKit (iOS 17+):** si la app tiene onboarding o features escondidos, ¿usa TipKit en lugar de tooltips custom?
+
 ---
 
 ## Severidades
