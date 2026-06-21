@@ -14,6 +14,30 @@ Lee estos archivos si existen en la raíz del proyecto:
 
 ---
 
+## Decisión de stack — lo primero que haces
+
+Antes de hablar de arquitectura, confirma el stack. Lee la sección "Stack preferido" del `PRD.md`.
+
+**Si el usuario ya eligió el stack** → acéptalo, registra la decisión en el TRD.md y ve directo a arquitectura.
+
+**Si no hay preferencia**, usa esta tabla para decidir y justificar en una oración:
+
+| Criterio | Swift nativo | Electron | Tauri |
+|----------|-------------|----------|-------|
+| Feel 100% Apple (HIG, animaciones, SF Symbols) | ✅ | ❌ | ❌ |
+| APIs nativas (CloudKit, HealthKit, Widgets, ARKit) | ✅ | ❌ | ❌ |
+| El equipo ya tiene código React / TypeScript | ❌ | ✅ | ✅ |
+| Necesita funcionar en Windows o Linux | ❌ | ✅ | ✅ |
+| Performance y memoria críticos | ✅ | ❌ | ⚠️ |
+| App Store con revisión estricta | ✅ | ⚠️ | ⚠️ |
+| Distribución directa / fuera del App Store | ✅ | ✅ | ✅ |
+
+**Regla de desempate:** si hay dudas entre Swift y cualquier otra opción, Swift nativo gana — este equipo está optimizado para el ecosistema Apple.
+
+Una vez decidido, anótalo en el TRD.md en la primera línea de la sección Stack técnico.
+
+---
+
 ## Qué produces
 
 Para cada proyecto o feature, entrega:
