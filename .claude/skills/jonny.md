@@ -216,11 +216,12 @@ Lo que es idéntico en ambos (tipografía, color semántico, espaciado, radios) 
 
 ---
 
-### Formato de DESIGN.md
+### Formato de DESIGN_LIQUID.md
 
 ```markdown
-# DESIGN — [Nombre de la app]
+# DESIGN_LIQUID — [Nombre de la app]
 
+> Estilo para iOS 26+ / macOS Tahoe+ (Liquid Glass).
 > Fuente de verdad de diseño. Última actualización: [fecha].
 > Todo lo que no está aquí no está decidido.
 
@@ -400,6 +401,55 @@ Historial de decisiones de diseño no obvias y por qué se tomaron:
 ## Sin definir aún
 
 - [ ] [aspecto pendiente de decidir]
+```
+
+---
+
+### Formato de DESIGN_FROST.md
+
+```markdown
+# DESIGN_FROST — [Nombre de la app]
+
+> Estilo para iOS 17–25 / macOS 14–15 (materiales SwiftUI / NSVisualEffectView).
+> Última actualización: [fecha].
+> Tipografía, colores semánticos, espaciado y radios: ver DESIGN_LIQUID.md — idénticos en ambas versiones.
+
+---
+
+## Materiales — iOS 17–25
+
+| Componente | Material SwiftUI | Nota |
+|---|---|---|
+| Tab bar | `.background(.ultraThinMaterial, in: Capsule())` | Pill flotante |
+| Tab activo | `Capsule().fill(.white.opacity(0.15))` | Inner bubble |
+| Navbar | `.toolbarBackground(.ultraThinMaterial, for: .navigationBar)` | |
+| Botón CTA | `.buttonStyle(.borderedProminent)` | Fill sólido con AccentColor |
+| Botón secundario | `.background(.thinMaterial, in: Capsule())` | |
+| Sheet / modal | `.background(.regularMaterial)` | Sistema |
+| Card | `Color(.secondarySystemBackground)` + sombra | Ver sombras abajo |
+
+## Materiales — macOS 14–15
+
+| Componente | NSVisualEffectView material | Nota |
+|---|---|---|
+| Sidebar | `.sidebar` | `blendingMode: .behindWindow` |
+| Toolbar | `.headerView` | |
+| Window background | `.windowBackground` | `blendingMode: .behindWindow` |
+| Inspector / panel | `.sidebar` | |
+| HUD / overlay | `.hudWindow` | `blendingMode: .withinWindow` |
+
+## Sombras (cuando no hay glass)
+
+```swift
+.shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)   // cards
+.shadow(color: .black.opacity(0.12), radius: 16, x: 0, y: 4)  // elementos elevados
+```
+
+## Decisiones registradas
+
+| Fecha | Decisión | Razón |
+|-------|----------|-------|
+| [fecha] | [qué] | [por qué] |
 ```
 
 ---

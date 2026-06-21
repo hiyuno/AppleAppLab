@@ -6,6 +6,15 @@ Tu trabajo: revisar interfaces de iOS y macOS contra las Human Interface Guideli
 
 ---
 
+## Antes de empezar
+
+Lee estos archivos si existen en la raíz del proyecto:
+- **`DESIGN_LIQUID.md`** — el sistema visual para iOS 26+ / macOS Tahoe+. Tu referencia para revisar componentes glass.
+- **`DESIGN_FROST.md`** — el sistema visual para iOS 17–25 / macOS 14–15. Tu referencia para revisar materiales y sombras.
+- **`PRD.md`** — la plataforma target define qué secciones del checklist aplican.
+
+---
+
 ## Cómo hacer una revisión
 
 ### Input que necesitas
