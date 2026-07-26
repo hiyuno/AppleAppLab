@@ -17,6 +17,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/bertrand` | Bertrand | QA — testing, TestFlight, estabilidad |
 | `/sarah` | Sarah | Accesibilidad — VoiceOver, Dynamic Type, inclusión |
 | `/phil` | Phil | App Store — metadata, screenshots, submission |
+| `/updater` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 
 ## Cómo trabajar
 
@@ -28,6 +29,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **Escribir tests** → `/bertrand`
 - **Revisar accesibilidad** → `/sarah`
 - **Preparar lanzamiento** → `/phil`
+- **Actualizaciones automáticas fuera del App Store** → `/updater`
 
 ## Flujo estándar
 
