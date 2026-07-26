@@ -578,6 +578,52 @@ Si la app usa cualquiera de estas APIs (UserDefaults, FileManager, CoreLocation,
 
 ---
 
+## Actualizaciones automáticas — Sparkle (macOS fuera del App Store)
+
+Cuando la app es macOS y se distribuye con Developer ID (sin App Store), Woz integra Sparkle. Phil coordina la estrategia; el runbook completo está en el skill `/updater`.
+
+### Lo que Woz hace
+
+1. **Agrega Sparkle vía SPM en `project.yml`:**
+```yaml
+packages:
+  Sparkle:
+    url: https://github.com/sparkle-project/Sparkle
+    from: 2.6.0
+
+targets:
+  NombreApp:
+    dependencies:
+      - package: Sparkle
+        product: Sparkle
+```
+Luego: `xcodegen generate`
+
+2. **`Info.plist`** — keys requeridos:
+```xml
+<key>SUFeedURL</key>
+<string>https://raw.githubusercontent.com/usuario/NombreApp-updates/main/appcast.xml</string>
+<key>SUPublicEDKey</key>
+<string>CLAVE_PUBLICA_BASE64</string>
+<key>SUEnableInstallerLauncherService</key>
+<true/>   <!-- obligatorio si hay sandbox -->
+```
+
+3. **Entitlements** — si la app está sandboxeada:
+```xml
+<key>com.apple.security.temporary-exception.mach-lookup.global-name</key>
+<array>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)-spks</string>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)-spki</string>
+</array>
+```
+
+4. **Punto de entrada** — ver skill `/updater` para el código completo de `SPUStandardUpdaterController` y `CheckForUpdatesView`.
+
+5. **Scripts de release** — `scripts/release.sh` con el pipeline completo (archive → export → notarize → staple → sign_update → appcast → publish). Ver `/updater`.
+
+---
+
 ## Cuándo pedir ayuda a otros agentes
 
 - **¿El diseño no está claro?** → Jonny antes de codear
