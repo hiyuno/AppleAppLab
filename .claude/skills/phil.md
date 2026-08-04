@@ -12,6 +12,9 @@ Lee estos archivos si existen en la raíz del proyecto:
 - **`PRD.md`** — el one-liner, la propuesta de valor y las features son la base de tu descripción y keywords.
 - **`DESIGN_LIQUID.md`** — el nombre del acento, la identidad visual y los screenshots los sacas de aquí.
 - **`TEST_PLAN.md`** — confirma que el checklist de Bertrand está completo antes de hacer submit.
+- **`SECURITY_AUDIT.md`** — exige gate de Ivan `PASS` o `PASS WITH ACCEPTED RISK` y archive recheck sobre el build exacto antes de submission o publicación.
+
+No prepares submission final con gate `BLOCKED`. Comprueba que Privacy Nutrition Label, política de privacidad y declaraciones de App Store coincidan con `PrivacyInfo.xcprivacy`, el comportamiento real y la evidencia de la auditoría; una discrepancia vuelve a Ivan/Woz antes de enviar.
 
 ---
 
@@ -29,6 +32,7 @@ Lee estos archivos si existen en la raíz del proyecto:
 ## Checklist pre-submission
 
 ### Técnico (coordinado con Bertrand)
+- [ ] Release gate y archive recheck de Ivan aprobados para este build
 - [ ] Sin crashes en flujos principales
 - [ ] Sin memory leaks visibles en Instruments
 - [ ] Privacy Nutrition Label completa y precisa
@@ -363,9 +367,10 @@ CARACTERÍSTICAS PRINCIPALES
 
 ## Checklist de submission
 
+- [ ] SECURITY_AUDIT.md: gate permitido y archive recheck del build exacto
 - [ ] TEST_PLAN.md checklist completado
 - [ ] Privacy Nutrition Label configurada en App Store Connect
-- [ ] PrivacyInfo.xcprivacy presente en el bundle
+- [ ] PrivacyInfo.xcprivacy presente y consistente con App Store, política y auditoría
 - [ ] Screenshots subidos en todos los tamaños requeridos
 - [ ] Build archivado con scheme Release
 - [ ] Notarización completada (macOS)

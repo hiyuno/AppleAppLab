@@ -4,6 +4,7 @@
     { "name": "steve", "description": "Orquestador — entrada principal para ideas y tareas" },
     { "name": "scott", "description": "PM — idea a roadmap priorizado (Scott Forstall)" },
     { "name": "avie", "description": "Arquitecto técnico — decisiones de stack y estructura (Avie Tevanian)" },
+    { "name": "ivan", "description": "Security Architect & Independent Reviewer — threat modeling, auditoría y release gate (Ivan Krstić)" },
     { "name": "jonny", "description": "Diseño UI/UX — Apple HIG, estética, flujos (Jony Ive)" },
     { "name": "woz", "description": "SwiftUI/Swift coder — código idiomático Apple (Steve Wozniak)" },
     { "name": "larry", "description": "HIG Reviewer — auditoría contra Human Interface Guidelines (Larry Tesler)" },

@@ -11,6 +11,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/steve` | Steve | Orquestador — entry point para cualquier idea o tarea |
 | `/scott` | Scott | PM — idea → roadmap → priorización |
 | `/avie` | Avie | Arquitecto — decisiones técnicas, estructura del proyecto |
+| `/ivan` | Ivan | Security Architect & Independent Reviewer — threat model, auditoría y release gate |
 | `/jonny` | Jonny | Diseño — UI/UX, Apple HIG, estética |
 | `/woz` | Woz | Coder — SwiftUI/Swift, código idiomático Apple |
 | `/larry` | Larry | HIG Reviewer — cumplimiento de Human Interface Guidelines |
@@ -23,6 +24,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 
 - **Nueva idea de app** → `/steve` o `/scott`
 - **Decisión técnica** → `/avie`
+- **Seguridad, APIs, auth o release gate** → `/ivan`
 - **Pantalla o flujo** → `/jonny`
 - **Escribir código** → `/woz`
 - **Revisar UI contra HIG** → `/larry`
@@ -36,18 +38,25 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 **Siempre empieza con Steve.** Él orquesta y decide si se necesitan todos los pasos o solo algunos.
 
 ```
-Steve/Scott → Avie → Jonny → Woz → Larry → Bertrand → Sarah → Phil
+Steve/Scott → Avie → Ivan (plan si aplica) → Jonny → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Ivan (archive recheck) → Phil
 ```
 
 - **Steve** recibe la idea o tarea y decide el camino
 - **Scott** la convierte en roadmap si es idea nueva
 - **Avie** define la arquitectura antes de escribir código
+- **Ivan** modela amenazas en superficies sensibles, audita de forma independiente y puede bloquear el release
 - **Jonny** diseña las pantallas y flujos
 - **Woz** construye el código
 - **Larry** revisa HIG antes de que salga
 - **Bertrand** prueba y asegura estabilidad
 - **Sarah** audita accesibilidad
 - **Phil** prepara el lanzamiento en App Store
+
+Toda app recibe una auditoría de seguridad proporcional. Si hay APIs externas, auth, datos sensibles, entitlements/helpers/App Groups, webhooks o distribución directa, Ivan actúa después de Avie y antes de implementar, después de Woz y sobre el archive Release antes de Phil/Craig. Ivan no implementa fixes; Woz los ejecuta. Bugs de seguridad: `Ivan → Woz → Ivan → Bertrand`. Critical/High bloquean release salvo aceptación explícita con owner y expiración.
+
+## Memoria evolutiva
+
+Steve consulta `KNOWN_ISSUES.md` en AppleAppLab o `.appleapplab/KNOWN_ISSUES.md` en proyectos instalados, además de `PROJECT_LEARNINGS.md` si existe. Pasa solo entradas relevantes al especialista. El agente propietario documenta reproducción, hipótesis/causa, fix y verificación local; Steve coordina retrospectivas. App Master es el único que promueve patrones verificados a la base global.
 
 ## Comportamiento de inicio
 

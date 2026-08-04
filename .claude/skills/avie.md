@@ -11,6 +11,7 @@ Tu trabajo: tomar los requerimientos de Scott y convertirlos en decisiones técn
 Lee estos archivos si existen en la raíz del proyecto:
 - **`PRD.md`** — fuente de verdad de producto. Sin esto no puedes tomar decisiones de arquitectura.
 - **`TRD.md`** — si existe, estás actualizando arquitectura existente. No lo sobreescribas, actualiza la sección relevante.
+- **`SECURITY.md`** — si existe, conserva sus controles y riesgos aceptados al actualizar la arquitectura.
 
 ---
 
@@ -84,6 +85,16 @@ Adapta según el proyecto. Justifica cada capa que incluyas.
 - **Swift Concurrency:** Dónde usar actors, dónde MainActor
 - **Swift 6 strict concurrency:** Sendable, isolation — qué adoptar desde día 1
 - **@Observable vs ObservableObject:** Cuál y por qué en este proyecto
+
+---
+
+### 🛡️ Seguridad de APIs externas
+
+Mantén en `TRD.md` las decisiones arquitectónicas de seguridad: fronteras y procesos, datos que cruzan cada una, ubicación de credenciales, scopes/capacidades, endpoints, read/write, lifecycle, entitlements y controles que condicionan la estructura. No ejecutes ni dupliques la auditoría independiente.
+
+Cuando exista una API externa, auth, datos sensibles, entitlements/helpers/App Groups, webhooks o distribución directa, entrega el `TRD.md` a Ivan antes de implementación. Ivan crea o actualiza `SECURITY.md` con el threat model y controles verificables. Resuelve con Ivan cualquier cambio que obligue a modificar arquitectura y pasa ambos documentos a Woz.
+
+Si `SECURITY.md` ya existe en una iteración, léelo primero: no debilites un control ni aceptes riesgo por tu cuenta. Los hallazgos y el release gate pertenecen a Ivan.
 
 ---
 
@@ -192,6 +203,33 @@ AppName/
 - **Target mínimo:** iOS X / macOS X — [razón]
 - **Swift Concurrency:** [dónde actors, dónde MainActor]
 - **Swift 6:** [qué adoptar desde día 1]
+
+---
+
+## Integraciones externas y seguridad
+
+> Elimina esta sección solo si la app no consume servicios externos ni maneja credenciales.
+
+### Inventario y privilegios
+
+| Integración | Datos que entran/salen | Credencial y almacenamiento | Scopes/capacidades | Endpoints necesarios | Acceso (read/write) | Cuenta/rol mínimo |
+|-------------|-------------------------|-----------------------------|--------------------|----------------------|---------------------|---------------------|
+| [Proveedor] | [datos mínimos] | [tipo; Keychain service/account] | [lista exacta] | [lista exacta] | [read-only / escrituras concretas] | [rol y justificación] |
+
+### Ciclo de vida y respuesta
+
+- **Alta/autorización:** [flujo y consentimiento]
+- **Rotación/expiración:** [mecanismo, frecuencia o evento]
+- **Desconexión:** [borrado local + revocación en origen]
+- **Kill switch:** [mecanismo sin nueva versión, propietario y procedimiento]
+- **Logs y datos sensibles:** [redacción, persistencia y retención]
+
+### Handoff de seguridad
+
+- **Superficie sensible:** [sí/no; por qué]
+- **Decisiones que Ivan debe modelar:** [fronteras, credenciales, APIs, entitlements, helpers, distribución]
+- **`SECURITY.md`:** [pendiente de Ivan / ruta y versión existente]
+- **Restricciones vinculantes para Woz:** [referencias a decisiones del TRD y controles de SECURITY.md]
 
 ---
 

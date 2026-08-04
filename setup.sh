@@ -7,16 +7,48 @@ set -e
 
 RAW="https://raw.githubusercontent.com/hiyuno/AppleAppLab/main"
 SKILLS_DIR=".claude/skills"
-SKILLS=(steve scott avie jonny woz larry bertrand sarah phil craig kara eve)
+SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah phil craig kara eve)
 
 echo "🍎 AppleAppLab setup..."
 
-# --- Skills ---
+# --- Skills (Claude Code) ---
 mkdir -p "$SKILLS_DIR"
 for skill in "${SKILLS[@]}"; do
   curl -s "$RAW/.claude/skills/${skill}.md" -o "$SKILLS_DIR/${skill}.md"
 done
 echo "  ✓ Skills instalados en $SKILLS_DIR"
+
+# --- Memoria evolutiva ---
+mkdir -p ".appleapplab"
+curl -fsSL "$RAW/KNOWN_ISSUES.md" -o ".appleapplab/KNOWN_ISSUES.md"
+echo "  ✓ Snapshot global actualizado en .appleapplab/KNOWN_ISSUES.md"
+
+if [ ! -f "PROJECT_LEARNINGS.md" ]; then
+  curl -fsSL "$RAW/PROJECT_LEARNINGS_TEMPLATE.md" -o "PROJECT_LEARNINGS.md"
+  echo "  ✓ PROJECT_LEARNINGS.md creado"
+else
+  echo "  ↩ PROJECT_LEARNINGS.md preservado"
+fi
+
+# --- AGENTS.md (OpenAI Codex) ---
+curl -s "$RAW/AGENTS.md" -o "AGENTS.md"
+echo "  ✓ AGENTS.md instalado (OpenAI Codex)"
+
+# --- GEMINI.md (Gemini CLI) ---
+if [ ! -f "GEMINI.md" ]; then
+  curl -s "$RAW/GEMINI.md" -o "GEMINI.md"
+  echo "  ✓ GEMINI.md creado (Gemini CLI)"
+elif grep -q "AppleAppLab" "GEMINI.md" 2>/dev/null; then
+  echo "  ↩ GEMINI.md ya existe"
+else
+  curl -s "$RAW/GEMINI.md" >> "GEMINI.md"
+  echo "  ✓ Equipo agregado a GEMINI.md existente"
+fi
+
+# --- Cursor rules ---
+mkdir -p ".cursor/rules"
+curl -s "$RAW/.cursor/rules/apple-team.mdc" -o ".cursor/rules/apple-team.mdc"
+echo "  ✓ .cursor/rules/apple-team.mdc instalado (Cursor)"
 
 # --- Bloque de Steve para CLAUDE.md ---
 STEVE_BLOCK='## Comportamiento de inicio
@@ -46,11 +78,21 @@ echo "Equipo listo:"
 echo "  /steve    → Orquestador"
 echo "  /scott    → PM y roadmap"
 echo "  /avie     → Arquitectura"
+echo "  /ivan     → Seguridad y release gate"
 echo "  /jonny    → Diseño UI/UX"
 echo "  /woz      → SwiftUI / Swift"
 echo "  /larry    → HIG Review"
 echo "  /bertrand → QA y testing"
 echo "  /sarah    → Accesibilidad"
 echo "  /phil     → App Store"
+echo "  /craig    → CI/CD"
+echo "  /kara     → Monetización"
+echo "  /eve      → Widgets y extensiones"
 echo ""
-echo "→ Abre Claude Code — Steve arranca solo."
+echo "Compatibilidad:"
+echo "  Claude Code → .claude/skills/ + CLAUDE.md"
+echo "  Cursor      → .cursor/rules/apple-team.mdc"
+echo "  Codex       → AGENTS.md"
+echo "  Gemini CLI  → GEMINI.md"
+echo ""
+echo "→ Abre tu herramienta — Steve arranca solo."

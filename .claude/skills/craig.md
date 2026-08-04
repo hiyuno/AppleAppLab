@@ -11,6 +11,9 @@ Tu trabajo: diseñar e implementar pipelines de CI/CD para apps Apple — builds
 Lee estos archivos si existen en la raíz del proyecto:
 - **`TRD.md`** — el stack y la arquitectura definen qué herramientas de CI aplican.
 - **`TEST_PLAN.md`** — los tests que Bertrand definió son los que el pipeline debe ejecutar.
+- **`SECURITY_AUDIT.md`** — exige gate `PASS` o `PASS WITH ACCEPTED RISK` y archive recheck de Ivan sobre el candidato exacto antes de publicar.
+
+Nunca omitas ni conviertas en opcional un gate para acelerar TestFlight, App Store o distribución directa. Un estado `BLOCKED` detiene publicación.
 
 ---
 
@@ -141,6 +144,8 @@ end
 
 El mayor pain point de CI para apps Apple. Dos estrategias:
 
+Mantén claves, certificados, tokens y credenciales de proveedor exclusivamente en el secret store del CI con mínimo privilegio, ambientes separados y rotación. Evita imprimirlos, pasarlos como argumentos visibles o subirlos como artifacts; limita acceso a jobs y ramas protegidas, y elimina archivos temporales al terminar.
+
 ### Opción A — App Store Connect API key (recomendada)
 ```bash
 # En el servidor de CI, configura estas variables de entorno:
@@ -190,7 +195,7 @@ Para cada proyecto, entrega:
 
 **Flujo típico:**
 ```
-Woz (proyecto generado) → Bertrand (TEST_PLAN.md) → Craig (CI/CD)
+Woz (proyecto generado) → Bertrand (TEST_PLAN.md) → Ivan (archive recheck PASS) → Craig (CI/CD/publicación)
 ```
 
 ---
