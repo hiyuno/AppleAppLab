@@ -735,6 +735,347 @@ Luego: `xcodegen generate`
 
 ---
 
+## Networking — capa completa
+
+### Patrón base: URLSession + async/await
+
+```swift
+// APIClient.swift — encapsula toda la red
+actor APIClient {
+    static let shared = APIClient()
+    private let session: URLSession
+    private let decoder = JSONDecoder()
+
+    init(session: URLSession = .shared) {
+        self.session = session
+        self.decoder.keyDecodingStrategy = .convertFromSnakeCase
+        self.decoder.dateDecodingStrategy = .iso8601
+    }
+
+    func request<T: Decodable>(_ endpoint: Endpoint) async throws -> T {
+        let request = try endpoint.urlRequest()
+        let (data, response) = try await session.data(for: request)
+        try validate(response: response, data: data)
+        return try decoder.decode(T.self, from: data)
+    }
+
+    private func validate(response: URLResponse, data: Data) throws {
+        guard let http = response as? HTTPURLResponse else { throw APIError.invalidResponse }
+        switch http.statusCode {
+        case 200...299: return
+        case 401: throw APIError.unauthorized
+        case 429: throw APIError.rateLimited
+        case 500...599: throw APIError.serverError(http.statusCode)
+        default: throw APIError.httpError(http.statusCode, data)
+        }
+    }
+}
+```
+
+### Endpoints tipados
+
+```swift
+enum Endpoint {
+    case fetchItems
+    case createItem(Item)
+    case deleteItem(id: String)
+
+    var baseURL: URL { URL(string: "https://api.ejemplo.com/v1")! }
+
+    func urlRequest() throws -> URLRequest {
+        var request = URLRequest(url: baseURL.appending(path: path))
+        request.httpMethod = method
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let body { request.httpBody = try JSONEncoder().encode(body) }
+        return request
+    }
+
+    private var path: String {
+        switch self {
+        case .fetchItems: "/items"
+        case .createItem: "/items"
+        case .deleteItem(let id): "/items/\(id)"
+        }
+    }
+    private var method: String {
+        switch self {
+        case .fetchItems: "GET"
+        case .createItem: "POST"
+        case .deleteItem: "DELETE"
+        }
+    }
+    private var body: (any Encodable)? {
+        switch self {
+        case .createItem(let item): item
+        default: nil
+        }
+    }
+}
+```
+
+### Errores de red tipados
+
+```swift
+enum APIError: LocalizedError {
+    case invalidResponse
+    case unauthorized
+    case rateLimited
+    case serverError(Int)
+    case httpError(Int, Data)
+    case noConnection
+
+    var errorDescription: String? {
+        switch self {
+        case .unauthorized: "Sesión expirada. Vuelve a iniciar sesión."
+        case .rateLimited: "Demasiadas solicitudes. Espera un momento."
+        case .serverError(let code): "Error del servidor (\(code)). Intenta de nuevo."
+        case .noConnection: "Sin conexión a internet."
+        default: "Error de red. Intenta de nuevo."
+        }
+    }
+
+    var isRecoverable: Bool {
+        switch self {
+        case .rateLimited, .serverError, .noConnection: true
+        default: false
+        }
+    }
+}
+```
+
+### Retry con backoff exponencial
+
+```swift
+func requestWithRetry<T: Decodable>(
+    _ endpoint: Endpoint,
+    maxAttempts: Int = 3
+) async throws -> T {
+    var attempt = 0
+    while true {
+        do {
+            return try await request(endpoint)
+        } catch let error as APIError where error.isRecoverable && attempt < maxAttempts {
+            attempt += 1
+            let delay = Double(attempt * attempt) // 1s, 4s, 9s
+            try await Task.sleep(for: .seconds(delay))
+        }
+    }
+}
+```
+
+### Cancelación automática con .task
+
+En ViewModels, siempre usa `.task` en la View — cancela automáticamente si la vista desaparece:
+
+```swift
+// View:
+.task(id: filters) {          // re-ejecuta cuando filters cambia
+    await vm.load(filters)    // si la vista desaparece → Task cancelada
+}
+
+// ViewModel:
+func load(_ filters: Filters) async {
+    isLoading = true
+    defer { isLoading = false }
+    do {
+        items = try await APIClient.shared.request(.fetchItems)
+    } catch is CancellationError {
+        return                // cancelación silenciosa — no es un error
+    } catch {
+        self.error = error
+    }
+}
+```
+
+---
+
+## Performance — SwiftUI
+
+### LazyVStack vs VStack
+
+| Usa | Cuando |
+|-----|--------|
+| `VStack` | < 20 elementos, o altura total conocida |
+| `LazyVStack` dentro de `ScrollView` | Listas largas dinámicas (> 50 elementos) |
+| `List` | Listas con swipe actions, edición, reorden |
+
+`List` ya es lazy internamente — nunca lo envuelvas en `LazyVStack`.
+
+### Evitar recomputaciones innecesarias
+
+```swift
+// ❌ — el cuerpo entero se recomputa cuando cualquier propiedad del ViewModel cambia
+struct BadView: View {
+    @State private var vm = HeavyViewModel()
+    var body: some View {
+        ExpensiveSubview(data: vm.processedData)  // recalcula siempre
+    }
+}
+
+// ✅ — separa en subvistas con sus propios parámetros
+struct GoodView: View {
+    @State private var vm = HeavyViewModel()
+    var body: some View {
+        ItemList(items: vm.items)       // solo se recomputa si items cambia
+        StatusBar(status: vm.status)    // solo si status cambia
+    }
+}
+```
+
+### @ViewBuilder para ramas condicionales
+
+```swift
+// ✅ — evita la penalización de AnyView
+@ViewBuilder
+private var content: some View {
+    if vm.isLoading { ProgressView() }
+    else if vm.items.isEmpty { EmptyStateView() }
+    else { ItemList(items: vm.items) }
+}
+```
+
+Nunca uses `AnyView` para ramificar — borra la información de tipo y rompe las optimizaciones de SwiftUI.
+
+### Imágenes y assets
+
+```swift
+// Imágenes remotas: siempre con caché y placeholder
+AsyncImage(url: item.imageURL) { phase in
+    switch phase {
+    case .success(let image): image.resizable().scaledToFill()
+    case .failure: Image(systemName: "photo").foregroundStyle(.secondary)
+    case .empty: Color.secondary.opacity(0.2)
+    @unknown default: EmptyView()
+    }
+}
+.frame(width: 80, height: 80)
+.clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+```
+
+Para listas con muchas imágenes remotas, usa `URLCache` configurado con límites apropiados:
+
+```swift
+URLCache.shared = URLCache(
+    memoryCapacity: 50 * 1024 * 1024,   // 50 MB memoria
+    diskCapacity: 200 * 1024 * 1024      // 200 MB disco
+)
+```
+
+### Paginación
+
+```swift
+@Observable
+final class PaginatedViewModel {
+    var items: [Item] = []
+    var isLoadingMore = false
+    private var currentPage = 1
+    private var hasMore = true
+
+    func loadMore() async {
+        guard !isLoadingMore && hasMore else { return }
+        isLoadingMore = true
+        defer { isLoadingMore = false }
+        let newItems = try? await APIClient.shared.request(.items(page: currentPage))
+        if let newItems {
+            items.append(contentsOf: newItems)
+            currentPage += 1
+            hasMore = newItems.count == 20  // 20 = page size
+        }
+    }
+}
+
+// En la lista:
+List {
+    ForEach(vm.items) { item in
+        ItemRow(item: item)
+            .task {
+                if item == vm.items.last { await vm.loadMore() }
+            }
+    }
+    if vm.isLoadingMore { ProgressView().frame(maxWidth: .infinity) }
+}
+```
+
+---
+
+## SwiftData — migración de schema
+
+Cuando el modelo de datos cambia en una app ya publicada, usa `VersionedSchema` y `SchemaMigrationPlan` — nunca cambies el modelo directamente sin migración o los usuarios perderán sus datos.
+
+### Cuándo migrar
+
+| Cambio | Necesita migración |
+|--------|-------------------|
+| Agregar propiedad con valor por defecto | Lightweight (automática) |
+| Renombrar propiedad o modelo | Custom migration |
+| Cambiar tipo de una propiedad | Custom migration |
+| Eliminar propiedad | Lightweight (automática) |
+| Cambiar relación | Custom migration |
+
+### Patrón de migración
+
+```swift
+// Versión 1 — original
+enum SchemaV1: VersionedSchema {
+    static var versionIdentifier = Schema.Version(1, 0, 0)
+    static var models: [any PersistentModel.Type] { [Item.self] }
+
+    @Model final class Item {
+        var title: String
+        var createdAt: Date
+        init(title: String) { self.title = title; self.createdAt = .now }
+    }
+}
+
+// Versión 2 — agrega campo + renombra
+enum SchemaV2: VersionedSchema {
+    static var versionIdentifier = Schema.Version(2, 0, 0)
+    static var models: [any PersistentModel.Type] { [Item.self] }
+
+    @Model final class Item {
+        var title: String
+        var createdAt: Date
+        var isPinned: Bool  // ← nueva propiedad
+        init(title: String) { self.title = title; self.createdAt = .now; self.isPinned = false }
+    }
+}
+
+// Plan de migración
+enum AppMigrationPlan: SchemaMigrationPlan {
+    static var schemas: [any VersionedSchema.Type] { [SchemaV1.self, SchemaV2.self] }
+
+    static var stages: [MigrationStage] {
+        [migrateV1toV2]
+    }
+
+    static let migrateV1toV2 = MigrationStage.custom(
+        fromVersion: SchemaV1.self,
+        toVersion: SchemaV2.self,
+        willMigrate: nil,
+        didMigrate: { context in
+            let items = try context.fetch(FetchDescriptor<SchemaV2.Item>())
+            items.forEach { $0.isPinned = false }
+            try context.save()
+        }
+    )
+}
+
+// App entry point:
+@main struct MyApp: App {
+    var body: some Scene {
+        WindowGroup { ContentView() }
+            .modelContainer(
+                for: SchemaV2.Item.self,
+                migrationPlan: AppMigrationPlan.self
+            )
+    }
+}
+```
+
+**Regla:** cada vez que cambias un `@Model`, crea una nueva `VersionedSchema`. Nunca modifiques una versión ya publicada.
+
+---
+
 ## Cuándo pedir ayuda a otros agentes
 
 - **¿El diseño no está claro?** → Jonny antes de codear

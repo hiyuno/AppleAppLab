@@ -126,6 +126,102 @@ Pasos concretos para que Woz empiece con la estructura correcta:
 
 ---
 
+## SwiftData — migración de schema
+
+Avie decide la estrategia de migración en el TRD.md antes de que Woz toque el modelo. Una migración mal pensada borra los datos de los usuarios.
+
+### Cuándo necesitas migración explícita
+
+| Cambio | Estrategia |
+|--------|-----------|
+| Agregar propiedad con default | Lightweight — automática, sin código |
+| Eliminar propiedad | Lightweight — automática |
+| Renombrar propiedad (`@Attribute(.unique)` o sin él) | Custom migration |
+| Renombrar modelo (`@Model`) | Custom migration |
+| Cambiar tipo de propiedad | Custom migration |
+| Cambiar relación entre modelos | Custom migration |
+
+**Regla:** si hay duda, usa custom migration. El costo de una migración fallida (pérdida de datos del usuario en producción) es mucho mayor que el costo de escribirla.
+
+### Decisión que documenta en TRD.md
+
+```markdown
+## Migración de schema
+
+- Versión actual: SchemaV[N]
+- Cambios en esta versión: [lista de cambios]
+- Estrategia: Lightweight / Custom
+- Plan: AppMigrationPlan en `AppName/Core/Migration/`
+- Prueba requerida: [sí — Bertrand prueba migración desde V[N-1]]
+```
+
+### Estructura de carpetas para migración
+
+```
+AppName/Core/Migration/
+├── SchemaV1.swift          ← modelo original
+├── SchemaV2.swift          ← modelo nuevo
+└── AppMigrationPlan.swift  ← plan de migración
+```
+
+Woz implementa el patrón `VersionedSchema` + `SchemaMigrationPlan`. Ver sección de migración en `/woz`.
+
+---
+
+## CloudKit — arquitectura de sync
+
+Cuando el PRD.md indica sync multi-dispositivo, Avie decide entre tres opciones:
+
+### Opciones de sync
+
+| Opción | Cuándo | Complejidad |
+|--------|--------|-------------|
+| **SwiftData + CloudKit** (`.cloud`) | App personal, datos privados del usuario, sin colaboración | Baja — Apple maneja conflictos |
+| **CloudKit privado** (`CKContainer`) | Necesitas control granular, queries complejas, notificaciones push de cambios | Media |
+| **CloudKit compartido** | Colaboración entre usuarios (documentos compartidos, equipos) | Alta |
+
+### SwiftData + CloudKit — el caso más común
+
+```swift
+// ModelContainer con sync automático:
+ModelContainer(
+    for: Item.self,
+    configurations: ModelConfiguration(cloudKitDatabase: .automatic)
+)
+```
+
+Requiere en entitlements:
+```xml
+<key>com.apple.developer.icloud-container-identifiers</key>
+<array><string>iCloud.$(PRODUCT_BUNDLE_IDENTIFIER)</string></array>
+<key>com.apple.developer.ubiquity-kvstore-identifier</key>
+<string>$(TeamIdentifierPrefix)$(CFBundleIdentifier)</string>
+```
+
+**Limitaciones de SwiftData + CloudKit que Avie debe conocer y documentar:**
+- No soporta `@Attribute(.unique)` en modelos con CloudKit
+- No soporta relaciones no opcionales — todas deben ser opcionales
+- No soporta `ModelConfiguration(isStoredInMemoryOnly: true)` con cloud
+- Los conflictos los resuelve CloudKit con last-write-wins — no hay merge manual
+
+### Offline-first — patrón arquitectónico
+
+Avie especifica en TRD.md cómo se comporta la app sin red:
+
+```markdown
+## Sync y offline
+
+- Fuente de verdad local: SwiftData (siempre funcional offline)
+- Sync: CloudKit automático cuando hay red
+- Conflictos: last-write-wins (SwiftData + CloudKit default)
+- Estado de sync: NO expuesto en UI — el sistema lo maneja
+- Datos sensibles: [si aplica, Ivan define encriptación antes de sync]
+```
+
+**Regla:** la app debe funcionar completamente offline. El sync es transparente, nunca bloqueante.
+
+---
+
 ## Principios que nunca negocias
 
 - **Sin over-engineering.** La arquitectura más simple que resuelve el problema.

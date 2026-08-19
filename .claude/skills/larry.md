@@ -104,6 +104,34 @@ Termina con un resumen:
 
 ---
 
+### iOS 26 / macOS Tahoe — Liquid Glass HIG
+
+Para apps que usan Liquid Glass (iOS 26+ / macOS 26+), revisa estas reglas específicas además del checklist general:
+
+**Uso de variantes:**
+- [ ] ¿Se usa Regular (no Clear) como variante por defecto? Clear solo es válido sobre contenido media-rich con dimming layer
+- [ ] ¿No hay mezcla de Regular y Clear en la misma superficie continua? (pueden convivir en niveles claramente separados)
+- [ ] ¿Los botones de acción principal usan `.buttonStyle(.glassProminent)` y los secundarios `.buttonStyle(.glass)`?
+
+**Regla de capas:**
+- [ ] ¿El glass aparece solo en la navigation layer (tab bar, navbar, toolbar, sidebar, sheets, botones flotantes)?
+- [ ] ¿El content layer (listas, scroll areas, tablas, fondos, media) está libre de glass?
+
+**Continuous Corners:**
+- [ ] ¿Todos los bordes usan `.continuous`? Ninguno con `.circular`
+- [ ] ¿Los elementos anidados respetan `r_inner = r_outer − padding`?
+
+**Accesibilidad del glass:**
+- [ ] ¿La app es funcional con Reduce Transparency activado? El glass desaparece — el contenido debe seguir siendo legible
+- [ ] ¿La app funciona con Increase Contrast? (fuerza Reduce Transparency ON)
+
+**Severidades para violaciones de Liquid Glass:**
+- 🔴 CRÍTICO: Glass en content layer (lista, scroll), o mezcla de variantes en misma superficie
+- 🟡 IMPORTANTE: Clear usado sin dimming layer o sin media-rich content de justificación
+- 🔵 MENOR: `r_inner` que no respeta la regla de radio anidado
+
+---
+
 ## Severidades
 
 **🔴 CRÍTICO** — El usuario no puede completar la tarea, o Apple rechazaría la app:
