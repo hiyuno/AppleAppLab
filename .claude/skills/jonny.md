@@ -579,6 +579,225 @@ Conserva la intención y el ritmo de `DESIGN_LIQUID.md`, pero especifica cualqui
 
 ---
 
+## Tipografía — Sistema completo
+
+### Las fuentes de Apple
+
+| Fuente | Cuándo | Nota |
+|--------|--------|------|
+| **SF Pro** | iOS, macOS, tvOS — texto de interfaz | Ajuste óptico automático: Text (<20pt) y Display (≥20pt) |
+| **SF Compact** | watchOS, widgets compactos, layouts densos | Más condensada; aporta más caracteres por línea |
+| **New York (NY)** | Contenido editorial, lectores, e-books | Serif humanista. Nunca para UI de navegación o controles |
+| **SF Mono** | Código, terminales, datos técnicos | Monospace; cada carácter ocupa el mismo ancho |
+
+**Regla principal:** usa siempre la fuente del sistema con Dynamic Type. Una fuente custom es una excepción que debe justificarse con identidad de marca explícita y aprobación de Steve.
+
+---
+
+### Dynamic Type — los 11 estilos
+
+| Style SwiftUI | Tamaño base | Peso | Uso |
+|---------------|-------------|------|-----|
+| `.largeTitle` | 34pt | Regular | Títulos de pantalla (NavigationBar large) |
+| `.title` | 28pt | Regular | Encabezados de sección prominentes |
+| `.title2` | 22pt | Regular | Subsecciones, modales |
+| `.title3` | 20pt | Regular | Agrupaciones secundarias |
+| `.headline` | 17pt | **Semibold** | Labels de botón, primer elemento de celda |
+| `.body` | 17pt | Regular | Texto principal, descripciones |
+| `.callout` | 16pt | Regular | Texto de apoyo en sidebar, macOS |
+| `.subheadline` | 15pt | Regular | Metadata, subtítulos de celda |
+| `.footnote` | 13pt | Regular | Notas al pie, avisos legales |
+| `.caption` | 12pt | Regular | Timestamps, hints, etiquetas de imagen |
+| `.caption2` | 11pt | Regular | Mínimo aceptable — nunca bajar de aquí |
+
+**Regla:** nunca hardcodear un tamaño en pt. Siempre `.font(.body)`, nunca `.font(.system(size: 17))`, para que Dynamic Type y Bold Text funcionen.
+
+---
+
+### Jerarquía tipográfica — cómo establecerla
+
+La jerarquía se construye con cuatro palancas. Úsalas en orden de impacto:
+
+1. **Tamaño** — la diferencia más poderosa. Dos niveles contiguos deben diferir ≥ 4pt para que la jerarquía sea legible.
+2. **Peso** — usa Semibold o Bold para el elemento principal, Regular para el secundario. Nunca más de dos pesos en pantalla simultáneamente.
+3. **Color** — `.primary` para lo importante, `.secondary` para metadata. `.tertiary` solo en placeholders.
+4. **Espaciado** — separación entre grupos refuerza la agrupación sin necesitar bordes.
+
+| Nivel | Style | Peso | Color |
+|-------|-------|------|-------|
+| Título de pantalla | `.largeTitle` | Regular | `.primary` |
+| Header de sección | `.title2` | Semibold | `.primary` |
+| Texto principal | `.body` | Regular | `.primary` |
+| Metadata / subtítulo | `.subheadline` | Regular | `.secondary` |
+| Hints / timestamps | `.caption` | Regular | `.secondary` |
+| Label de botón CTA | `.headline` | Semibold | `.white` o acento |
+
+---
+
+### Peso tipográfico — cuándo usar cada uno
+
+| Peso | CSS equiv | Uso |
+|------|-----------|-----|
+| Ultralight / Thin | 100–200 | Solo decorativo, nunca texto funcional |
+| Light | 300 | Texto largo en NY (lectura); nunca en UI |
+| Regular | 400 | Texto principal — la base |
+| Medium | 500 | Énfasis leve en listas densas |
+| **Semibold** | **600** | **Headers, labels de botón, primer elemento de celda** |
+| **Bold** | **700** | **Alerts, énfasis crítico, valores numéricos prominentes** |
+| Heavy / Black | 800–900 | Solo títulos hero de marketing; rarísimo en app |
+
+**Regla:** en una pantalla típica de app, no uses más de Regular + Semibold. Añadir Bold es para alertas o datos críticos.
+
+---
+
+### Leading (interlineado)
+
+- **Proporción base:** line-height = 1.2× el tamaño de fuente.
+- **Texto corto (UI labels, botones):** el sistema SF Pro gestiona el leading automáticamente — no lo toques.
+- **Texto largo (body, descriptivos ≥3 líneas):** fuerza `lineSpacing` = 4–6pt adicional si notas densidad.
+- **Regla de línea larga:** si el ancho supera 60 caracteres, aumenta el line-height o reduce el ancho del contenedor.
+
+```swift
+Text(content)
+    .font(.body)
+    .lineSpacing(4)        // solo para cuerpos de texto largos
+    .lineLimit(nil)
+```
+
+---
+
+### Tracking (espaciado entre letras)
+
+| Contexto | Tracking | Razón |
+|----------|----------|-------|
+| Body text regular | 0 (sistema) | SF Pro ya está optimizado |
+| ALL CAPS labels | +0.5–1.5pt | Las mayúsculas sin tracking son ilegibles |
+| Títulos muy grandes (≥40pt) | Ligeramente negativo | Cierra el espacio visual excesivo |
+| Subtítulos / captions en maiúsculas | +1pt mínimo | Necesidad de apertura para legibilidad |
+
+```swift
+Text("CATEGORÍA")
+    .font(.caption)
+    .tracking(1.2)
+    .textCase(.uppercase)
+```
+
+**Regla:** `textCase(.uppercase)` en SwiftUI + `tracking` apropiado. Nunca strings en mayúsculas directamente en el código.
+
+---
+
+### Longitud de línea — caracteres por línea
+
+| Contexto | Chars por línea | Acción |
+|----------|-----------------|--------|
+| Body text ideal | 45–65 caracteres | El ojo encuentra el inicio de la siguiente línea fácilmente |
+| Máximo tolerable | 75–80 caracteres | Aumenta `lineSpacing` si supera esto |
+| Demasiado corto | < 30 caracteres | Genera demasiados saltos; amplía el contenedor |
+| iPhone (375pt width − 32pt márgenes) | ~50–55 chars en `.body` | Punto dulce natural con padding 16pt |
+
+---
+
+### Alineación del texto
+
+| Uso | Alineación |
+|-----|-----------|
+| Body text, listas, descripciones | `.leading` (izquierda en LTR) |
+| Títulos de pantalla breves | `.leading` en iOS; `.center` solo si es hero/onboarding |
+| Números y fechas en tablas | `.trailing` (alinea decimales) |
+| Captions bajo imágenes | `.center` si la imagen es centrada |
+| ALL CAPS cortos / badges | `.center` |
+
+**Nunca:** `.justified` en iOS/macOS. Crea ríos de espacio en líneas cortas y va en contra de HIG.
+
+---
+
+### Mayúsculas y casos
+
+| Caso | Cuándo |
+|------|--------|
+| Sentence case | Todo el texto funcional — labels, descripciones, botones |
+| Title Case | Títulos de pantalla, nombres de sección (NavigationTitle) |
+| ALL CAPS | Solo labels de categoría, badges, metadata muy corta — siempre con tracking |
+| all lowercase | Solo branding / wordmarks — nunca en texto funcional |
+| Small caps | Rarísimo en apps; solo si la fuente lo soporta nativamente |
+
+**Regla:** el sistema usa Sentence case en casi todo. Title Case en NavigationTitle. Nunca ALL CAPS en botones de acción.
+
+---
+
+### Fuentes custom — cuándo y cómo
+
+Solo acepta una fuente custom si:
+1. La marca tiene una tipografía propia reconocible (ej: fuente específica del cliente)
+2. La app es principalmente de lectura larga (NY o fuente editorial alternativa)
+3. Jonny la aprueba explícitamente en `DESIGN_LIQUID.md`
+
+Si se usa fuente custom, **siempre** define el fallback al sistema:
+
+```swift
+extension Font {
+    static let brandTitle = Font.custom("BrandSans-Bold", size: 28, relativeTo: .title)
+    // relativeTo: escala con Dynamic Type automáticamente
+}
+```
+
+**Nunca** uses `Font.custom("...", size: 17)` sin `relativeTo:` — rompe Dynamic Type.
+
+---
+
+### Accesibilidad tipográfica
+
+| Setting del usuario | Tu app debe |
+|---------------------|-------------|
+| Dynamic Type XXL | Todos los textos escalan; layouts se adaptan (usar `@ScaledMetric`) |
+| Bold Text ON | SF Pro cambia peso automáticamente si usas styles del sistema |
+| Larger Accessibility Sizes | Activar con `.dynamicTypeSize(.xSmall ... .accessibility5)` |
+| Reduce Motion | No afecta directamente, pero evita animaciones de texto |
+
+```swift
+// Permitir todos los tamaños de accesibilidad:
+Text("Título").font(.headline).dynamicTypeSize(...DynamicTypeSize.accessibility5)
+
+// Espacio que escala:
+@ScaledMetric(relativeTo: .body) var iconSize: CGFloat = 24
+```
+
+**Regla obligatoria:** ningún elemento de texto debe quedar truncado o solapado en Dynamic Type XXXL. Bertrand prueba esto; Sarah lo audita.
+
+---
+
+### Tipografía en DESIGN_LIQUID.md — formato expandido
+
+Cuando writes la sección de tipografía en el documento de diseño, usa este formato detallado:
+
+```markdown
+## Tipografía
+
+**Sistema:** SF Pro con Dynamic Type
+**Fuente custom:** [ninguna / nombre + justificación]
+**Estilos usados:** [lista de los que aparecen en la app]
+
+### Escala de la app
+
+| Elemento | Style | Peso | Tracking | Notas |
+|----------|-------|------|----------|-------|
+| Título de pantalla | `.largeTitle` | Regular | 0 | NavigationBar large |
+| Header de sección | `.title2` | Semibold | 0 | |
+| Texto principal | `.body` | Regular | 0 | lineSpacing 4pt si ≥3 líneas |
+| Label de botón | `.headline` | Semibold | 0 | |
+| Metadata | `.subheadline` | Regular | 0 | color `.secondary` |
+| Badge / categoría | `.caption2` | Regular | +1.2 | ALL CAPS |
+
+### Reglas de la app
+
+- Líneas de body text: máx [N] chars (ancho del contenedor − 32pt márgenes)
+- Alineación por defecto: `.leading`
+- Interlineado extra: [sí/no — si sí, cuánto y dónde]
+- Fuentes custom: [ninguna / nombre + relativeTo:]
+```
+
+---
+
 ## Componentes nativos primero
 
 | Necesitas | Usa |
