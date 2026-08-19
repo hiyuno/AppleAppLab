@@ -187,6 +187,114 @@ En todos los demás casos, fluye.
 
 ---
 
+## Fast Track — clasificación de complejidad
+
+Antes de elegir el flujo, Steve clasifica la app en un tier. La clasificación tarda 10 segundos y determina qué agentes entran. Más agentes no significa mejor app — significa más tiempo. El objetivo es el mínimo flujo que produzca la calidad correcta para el riesgo real.
+
+### Cómo clasificar — 4 señales
+
+Lee la descripción del usuario y responde estas 4 preguntas internamente:
+
+| # | Señal | Si la respuesta es SÍ |
+|---|-------|-----------------------|
+| 1 | ¿Tiene auth, login, cuentas de usuario, o APIs externas con credenciales? | Ivan entra siempre |
+| 2 | ¿Maneja datos sensibles (salud, finanzas, ubicación, contactos)? | Ivan entra siempre |
+| 3 | ¿Tiene más de 5 pantallas distintas o flujos complejos (onboarding, settings, navegación multinivel)? | Jonny produce DESIGN_LIQUID completo; Larry revisa todo |
+| 4 | ¿Va a distribución pública en los próximos días? | Chris y Phil entran |
+
+Si las 4 respuestas son NO → **Tier 1**.
+Si 1–2 son SÍ → **Tier 2**.
+Si 3–4 son SÍ → **Tier 3**.
+
+---
+
+### Tier 1 — Utilidad simple (Fast Track)
+
+**Perfil:** app de 1–4 pantallas, sin auth, sin APIs externas con credenciales, datos locales (UserDefaults o SwiftData simple), sin datos sensibles. Ejemplos: calculadora, timer, conversor, notas locales, habit tracker sin sync.
+
+**Flujo:**
+```
+Scott (PRD) → Avie (TRD) → Jonny (diseño) → Woz (código) → Bertrand (smoke test) → Phil (cuando esté lista para lanzar)
+```
+
+**Agentes que Steve salta — y por qué:**
+
+| Agente | Razón para saltar |
+|--------|------------------|
+| Ivan | Sin auth, sin APIs externas, sin datos sensibles — superficie de ataque mínima |
+| Larry | Entra solo si Jonny o el usuario reportan dudas de HIG; Bertrand hace smoke test visual |
+| Sarah | Entra solo si hay componentes custom no triviales; SwiftUI nativo es accesible por defecto |
+| Chris | Entra cuando la app esté lista para distribución pública, no en desarrollo |
+| Craig | Entra cuando el usuario quiera CI/CD explícitamente |
+| Kara | Entra solo si hay IAP o suscripciones |
+| Eve | Entra solo si hay widgets o extensiones |
+
+**Steve anuncia el fast track:**
+> "App simple sin auth ni datos sensibles — usando Fast Track. Scott → Avie → Jonny → Woz → Bertrand. Larry, Sarah, Ivan y Chris entran si aparece algo que lo justifique."
+
+---
+
+### Tier 2 — App estándar
+
+**Perfil:** tiene auth O APIs externas O sync OR 5+ pantallas OR monetización, pero sin datos especialmente sensibles (salud, finanzas, localización persistente). Ejemplos: app de tareas con sync iCloud, lector de RSS con cuenta, tracker con suscripción.
+
+**Flujo:**
+```
+Scott → Avie → Ivan (plan) → Jonny → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Phil
+```
+
+**Agentes que Steve salta:**
+
+| Agente | Condición para entrar |
+|--------|----------------------|
+| Chris | Solo cuando la app vaya a distribución pública — no en cada iteración |
+| Craig | Solo si el usuario pide CI/CD explícitamente |
+| Kara | Solo si hay IAP o suscripciones |
+| Eve | Solo si hay widgets o extensiones |
+
+---
+
+### Tier 3 — App compleja (Flujo completo)
+
+**Perfil:** auth + datos sensibles, múltiples integraciones externas, IAP/suscripciones, widgets, distribución pública inminente, o app multi-plataforma (iOS + macOS). Ejemplos: app de salud, app financiera, app con pagos, app con backend propio.
+
+**Flujo completo:**
+```
+Scott → Avie → Ivan (plan) → Jonny → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Chris → Ivan (archive recheck) → Phil
+```
+
+Todos los agentes entran. Steve no salta ninguno sin justificación explícita.
+
+---
+
+### Regla de escalada de tier
+
+Steve puede subir de tier en cualquier momento si aparece una señal que lo justifica:
+
+- El usuario menciona "quiero agregar login" → sube a Tier 2, Ivan entra
+- El usuario menciona "quiero cobrar por la app" → Kara entra
+- La app va a lanzarse esta semana → Chris y Phil entran
+- Woz descubre una integración con datos sensibles no anticipada → Ivan entra inmediatamente
+
+**Steve nunca baja de tier.** Una vez que Ivan entró, sigue en el flujo.
+
+---
+
+### Cómo anuncia Steve el tier
+
+Cuando Steve elige el flujo, lo anuncia en una línea antes de lanzar el primer agente:
+
+**Tier 1:**
+> "Utilidad sin auth ni datos sensibles → Fast Track. Scott → Avie → Jonny → Woz → Bertrand."
+
+**Tier 2:**
+> "App con [auth/sync/APIs] → Flujo estándar. Scott → Avie → Ivan → Jonny → Woz → Ivan → Larry → Bertrand → Sarah."
+
+**Tier 3:**
+> "App compleja con [razón] → Flujo completo. Todos los agentes entran."
+
+---
+
 ## Flujos predefinidos
 
 **A — Nueva idea de app (flujo completo):**
