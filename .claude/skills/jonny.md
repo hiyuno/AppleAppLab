@@ -1478,6 +1478,289 @@ Assets.xcassets/
 
 ---
 
+## Hero transitions — matchedGeometryEffect
+
+Las hero transitions conectan visualmente dos estados de la UI: un elemento en una lista "vuela" y se convierte en el elemento principal de la pantalla de detalle. Hacen que la navegación se sienta continua en lugar de abrupta.
+
+### Cuándo diseñar una hero transition
+
+| Situación | ¿Hero? |
+|-----------|--------|
+| Grid de imágenes → detalle fullscreen | ✅ Sí — el elemento tiene identidad visual clara |
+| Lista de cards → detalle | ✅ Sí — si la card tiene imagen o forma distintiva |
+| Lista de texto → pantalla de texto | ❌ No — no hay elemento visual que "volar" |
+| Tab switch | ❌ No — es navegación estructural, no profundidad |
+| Sheet modal | Depende — solo si el sheet nace visualmente del elemento que lo lanzó |
+
+### Cómo especificarlo en el handoff a Woz
+
+Define en DESIGN_LIQUID.md o en el brief de pantalla:
+
+```
+Hero transition: Card en lista → pantalla de detalle
+- Elemento que viaja: imagen de la card (aspecto ratio 3:2 → pantalla completa)
+- Duración aproximada: spring suave ~0.4s
+- Qué se anima: posición, tamaño, corner radius (20pt → 0pt)
+- Qué no se anima: el texto aparece con fade, no viaja con la imagen
+- Reduce Motion: fade simple sin movimiento espacial
+```
+
+### API para Woz — referencia de diseño
+
+```swift
+// En la vista origen (lista):
+Image(item.image)
+    .matchedGeometryEffect(id: item.id, in: namespace, isSource: true)
+    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+
+// En la vista destino (detalle):
+Image(item.image)
+    .matchedGeometryEffect(id: item.id, in: namespace, isSource: false)
+    .ignoresSafeArea()
+    // sin clipShape — o con cornerRadius: 0 para fullscreen
+```
+
+### Reglas de diseño
+
+- **Un elemento hero por transición** — no animes simultáneamente imagen + título + botón. El ojo no puede seguir tres cosas a la vez.
+- **El hero es el puente visual** — todo lo demás (texto, botones de detalle) aparece con fade después de que el hero llega.
+- **Corner radius debe interpolar** — especifica el radio de origen y destino. De 20pt a 0pt para fullscreen; de 20pt a 12pt si el detalle también tiene bordes.
+- **Reduce Motion:** siempre define la alternativa. Típicamente: fade de opacidad 0→1, sin movimiento espacial.
+- **Nunca hero en elementos que cambian de contenido** — el id del `matchedGeometryEffect` debe referirse al mismo elemento lógico en ambas vistas.
+
+---
+
+## Gestures — diseño con gestos
+
+Los gestos extienden la interacción más allá del tap. Diseña con ellos solo cuando añaden velocidad o expresividad real — nunca como única vía de acceso a una función crítica.
+
+### Regla de accesibilidad de gestos
+
+> **Cada gesto debe tener una alternativa tap.** Los gestos son aceleradores, no la única forma de hacer algo.
+
+| Gesto | Alternativa tap |
+|-------|----------------|
+| Swipe to delete | Botón en `.contextMenu` o modo de edición |
+| Long press para opciones | `.contextMenu` que aparece en tap también |
+| Drag para reordenar | Botón de "Editar" con handles de arrastre visibles |
+| Pinch to zoom | Botones +/− |
+
+### Los gestos principales y cuándo usarlos
+
+**`TapGesture`** — el predeterminado. Un tap = selección o acción principal.
+
+**`LongPressGesture`** — para acciones contextuales secundarias (preview, opciones). Máximo 0.5s de duración — si tarda más, el usuario no sabe qué esperar.
+
+```swift
+.onLongPressGesture(minimumDuration: 0.4) {
+    showContextMenu = true
+}
+// Prefiere .contextMenu — ya incluye long press nativo + menú correcto
+.contextMenu {
+    Button("Compartir") { share() }
+    Button("Eliminar", role: .destructive) { delete() }
+}
+```
+
+**`DragGesture`** — para reordenar, dismiss custom, drawers, sliders custom.
+
+```swift
+// Patrón dismiss con drag (sheet custom):
+.gesture(
+    DragGesture()
+        .onChanged { value in
+            offset = max(0, value.translation.height)
+        }
+        .onEnded { value in
+            if value.translation.height > 200 {
+                dismiss()
+            } else {
+                withAnimation(.spring(response: 0.3)) { offset = 0 }
+            }
+        }
+)
+```
+
+Especifica en el brief: umbral de dismiss (ej: 200pt), velocidad mínima si aplica, snap back animation.
+
+**`MagnifyGesture`** (antes `MagnificationGesture`)— zoom en imágenes, mapas, canvas. Siempre con límites mínimos y máximos.
+
+```swift
+.gesture(
+    MagnifyGesture()
+        .onChanged { value in
+            scale = min(max(value.magnification * lastScale, 1.0), 5.0)
+        }
+        .onEnded { _ in lastScale = scale }
+)
+```
+
+**`RotateGesture`** — rarísimo en apps estándar. Solo para editores de imagen, canvas creativos.
+
+### Gestos simultáneos y combinados
+
+Cuando un elemento necesita drag + tap al mismo tiempo (ej: un slider draggable que también tiene tap):
+
+```swift
+.simultaneousGesture(TapGesture().onEnded { ... })
+.gesture(DragGesture().onChanged { ... })
+```
+
+Cuando un gesto debe tener prioridad sobre los gestos del sistema (scroll vs drag):
+
+```swift
+.highPriorityGesture(DragGesture(minimumDistance: 30))
+```
+
+### Feedback visual durante gestos
+
+Siempre da feedback visual inmediato mientras el gesto está activo:
+
+| Gesto | Feedback visual |
+|-------|----------------|
+| Long press | Escala ligera (`scaleEffect(0.97)`) + haptic impact |
+| Drag para eliminar | Color de fondo cambia a rojo al superar umbral |
+| Drag para reordenar | Sombra elevada + ligera escala up (1.05) del elemento arrastrado |
+| Pinch zoom | Ninguno adicional — el propio zoom es el feedback |
+
+```swift
+// Feedback de long press:
+.scaleEffect(isPressed ? 0.97 : 1.0)
+.animation(.spring(response: 0.2), value: isPressed)
+```
+
+### Qué especificar en el handoff
+
+```
+Gesto: long press en card de lista
+- Duración mínima: 0.4s
+- Feedback visual: scaleEffect 0.97 durante el press
+- Haptic: impact .light al activarse
+- Resultado: contextMenu con opciones [Editar, Compartir, Eliminar]
+- Alternativa: mismo contextMenu accesible desde botón "···" en la card
+- Reduce Motion: sin animación de escala, solo el menu aparece
+```
+
+---
+
+## Search UX — diseño de búsqueda
+
+La búsqueda es una feature de navegación crítica. Mal diseñada frustra; bien diseñada es el camino más rápido al contenido.
+
+### Dónde vive la barra de búsqueda
+
+| Contexto | Ubicación | API |
+|----------|-----------|-----|
+| Lista principal con mucho contenido | Bajo el NavigationTitle (pull to reveal) | `.searchable(text:, placement: .navigationBarDrawer)` |
+| App cuyo uso principal es búsqueda | Siempre visible en toolbar | `.searchable(text:, placement: .toolbar)` |
+| Búsqueda dentro de un sheet o modal | Top del sheet | `.searchable(text:, placement: .navigationBarDrawer)` |
+| macOS sidebar | En el toolbar de la ventana | `.searchable(text:)` — el sistema lo posiciona |
+
+```swift
+NavigationStack {
+    List(filteredItems) { item in ItemRow(item: item) }
+        .navigationTitle("Notas")
+        .searchable(text: $searchText, prompt: "Buscar notas")
+        .searchSuggestions {
+            ForEach(suggestions) { suggestion in
+                Label(suggestion.title, systemImage: suggestion.icon)
+                    .searchCompletion(suggestion.query)
+            }
+        }
+}
+```
+
+### Search suggestions — cuándo y qué mostrar
+
+| Momento | Qué mostrar |
+|---------|------------|
+| Campo vacío (usuario abre búsqueda) | Búsquedas recientes + sugerencias populares o trending |
+| 1–2 caracteres escritos | Completaciones del término (autocompletar) |
+| 3+ caracteres | Resultados en tiempo real + "¿Quisiste decir X?" si aplica |
+| Sin resultados | Estado vacío específico + sugerencias alternativas |
+
+### Scopes — filtros dentro de búsqueda
+
+Usa scopes cuando el contenido tiene categorías claramente distintas que el usuario querrá filtrar:
+
+```swift
+.searchable(text: $searchText, placement: .toolbar)
+.searchScopes($selectedScope) {
+    Text("Todo").tag(SearchScope.all)
+    Text("Fotos").tag(SearchScope.photos)
+    Text("Documentos").tag(SearchScope.documents)
+}
+```
+
+**Regla:** máximo 4–5 scopes. Si hay más, usa un Picker separado en lugar de scopes.
+
+### Los 4 estados de búsqueda — diseña todos
+
+**1. Estado inicial (campo vacío)**
+Muestra recientes o sugerencias. Si no hay recientes: sugerencias de exploración o grid de categorías. Nunca una pantalla en blanco.
+
+**2. Escribiendo (con texto, resultados en tiempo real)**
+Actualiza mientras escribe. Debounce de ~300ms para evitar requests excesivos. Muestra un indicador de carga sutil si la búsqueda es async.
+
+**3. Sin resultados**
+```swift
+ContentUnavailableView.search(text: searchText)
+// iOS 17+ — usa esto, es el estándar del sistema
+```
+Añade: "¿Quisiste decir [alternativa]?" si puedes detectar errores tipográficos comunes.
+
+**4. Error de búsqueda (red caída, timeout)**
+Banner sutil + resultados en caché si los hay. No reemplaces toda la pantalla con el error si tienes algo que mostrar.
+
+### Highlighting de resultados
+
+Cuando muestras resultados, resalta el término buscado dentro del texto:
+
+```swift
+// Con AttributedString:
+func highlight(_ text: String, query: String) -> AttributedString {
+    var attributed = AttributedString(text)
+    if let range = attributed.range(of: query, options: .caseInsensitive) {
+        attributed[range].backgroundColor = .yellow.opacity(0.4)
+        attributed[range].font = .body.weight(.semibold)
+    }
+    return attributed
+}
+
+Text(highlight(item.title, query: searchText))
+```
+
+### Performance de búsqueda
+
+- **Filtrado local:** usa `.task(id: searchText)` para cancelar búsquedas anteriores automáticamente.
+- **Búsqueda remota:** debounce de 300ms antes de hacer el request.
+- **Resultados:** muestra los primeros 20–50. Carga más con infinite scroll o botón "Ver más".
+
+```swift
+.task(id: searchText) {
+    try? await Task.sleep(for: .milliseconds(300))  // debounce
+    guard !Task.isCancelled else { return }
+    results = await search(query: searchText)
+}
+```
+
+### Qué especificar en DESIGN_LIQUID.md
+
+```markdown
+## Búsqueda
+
+- Placement: navigationBarDrawer (pull to reveal)
+- Prompt: "[texto del placeholder]"
+- Scopes: [lista o "ninguno"]
+- Suggestions: recientes + [tipo de sugerencias]
+- Estado vacío inicial: [qué mostrar]
+- Sin resultados: ContentUnavailableView.search + [alternativa si aplica]
+- Highlighting: [sí/no — color de highlight]
+- Búsqueda: [local / async con debounce Xms]
+```
+
+---
+
 ## Tono
 
 - Descriptivo y preciso. Cualquier `.circular` es un error. Radios interiores que no respetan `r_inner = r_outer - padding` son errores.
