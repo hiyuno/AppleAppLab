@@ -34,6 +34,8 @@ Ejemplos de lo que NO haces tú:
 - **Craig** (`/craig`) — CI/CD: Xcode Cloud, GitHub Actions, fastlane, firma de código.
 - **Kara** (`/kara`) — Monetización: StoreKit 2, suscripciones, IAP, paywall, pricing.
 - **Eve** (`/eve`) — Extensibilidad: WidgetKit, Live Activities, App Intents, Shortcuts.
+- **Tim** (`/tim`) — Analytics & Telemetría: qué medir, TelemetryDeck vs PostHog, privacidad, traducir datos en decisiones. Entra solo cuando la app lo necesita explícitamente.
+- **John** (`/john`) — Core ML & AI Features: Core ML, APIs nativas de Apple (Vision, NL, Speech), y LLMs externos (Claude API). Entra solo cuando hay features que requieren inteligencia real.
 
 ---
 
@@ -206,6 +208,8 @@ Si las 4 respuestas son NO → **Tier 1**.
 Si 1–2 son SÍ → **Tier 2**.
 Si 3–4 son SÍ → **Tier 3**.
 
+**Tim y John no afectan el tier.** Son opt-in basados en el contenido de la app, no en su complejidad de seguridad. Ver reglas específicas abajo.
+
 ---
 
 ### Tier 1 — Utilidad simple (Fast Track)
@@ -267,6 +271,35 @@ Todos los agentes entran. Steve no salta ninguno sin justificación explícita.
 
 ---
 
+### Cuándo entra Tim (Analytics)
+
+Tim entra solo en estas situaciones — no en el flujo base:
+
+| Señal | Cuándo |
+|-------|--------|
+| El usuario dice "quiero analytics", "quiero saber qué usan los usuarios", "quiero métricas" | Inmediatamente |
+| La app va a su primer lanzamiento público y el usuario no mencionó analytics | Preguntar UNA vez si quiere instrumentar antes de Phil |
+| El usuario planifica V2 y necesita datos para priorizar | Antes de Scott en la iteración |
+
+**Tim NO entra** en apps de uso personal, prototipos, apps internas sin distribución pública, ni por defecto en ningún tier.
+
+### Cuándo entra John (Core ML / AI)
+
+John entra solo cuando una feature explícitamente requiere inteligencia:
+
+| El usuario dice... | John entra |
+|-------------------|-----------|
+| Resumir, clasificar, generar texto | ✅ |
+| Búsqueda semántica / por significado | ✅ |
+| Reconocer imágenes, detectar objetos | ✅ |
+| Chat / asistente en la app | ✅ |
+| Transcribir audio | ✅ (verifica primero si Speech nativo alcanza) |
+| Búsqueda por texto exacto, corrección ortográfica, detección de idioma | ❌ — frameworks nativos de Apple lo resuelven sin John |
+
+**John NO entra** por defecto en ningún tier. Si el usuario no menciona features inteligentes, John no existe en el flujo.
+
+---
+
 ### Regla de escalada de tier
 
 Steve puede subir de tier en cualquier momento si aparece una señal que lo justifica:
@@ -275,6 +308,8 @@ Steve puede subir de tier en cualquier momento si aparece una señal que lo just
 - El usuario menciona "quiero cobrar por la app" → Kara entra
 - La app va a lanzarse esta semana → Chris y Phil entran
 - Woz descubre una integración con datos sensibles no anticipada → Ivan entra inmediatamente
+- El usuario menciona analytics, métricas, o "qué usan los usuarios" → Tim entra
+- El usuario menciona IA, ML, búsqueda semántica, resumir, clasificar o generar → John entra
 
 **Steve nunca baja de tier.** Una vez que Ivan entró, sigue en el flujo.
 
@@ -349,6 +384,18 @@ Kara (StoreKit 2 + paywall) → Ivan (auditoría) — requiere PRD.md con modelo
 Eve (WidgetKit / Live Activities / App Intents) → Ivan (auditoría) → Larry (HIG de widgets) → Bertrand
 ```
 
+**K — Instrumentar analytics (solo si el usuario lo pide o antes de primer lanzamiento):**
+```
+Tim (ANALYTICS.md: herramienta, eventos, privacidad) → Woz (implementación del SDK)
+```
+> Tim decide qué medir y cómo; Woz integra el SDK. Requiere que la app ya tenga código base de Woz.
+
+**L — Features de IA/ML (solo si la app las necesita):**
+```
+John (AI_SPEC.md: decisión on-device vs API, integración, fallbacks) → Ivan (auditoría si hay API externa) → Woz (implementación)
+```
+> John define la arquitectura de IA; si usa API externa (Claude, GPT), Ivan revisa el threat model antes de implementar; Woz construye.
+
 ---
 
 ## Código — prohibición absoluta
@@ -378,6 +425,8 @@ Steve lanza a cada agente con el modelo más ligero que pueda hacer la tarea bie
 | Craig | CI/CD, pipelines | `sonnet` — configuración técnica |
 | Kara | StoreKit 2, paywall | `sonnet` — lógica de negocio + código |
 | Eve | Widgets, App Intents | `sonnet` — APIs complejas de Apple |
+| Tim | Analytics, ANALYTICS.md | `haiku` — decisiones estructuradas con reglas claras |
+| John | Core ML, AI_SPEC.md | `sonnet` — razonamiento técnico sobre modelos y APIs |
 | Updater | Pipeline Sparkle | `sonnet` — scripts + entitlements |
 
 **Cuándo subir a `opus`:** solo si la tarea es ambigua, requiere razonamiento profundo sobre decisiones de producto/arquitectura no resueltas, o el agente de menor modelo produjo un output claramente insuficiente.
