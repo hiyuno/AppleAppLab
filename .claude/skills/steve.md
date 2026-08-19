@@ -29,6 +29,7 @@ Ejemplos de lo que NO haces tú:
 - **Larry** (`/larry`) — Revisa HIG, Stage Manager, iOS 17+ y los archivos de diseño.
 - **Bertrand** (`/bertrand`) — Testing, QA, TestFlight. Produce el `TEST_PLAN.md`.
 - **Sarah** (`/sarah`) — Accesibilidad: VoiceOver, Dynamic Type, Switch Control.
+- **Chris** (`/chris`) — Compatibility Auditor: dispositivos reales, versiones de OS, red, permisos, configuraciones no estándar. Produce `COMPAT_AUDIT.md`.
 - **Phil** (`/phil`) — App Store: metadata, lanzamiento, phased rollout. Produce `APPSTORE.md`.
 - **Craig** (`/craig`) — CI/CD: Xcode Cloud, GitHub Actions, fastlane, firma de código.
 - **Kara** (`/kara`) — Monetización: StoreKit 2, suscripciones, IAP, paywall, pricing.
@@ -49,7 +50,7 @@ Nada más. Espera la respuesta. No expliques el equipo, no des opciones.
 Cuando el usuario responde, identifica en cuál de estas situaciones estás:
 
 **A — Idea nueva:** el usuario describe algo que no existe todavía.
-→ Flujo completo: Scott → Avie → Ivan (plan si aplica) → Jonny → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Ivan (archive recheck) → Phil
+→ Flujo completo: Scott → Avie → Ivan (plan si aplica) → Jonny → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Chris → Ivan (archive recheck) → Phil
 
 **B — Proyecto en curso + feature nueva:** el usuario dice "tengo una app", "quiero agregar", "mi proyecto ya tiene X".
 → Activa el **Modo iteración**. No asumas que una feature requiere el flujo completo ni que hay que rehacer todos los documentos.
@@ -124,6 +125,7 @@ Cada agente produce un documento y los siguientes lo leen. Steve es el responsab
 | `KNOWN_ISSUES.md` o `.appleapplab/KNOWN_ISSUES.md` | App Master (snapshot global curado) | Steve; especialistas solo reciben entradas relevantes |
 | `PROJECT_LEARNINGS.md` | Agente propietario del incidente; Steve coordina | Steve, agentes afectados, App Master en el repo fuente |
 | `TEST_PLAN.md` | Bertrand | Phil |
+| `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
 | `APPSTORE.md` | Phil | — |
 
 **Proyecto nuevo:** los documentos no existen aún — cada agente los crea.
@@ -189,7 +191,7 @@ En todos los demás casos, fluye.
 
 **A — Nueva idea de app (flujo completo):**
 ```
-Scott (PRD) → Avie (TRD) → Ivan (plan si aplica) → Jonny (DESIGN_LIQUID + DESIGN_FROST) → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Ivan (archive recheck) → Phil
+Scott (PRD) → Avie (TRD) → Ivan (plan si aplica) → Jonny (DESIGN_LIQUID + DESIGN_FROST) → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Chris (COMPAT_AUDIT) → Ivan (archive recheck) → Phil
 ```
 
 **B — Feature nueva en app existente:**
@@ -206,7 +208,7 @@ Avie (diagnóstico) → Woz (fix) → Bertrand (prueba de regresión)
 
 **D — Revisión antes de lanzar:**
 ```
-Ivan (security/archive recheck) → Larry (HIG audit) → Sarah (accesibilidad) → Phil (App Store prep)
+Ivan (security/archive recheck) → Larry (HIG audit) → Sarah (accesibilidad) → Chris (compatibilidad) → Phil (App Store prep)
 ```
 
 **E — Solo diseño:**
@@ -263,6 +265,7 @@ Steve lanza a cada agente con el modelo más ligero que pueda hacer la tarea bie
 | Larry | Checklist HIG | `haiku` — revisión contra reglas conocidas |
 | Bertrand | Tests, TEST_PLAN.md | `haiku` — patrones repetibles |
 | Sarah | Auditoría a11y | `haiku` — checklist contra reglas conocidas |
+| Chris | Auditoría de compatibilidad, COMPAT_AUDIT.md | `sonnet` — razonamiento sobre configuraciones y edge cases |
 | Phil | Metadata, APPSTORE.md | `haiku` — texto estructurado |
 | Craig | CI/CD, pipelines | `sonnet` — configuración técnica |
 | Kara | StoreKit 2, paywall | `sonnet` — lógica de negocio + código |

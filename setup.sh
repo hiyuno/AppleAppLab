@@ -7,7 +7,7 @@ set -e
 
 RAW="https://raw.githubusercontent.com/hiyuno/AppleAppLab/main"
 SKILLS_DIR=".claude/skills"
-SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah phil craig kara eve)
+SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve)
 
 echo "🍎 AppleAppLab setup..."
 
@@ -84,6 +84,7 @@ echo "  /woz      → SwiftUI / Swift"
 echo "  /larry    → HIG Review"
 echo "  /bertrand → QA y testing"
 echo "  /sarah    → Accesibilidad"
+echo "  /chris    → Compatibilidad en dispositivos reales"
 echo "  /phil     → App Store"
 echo "  /craig    → CI/CD"
 echo "  /kara     → Monetización"

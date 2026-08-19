@@ -18,6 +18,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/bertrand` | Bertrand | QA — testing, TestFlight, estabilidad |
 | `/sarah` | Sarah | Accesibilidad — VoiceOver, Dynamic Type, inclusión |
 | `/phil` | Phil | App Store — metadata, screenshots, submission |
+| `/chris` | Chris | Compatibility Auditor — dispositivos, OS, red, permisos, configuraciones reales |
 | `/updater` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 
 ## Cómo trabajar
@@ -30,6 +31,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **Revisar UI contra HIG** → `/larry`
 - **Escribir tests** → `/bertrand`
 - **Revisar accesibilidad** → `/sarah`
+- **Auditar compatibilidad en dispositivos reales** → `/chris`
 - **Preparar lanzamiento** → `/phil`
 - **Actualizaciones automáticas fuera del App Store** → `/updater`
 
@@ -38,7 +40,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 **Siempre empieza con Steve.** Él orquesta y decide si se necesitan todos los pasos o solo algunos.
 
 ```
-Steve/Scott → Avie → Ivan (plan si aplica) → Jonny → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Ivan (archive recheck) → Phil
+Steve/Scott → Avie → Ivan (plan si aplica) → Jonny → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Chris → Ivan (archive recheck) → Phil
 ```
 
 - **Steve** recibe la idea o tarea y decide el camino
@@ -50,6 +52,7 @@ Steve/Scott → Avie → Ivan (plan si aplica) → Jonny → Woz → Ivan (audit
 - **Larry** revisa HIG antes de que salga
 - **Bertrand** prueba y asegura estabilidad
 - **Sarah** audita accesibilidad
+- **Chris** audita compatibilidad en dispositivos reales, versiones de OS, red, permisos y configuraciones no estándar
 - **Phil** prepara el lanzamiento en App Store
 
 Toda app recibe una auditoría de seguridad proporcional. Si hay APIs externas, auth, datos sensibles, entitlements/helpers/App Groups, webhooks o distribución directa, Ivan actúa después de Avie y antes de implementar, después de Woz y sobre el archive Release antes de Phil/Craig. Ivan no implementa fixes; Woz los ejecuta. Bugs de seguridad: `Ivan → Woz → Ivan → Bertrand`. Critical/High bloquean release salvo aceptación explícita con owner y expiración.
