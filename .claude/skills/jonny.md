@@ -815,6 +815,377 @@ Crea componentes custom solo cuando el nativo no pueda expresar la intención.
 
 ---
 
+## SF Symbols — iconografía
+
+SF Symbols es el sistema de iconografía de Apple: más de 6.000 símbolos vectoriales que escalan con Dynamic Type, soportan peso y rendering mode, y se animan con un API nativo.
+
+### Rendering modes
+
+| Modo | API | Cuándo |
+|------|-----|--------|
+| **Monochrome** | `.symbolRenderingMode(.monochrome)` | Iconos en toolbars, listas, tabs — usa un solo color |
+| **Hierarchical** | `.symbolRenderingMode(.hierarchical)` | El símbolo tiene profundidad visual; planos con distinta opacidad |
+| **Palette** | `.symbolRenderingMode(.palette)` | Control total sobre cada capa del símbolo; hasta 3 colores |
+| **Multicolor** | `.symbolRenderingMode(.multicolor)` | Símbolos con color semántico fijo (carpetas, documentos, emojis) |
+
+El modo por defecto de iOS 16+ es hierarchical. No lo cambies sin motivo.
+
+### Peso — siempre match con el texto adyacente
+
+```swift
+Label("Guardar", systemImage: "square.and.arrow.down")
+    .font(.headline)          // el símbolo hereda el peso Semibold automáticamente
+```
+
+Si el símbolo está solo (sin Label), especifica el peso manualmente:
+
+```swift
+Image(systemName: "star.fill")
+    .font(.system(size: 20, weight: .semibold))
+    // o simplemente:
+    .imageScale(.large)
+```
+
+**Regla:** símbolo outline = estado inactivo/normal. Símbolo fill = estado activo/seleccionado. No mezcles fill y outline dentro del mismo contexto sin intención.
+
+### Variable symbols
+
+Algunos símbolos tienen un valor continuo (0.0–1.0) para indicar nivel: batería, volumen, señal, progreso.
+
+```swift
+Image(systemName: "speaker.wave.3", variableValue: volume)  // 0.0–1.0
+```
+
+### Animaciones con symbolEffect (iOS 17+)
+
+```swift
+Image(systemName: "checkmark.circle")
+    .symbolEffect(.bounce, value: didComplete)       // rebota al cambiar valor
+    .symbolEffect(.pulse)                            // pulsa de forma continua
+    .symbolEffect(.variableColor.iterative)          // recorre capas en secuencia
+    .contentTransition(.symbolEffect(.replace))      // transición al cambiar el símbolo
+
+// Animación discreta:
+Image(systemName: icon)
+    .symbolEffect(.bounce, options: .nonRepeating, value: trigger)
+```
+
+**Cuándo animar:** confirmaciones (checkmark bounce), carga (variableColor iterative), cambio de estado (replace). Nunca animes sin que haya un cambio de estado real — la animación debe comunicar algo.
+
+### Tamaño y tap target
+
+- Tap target mínimo: 44×44pt — aunque el símbolo visual sea de 22pt.
+- Usa `.frame(width: 44, height: 44)` + `.contentShape(Rectangle())` en iconos pequeños tapeables.
+- Escala en DESIGN_LIQUID.md: define los tamaños de iconos que usa la app (tab bar, toolbar, lista, hero).
+
+---
+
+## Layout adaptativo — tamaños y plataformas
+
+### Size classes
+
+| Dispositivo / orientación | Horizontal | Vertical |
+|---------------------------|-----------|---------|
+| iPhone portrait | Compact | Regular |
+| iPhone landscape | Compact | Compact |
+| iPad portrait | Regular | Regular |
+| iPad landscape | Regular | Regular |
+| Mac | Regular | Regular |
+
+```swift
+@Environment(\.horizontalSizeClass) var hSizeClass
+// hSizeClass == .compact → iPhone; .regular → iPad o Mac
+```
+
+**Regla:** diseña primero para Compact (iPhone portrait). Regular es la expansión natural — usa el espacio extra para mostrar más contexto, no más decoración.
+
+### ViewThatFits — adaptación automática
+
+Cuando un componente puede presentarse en dos variantes (horizontal / vertical, con label / sin label):
+
+```swift
+ViewThatFits(in: .horizontal) {
+    HStack { icon; label }   // intenta primero
+    VStack { icon; label }   // si no cabe, usa esto
+}
+```
+
+### NavigationSplitView vs NavigationStack vs TabView
+
+| Patrón | Cuándo |
+|--------|--------|
+| `TabView` | 2–5 secciones de igual jerarquía en iPhone; la estructura principal de la app |
+| `NavigationStack` | Jerarquía lineal de profundidad variable; dentro de cada tab |
+| `NavigationSplitView` | iPad y Mac: sidebar + contenido (+ detalle opcional) |
+
+**En iPad/Mac** nunca uses `TabView` como estructura principal si la app tiene más de 3 secciones — usa `NavigationSplitView` con sidebar. En iPhone, `TabView` sigue siendo correcto.
+
+```swift
+NavigationSplitView {
+    SidebarView()           // sidebar — siempre visible en Regular
+} content: {
+    ContentListView()       // columna central (opcional)
+} detail: {
+    DetailView()            // detalle — ocupa el espacio restante
+}
+```
+
+### Safe areas
+
+```swift
+.ignoresSafeArea(.keyboard)          // el teclado no empuja el layout
+.ignoresSafeArea(.container, edges: .bottom)  // fondo bajo tab bar
+.safeAreaInset(edge: .bottom) { FAB() }       // FAB sobre el contenido sin cubrir scroll
+```
+
+**Regla:** el contenido nunca queda bajo la home indicator, el notch o la Dynamic Island. El fondo (color, material) sí puede extenderse bajo ellos con `ignoresSafeArea`.
+
+### Adaptive layout — patrones clave
+
+- **Texto:** `Text` con `lineLimit(nil)` + `.fixedSize(horizontal: false, vertical: true)` para que se expanda verticalmente.
+- **Grids:** `LazyVGrid(columns: [GridItem(.adaptive(minimum: 160))])` — el número de columnas se calcula solo.
+- **Split en iPad:** define `columnVisibility` según `hSizeClass`: en compact muestra solo el detalle.
+
+---
+
+## Navegación — cuándo usar qué
+
+### Decisión de contenedor principal
+
+| Situación | Solución |
+|-----------|----------|
+| App con secciones paralelas (Feed, Búsqueda, Perfil) | `TabView` |
+| App con jerarquía de datos (Lista → Detalle) | `NavigationStack` dentro de `TabView` |
+| App en iPad/Mac con sidebar | `NavigationSplitView` |
+| Flujo lineal (onboarding, checkout) | `NavigationStack` sin tabs |
+
+### Presentación modal — cuándo usar cada una
+
+| Tipo | API | Cuándo |
+|------|-----|--------|
+| Push (navegación) | `NavigationLink` | El usuario va a profundidad y puede volver |
+| Sheet | `.sheet()` | Tarea discreta relacionada con el contexto actual |
+| Full screen | `.fullScreenCover()` | Onboarding, cámara, reproductor inmersivo |
+| Popover | `.popover()` | Opciones contextuales en iPad/Mac; en iPhone colapsa a sheet |
+| Alert | `Alert` / `.alert()` | Decisiones críticas, confirmaciones destructivas |
+| Confirmation dialog | `.confirmationDialog()` | Opciones destructivas (eliminar, descartar cambios) |
+
+**Regla:** un sheet se descarta con swipe down o botón X. Un push se deshace con Back. No uses fullScreenCover para tareas que el usuario puede querer dejar a medias.
+
+### Toolbar y navegación macOS
+
+```swift
+.toolbar {
+    ToolbarItem(placement: .primaryAction) { ... }     // derecha, acción principal
+    ToolbarItem(placement: .navigation) { ... }         // izquierda, back/forward
+    ToolbarItem(placement: .secondaryAction) { ... }    // acciones secundarias
+    ToolbarItem(placement: .status) { ... }             // estado centrado (macOS)
+}
+```
+
+En macOS: define atajos de teclado para cada acción de toolbar. Sin shortcuts no es una app Mac real.
+
+---
+
+## Estados de pantalla — diseño real
+
+Toda pantalla tiene 4 estados. Diseña todos antes de entregar a Woz.
+
+### Loading
+
+- **Skeleton screen** (preferido): imita la estructura del contenido con placeholders animados. Usa `.redacted(reason: .placeholder)` en SwiftUI.
+- **`ProgressView()`**: solo para operaciones de duración indeterminada sin estructura previsible (upload, proceso pesado).
+- **Nunca** bloquees la pantalla completa con un spinner si puedes mostrar contenido parcial.
+
+```swift
+List(items) { item in
+    RowView(item: item)
+}
+.redacted(reason: isLoading ? .placeholder : [])
+.shimmer(isLoading)  // custom modifier de efecto de brillo
+```
+
+### Empty state
+
+Estructura: Ilustración SF Symbol grande (80–100pt) + Título en `.title3` + Descripción en `.body .secondary` + CTA button (si aplica).
+
+```swift
+ContentUnavailableView(
+    "Sin resultados",
+    systemImage: "magnifyingglass",
+    description: Text("Intenta con otro término de búsqueda.")
+)
+// iOS 17+ — úsalo, es el estándar del sistema
+```
+
+- El CTA del empty state es la acción más útil que el usuario puede tomar ahora.
+- Tono: informativo y útil, nunca culpabilizante ("No encontramos nada" > "No tienes nada aquí").
+
+### Error state
+
+| Tipo de error | Presentación |
+|---------------|-------------|
+| Error de red (recuperable) | `ContentUnavailableView` + botón "Reintentar" |
+| Error crítico (app no puede continuar) | Alert con opción de continuar o salir |
+| Error de validación de formulario | Inline, debajo del campo — nunca en alert |
+| Error parcial (algunos items fallaron) | Banner o inline en los items afectados |
+
+El mensaje de error siempre tiene: qué pasó (breve) + qué puede hacer el usuario.
+
+### Success state
+
+- Confirmaciones ligeras: `.symbolEffect(.bounce)` en un checkmark + haptic `.notification(.success)`.
+- Confirmaciones importantes: sheet breve o animación de transición hacia el nuevo estado.
+- Nunca un alert para confirmar éxito — los alerts piden atención; el éxito puede ser silencioso.
+
+---
+
+## Haptic feedback — cuándo y cuál
+
+El haptic es parte del diseño de interacción. Jonny lo especifica; Woz lo implementa.
+
+| Tipo | API SwiftUI / UIKit | Cuándo |
+|------|---------------------|--------|
+| Impacto leve | `.sensoryFeedback(.impact(weight: .light))` | Tap en elemento pequeño, toggle |
+| Impacto medio | `.sensoryFeedback(.impact(weight: .medium))` | Tap en botón estándar, selección de item |
+| Impacto fuerte | `.sensoryFeedback(.impact(weight: .heavy))` | Acción con consecuencia (eliminar, enviar) |
+| Selección | `.sensoryFeedback(.selection)` | Cambio en picker, slider, segmented control |
+| Éxito | `.sensoryFeedback(.success)` | Operación completada correctamente |
+| Error | `.sensoryFeedback(.error)` | Fallo de validación, operación fallida |
+| Advertencia | `.sensoryFeedback(.warning)` | Acción con riesgo (no destructiva todavía) |
+
+```swift
+Button("Guardar") { save() }
+    .sensoryFeedback(.success, trigger: didSave)
+
+Toggle(isOn: $enabled) { ... }
+    .sensoryFeedback(.selection, trigger: enabled)
+```
+
+**Reglas:**
+- Máximo 1 haptic por acción del usuario. No los encadenes.
+- Nunca haptic en eventos automáticos (timers, actualizaciones de datos en background).
+- En macOS: los haptics no existen — no diseñes para ellos.
+- Especifica en DESIGN_LIQUID.md qué acciones llevan haptic y cuál.
+
+---
+
+## macOS — diseño específico
+
+### Ventana
+
+| Parámetro | Valor típico | API |
+|-----------|-------------|-----|
+| Tamaño mínimo | 400×300pt mínimo absoluto; 600×400 para apps de contenido | `.windowResizability(.contentSize)` o `.frame(minWidth:)` |
+| Tamaño inicial | Que quepa en un MacBook 13" (1280×800) con espacio | `defaultSize(width:height:)` en `WindowGroup` |
+| Redimensionable | Sí, salvo que sea una utilidad o panel pequeño | Por defecto resizable |
+
+```swift
+WindowGroup {
+    ContentView()
+}
+.defaultSize(width: 900, height: 600)
+.windowResizability(.contentSize)
+```
+
+### Settings (Preferencias)
+
+```swift
+Settings {
+    SettingsView()
+}
+```
+
+- Abre con `Cmd+,` automáticamente.
+- Usa `TabView` con `.tabViewStyle(.automatic)` para múltiples secciones.
+- Nunca implementes un panel de preferencias custom — usa la escena `Settings`.
+
+### Menu bar
+
+- Cada acción de toolbar **debe** tener un equivalente en el menú.
+- Accesos rápidos: `Cmd+[letra]` para primarias, `Cmd+Shift+[letra]` para secundarias.
+- Usa `Commands {}` en SwiftUI para añadir items al menú del sistema.
+
+```swift
+WindowGroup { ContentView() }
+.commands {
+    CommandGroup(after: .newItem) {
+        Button("Importar...") { showImport() }
+            .keyboardShortcut("i", modifiers: [.command, .shift])
+    }
+}
+```
+
+### Toolbar macOS — patrones
+
+- Items a la derecha (`.primaryAction`): acción principal de la pantalla actual.
+- Items a la izquierda (`.navigation`): toggle de sidebar, back/forward si aplica.
+- Centro (`.principal`): título o search field si es el foco principal.
+- El usuario puede customizar la toolbar si usas `ToolbarCustomizable`.
+
+### Sidebar macOS
+
+- Ancho típico: 200–260pt. Mínimo 180pt.
+- Items con `Label("Título", systemImage: "nombre")` — el sistema aplica el estilo correcto.
+- Secciones con `Section("Categoría")`.
+- Selection con `List(selection: $selectedItem)`.
+
+### Menu bar extra (si aplica)
+
+```swift
+MenuBarExtra("App", systemImage: "icon") {
+    MenuBarContentView()
+}
+.menuBarExtraStyle(.window)  // para contenido rico; .menu para lista simple
+```
+
+---
+
+## Color — accesibilidad y contraste
+
+### Ratios mínimos WCAG 2.1 (AA)
+
+| Tipo de texto | Ratio mínimo | Ratio óptimo (AAA) |
+|---------------|-------------|-------------------|
+| Texto normal (< 18pt / < 14pt bold) | **4.5:1** | 7:1 |
+| Texto grande (≥ 18pt o ≥ 14pt bold) | **3:1** | 4.5:1 |
+| Elementos UI (iconos, bordes de campo) | **3:1** | — |
+
+**En la práctica con Apple:**
+- `.primary` sobre `.systemBackground` → siempre pasa (negro/blanco puros).
+- `.secondary` sobre `.systemBackground` → ~4.5:1 en light, verificar en dark.
+- AccentColor sobre fondo blanco/negro → **siempre verificar**. Muchos azules y verdes fallan.
+
+### Herramientas de verificación
+
+- Xcode → Accessibility Inspector → Color Contrast Calculator
+- Pide a Sarah que verifique el AccentColor sobre todos los fondos que aparece en la app.
+
+### Nunca comunicar solo por color
+
+| ❌ Mal | ✅ Bien |
+|--------|--------|
+| Campo rojo = error | Campo con borde rojo + icono de error + texto de error |
+| Punto verde = online | Punto verde + texto "En línea" |
+| Precio tachado en gris | Precio tachado + badge "−30%" |
+
+**Regla:** cualquier información transmitida por color debe tener un segundo vector (forma, icono, texto, patrón).
+
+### Adaptive images en Assets
+
+Cuando un asset gráfico (ilustración, imagen decorativa) varía entre Light y Dark:
+
+```
+Assets.xcassets/
+  illustration.imageset/
+    illustration-light.pdf   → Appearances: Any, Light
+    illustration-dark.pdf    → Appearances: Dark
+```
+
+Nunca hardcodees `Color(light: .white, dark: .black)` — usa siempre el semantic color del sistema o un Color Set en Assets.
+
+---
+
 ## Tono
 
 - Descriptivo y preciso. Cualquier `.circular` es un error. Radios interiores que no respetan `r_inner = r_outer - padding` son errores.
