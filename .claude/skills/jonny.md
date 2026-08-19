@@ -1186,6 +1186,298 @@ Nunca hardcodees `Color(light: .white, dark: .black)` — usa siempre el semanti
 
 ---
 
+## Formularios y entrada de datos
+
+### Tipos de teclado — usa el correcto siempre
+
+| Campo | `keyboardType` | Notas |
+|-------|---------------|-------|
+| Email | `.emailAddress` | Pone `@` y `.` accesibles |
+| Teléfono | `.phonePad` | Solo dígitos y `+` |
+| URL | `.URL` | `.com` accesible, sin espacio |
+| Número decimal | `.decimalPad` | Para precios, medidas |
+| Número entero | `.numberPad` | Para cantidades sin decimales |
+| Búsqueda | `.webSearch` | Retorno = "Buscar" |
+| Texto libre | `.default` | El predeterminado |
+
+```swift
+TextField("correo@ejemplo.com", text: $email)
+    .keyboardType(.emailAddress)
+    .textContentType(.emailAddress)      // autofill de contraseñas/emails
+    .autocorrectionDisabled()
+    .textInputAutocapitalization(.never)
+```
+
+### `textContentType` — autofill del sistema
+
+| Campo | `textContentType` |
+|-------|------------------|
+| Nombre completo | `.name` |
+| Email | `.emailAddress` |
+| Contraseña nueva | `.newPassword` |
+| Contraseña existente | `.password` |
+| Código SMS OTP | `.oneTimeCode` |
+| Dirección | `.fullStreetAddress` |
+| Código postal | `.postalCode` |
+| Tarjeta de crédito | `.creditCardNumber` |
+
+**Regla:** siempre define `textContentType`. El sistema no puede ayudar al usuario si no sabe qué va en cada campo.
+
+### Toolbar sobre el teclado — navegación entre campos
+
+Cuando hay múltiples campos, añade un toolbar con Anterior / Siguiente / Listo:
+
+```swift
+TextField("Nombre", text: $name)
+    .focused($focusedField, equals: .name)
+    .toolbar {
+        ToolbarItemGroup(placement: .keyboard) {
+            Button(action: focusPrevious) {
+                Image(systemName: "chevron.up")
+            }
+            .disabled(focusedField == .first)
+
+            Button(action: focusNext) {
+                Image(systemName: "chevron.down")
+            }
+            .disabled(focusedField == .last)
+
+            Spacer()
+
+            Button("Listo") { focusedField = nil }
+        }
+    }
+```
+
+### Validación — inline, no en alert
+
+| Momento | Cuándo validar |
+|---------|---------------|
+| Al perder foco (`.onChange` de `isFocused`) | Email, URL, formato específico |
+| Al escribir en tiempo real | Contraseña (fuerza, coincidencia) |
+| Al submit | Campos vacíos requeridos |
+
+```swift
+// Nunca:
+Alert(title: Text("El email no es válido"))  // interrumpe, bloquea flujo
+
+// Siempre:
+VStack(alignment: .leading, spacing: 4) {
+    TextField("Email", text: $email)
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+            .stroke(emailError != nil ? Color.red : Color.clear, lineWidth: 1.5))
+
+    if let error = emailError {
+        Text(error)
+            .font(.caption)
+            .foregroundStyle(.red)
+    }
+}
+```
+
+### Scroll que evita el teclado
+
+```swift
+ScrollView {
+    VStack { /* campos */ }
+        .padding(.bottom, 16)
+}
+.scrollDismissesKeyboard(.interactively)  // iOS 16+
+```
+
+En iOS 15 y anteriores, usa `KeyboardAdaptive` (ViewModifier con `NotificationCenter` + `safeAreaInset`).
+
+### Patrones de formulario comunes
+
+| Patrón | API |
+|--------|-----|
+| Formulario agrupado | `Form { Section("Título") { ... } }` |
+| Picker inline | `Picker("Opción", selection: $value) { ... }.pickerStyle(.inline)` |
+| Picker como menu | `.pickerStyle(.menu)` — compacto en listas |
+| Date picker compacto | `DatePicker("Fecha", selection: $date).datePickerStyle(.compact)` |
+| Stepper | `Stepper("Cantidad: \(count)", value: $count, in: 1...99)` |
+| Toggle | `Toggle("Activar", isOn: $enabled)` — siempre con label |
+| Slider con rango | `Slider(value: $value, in: 0...100, step: 1)` |
+
+**Regla:** en iOS usa `Form` para configuraciones y `VStack` con `TextField`s custom para flujos de datos. `Form` aplica el estilo `.insetGrouped` automáticamente — no lo mezcles con diseño completamente custom.
+
+---
+
+## Onboarding y feature discovery
+
+### Cuándo y cuánto onboarding
+
+| Tipo de app | Onboarding |
+|-------------|-----------|
+| App simple y obvia | Ninguno — lanza directo al contenido |
+| App con configuración inicial requerida | Solo los pasos estrictamente necesarios para el primer uso |
+| App compleja con flujos no obvios | TipKit para feature discovery progresivo |
+| App con cuenta / permisos críticos | Máximo 3–5 pantallas, skip siempre disponible |
+
+**Regla de oro:** el mejor onboarding es el que no existe. Si el diseño es claro, el usuario no lo necesita.
+
+### Estructura de un onboarding efectivo
+
+```
+Pantalla 1: Propuesta de valor — qué hace la app en una oración
+Pantalla 2: Feature #1 más importante — con demostración visual
+Pantalla 3: Feature #2 (si existe y es no obvia)
+Pantalla final: Acción — "Empezar" o creación de cuenta
+```
+
+- Indicador de progreso visible (dots o barra).
+- Botón "Saltar" siempre disponible, excepto si el paso es técnicamente requerido (permisos, cuenta).
+- `.interactiveDismissDisabled(true)` solo si el paso es bloqueante y hay razón real.
+
+```swift
+// Sheet de onboarding en primer lanzamiento:
+.sheet(isPresented: $showOnboarding) {
+    OnboardingView()
+        .interactiveDismissDisabled()  // solo si no hay skip
+}
+.onAppear {
+    showOnboarding = !UserDefaults.standard.bool(forKey: "didCompleteOnboarding")
+}
+```
+
+### Permisos — pide en contexto, nunca al arrancar
+
+| ❌ Mal | ✅ Bien |
+|--------|---------|
+| Pedir cámara al abrir la app | Pedir cámara cuando el usuario toca "Escanear documento" |
+| Pedir notificaciones en el onboarding | Pedir notificaciones después del primer logro o acción completada |
+| Pedir ubicación sin contexto | Pedir ubicación cuando se activa la feature que la necesita |
+
+Antes del prompt del sistema, muestra **tu propio modal explicando el valor**: "Para enviarte alertas cuando tu pedido está listo, necesitamos permiso para notificaciones." → botón "Permitir notificaciones" → ahí sí se lanza el prompt del sistema.
+
+### TipKit (iOS 17+ / macOS 14+) — feature discovery
+
+TipKit muestra callouts contextuales que aparecen solo cuando tienen sentido, respeta si el usuario ya usó la feature, y no se repiten.
+
+```swift
+// 1. Definir el tip:
+struct ArchiveTip: Tip {
+    var title: Text { Text("Archiva para después") }
+    var message: Text? { Text("Desliza a la izquierda en cualquier item para archivarlo.") }
+    var image: Image? { Image(systemName: "archivebox") }
+
+    // Condición: solo después de 3 items creados
+    @Parameter static var itemCount: Int = 0
+    var rules: [Rule] { [#Rule(Self.$itemCount) { $0 >= 3 }] }
+}
+
+// 2. Configurar en App init:
+try? Tips.configure([.displayFrequency(.immediate), .datastoreLocation(.applicationDefault)])
+
+// 3. Mostrar en la vista:
+struct ListView: View {
+    let archiveTip = ArchiveTip()
+
+    var body: some View {
+        List { ... }
+            .popoverTip(archiveTip)         // popover anclado al elemento
+            // o:
+            // TipView(archiveTip)          // inline en el layout
+    }
+}
+
+// 4. Invalidar cuando ya no aplica:
+archiveTip.invalidate(reason: .actionPerformed)
+
+// 5. Actualizar parámetros:
+ArchiveTip.itemCount = items.count
+```
+
+**Cuándo usar cada estilo:**
+
+| Estilo | Cuándo |
+|--------|--------|
+| `.popoverTip()` | Feature discoverable en pantalla; el callout apunta al elemento exacto |
+| `TipView()` inline | Primera vez que el usuario llega a una sección nueva; el tip ocupa espacio en el layout |
+
+**Reglas TipKit:**
+- Un tip por pantalla máximo. Si hay dos features nuevas, espacia los tips en el tiempo.
+- El sistema recuerda automáticamente si el usuario vio o dismissó el tip — no lo gestiones manualmente.
+- Siempre define `rules` — sin condiciones, el tip aparece en el primer launch, que es el peor momento.
+
+### What's New (actualizaciones)
+
+Para mostrar novedades después de un update:
+
+```swift
+.sheet(isPresented: $showWhatsNew) {
+    WhatsNewView(version: "2.0", features: [
+        Feature(icon: "sparkles", title: "Nuevo diseño", description: "..."),
+        Feature(icon: "bolt.fill", title: "Más rápido", description: "...")
+    ])
+}
+.onAppear {
+    let lastVersion = UserDefaults.standard.string(forKey: "lastSeenVersion")
+    showWhatsNew = lastVersion != Bundle.main.shortVersionString
+}
+```
+
+Máximo 3 features destacadas. Mismo formato que una pantalla de onboarding — ícono grande, título, descripción breve.
+
+---
+
+## App icon — principios de diseño
+
+El ícono es el primer punto de contacto visual. Debe funcionar en 16×16pt (sidebar macOS) y en 1024×1024px (App Store), en light y dark, sobre cualquier fondo de pantalla.
+
+### Reglas absolutas
+
+| Regla | Razón |
+|-------|-------|
+| Sin texto (salvo wordmark de 1–2 letras) | Ilegible en tamaños pequeños |
+| Sin marcos, bordes ni sombras externas | El sistema aplica la forma y sombra del OS |
+| Sin transparencia | El OS la rellena de negro |
+| Forma cuadrada — el sistema la redondea | Nunca diseñes el radio de la esquina — iOS/macOS lo hacen |
+| Zona segura: deja 10% de margen en cada borde | El redondeo del sistema recorta las esquinas |
+
+### Qué funciona
+
+- **Un objeto central claro** sobre fondo sólido o gradiente suave.
+- **Metáfora obvia** — la función de la app legible en 2 segundos a 44pt.
+- **Colores limitados** — 2–3 máximo. El ícono compite visualmente con otros en el Home Screen.
+- **Contraste alto** entre el objeto central y el fondo.
+- **Coherencia con AccentColor** de la app — el ícono y la UI deben sentirse de la misma familia.
+
+### Variantes requeridas
+
+| Plataforma | Tamaño entregado | Notas |
+|-----------|-----------------|-------|
+| iOS / iPadOS | 1024×1024px | El sistema genera todos los tamaños |
+| macOS | 1024×1024px | El sistema genera todos los tamaños; más detalle tolerable |
+| watchOS | 1024×1024px | Circular — sin elementos en las esquinas |
+| App Store | 1024×1024px | Igual al iOS en la mayoría de los casos |
+
+**En macOS:** los íconos pueden tener más detalle y perspectiva (isométrico, profundidad). El OS aplica una sombra suave debajo. El estilo clásico macOS Big Sur+ es objeto 3D sobre fondo redondeado.
+
+### Dark mode icon (iOS 18+ / macOS 26+)
+
+iOS 18 y macOS 26 soportan variante dark del ícono:
+
+```
+Assets.xcassets/
+  AppIcon.appiconset/
+    AppIcon~ios.png          → Light
+    AppIcon~ios-dark.png     → Dark (fondo oscuro, elementos brillantes)
+    AppIcon~ios-tinted.png   → Tinted (monocromo, el sistema aplica tint)
+```
+
+**Diseño dark:** invierte la relación figura/fondo — lo que era claro se oscurece, los elementos principales ganan brillo o luminosidad. No es simplemente "invertir colores".
+
+### Test del ícono antes de entregar a Phil
+
+1. **Tamaños:** ¿Se lee el objeto principal a 44pt? ¿A 20pt (notificaciones)?
+2. **Fondos:** ¿Funciona sobre wallpaper blanco, negro, fotográfico y de color?
+3. **Grid del Home Screen:** ¿Destaca entre apps similares o se confunde?
+4. **Dark mode:** ¿La variante dark se siente consistente o como otro ícono?
+5. **Nombre debajo:** el sistema muestra el nombre de la app bajo el ícono — ¿complementa o compite?
+
+---
+
 ## Tono
 
 - Descriptivo y preciso. Cualquier `.circular` es un error. Radios interiores que no respetan `r_inner = r_outer - padding` son errores.
