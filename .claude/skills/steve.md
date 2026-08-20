@@ -406,32 +406,56 @@ Si Steve se encuentra a punto de escribir un bloque de código, para y delega. L
 
 ---
 
-## Modelo mínimo por agente
+## Selección de modelo por tarea
 
-Steve lanza a cada agente con el modelo más ligero que pueda hacer la tarea bien. No usa modelos pesados por defecto — los reserva para trabajo que los requiere.
+Antes de lanzar cualquier subagente, Steve analiza el esfuerzo cognitivo real de esa tarea específica y asigna el modelo mínimo que pueda hacerla bien. No el más potente disponible — el justo necesario.
 
-| Agente | Tarea típica | Modelo mínimo |
-|--------|-------------|---------------|
-| Scott | Roadmap, PRD.md | `haiku` — structurado y predecible |
-| Avie | Arquitectura, TRD.md | `sonnet` — razonamiento técnico |
-| Ivan | Threat model, auditoría y release gate | `sonnet` — razonamiento adversarial y evidencia técnica |
-| Jonny | Diseño, `DESIGN_LIQUID.md` + `DESIGN_FROST.md` | `sonnet` — criterio estético + técnico |
-| Woz | Código Swift, XcodeGen | `sonnet` — generación de código complejo |
-| Larry | Checklist HIG | `haiku` — revisión contra reglas conocidas |
-| Bertrand | Tests, TEST_PLAN.md | `haiku` — patrones repetibles |
-| Sarah | Auditoría a11y | `haiku` — checklist contra reglas conocidas |
-| Chris | Auditoría de compatibilidad, COMPAT_AUDIT.md | `sonnet` — razonamiento sobre configuraciones y edge cases |
-| Phil | Metadata, APPSTORE.md | `haiku` — texto estructurado |
-| Craig | CI/CD, pipelines | `sonnet` — configuración técnica |
-| Kara | StoreKit 2, paywall | `sonnet` — lógica de negocio + código |
-| Eve | Widgets, App Intents | `sonnet` — APIs complejas de Apple |
-| Tim | Analytics, ANALYTICS.md | `haiku` — decisiones estructuradas con reglas claras |
-| John | Core ML, AI_SPEC.md | `sonnet` — razonamiento técnico sobre modelos y APIs |
-| Updater | Pipeline Sparkle | `sonnet` — scripts + entitlements |
+### Regla de evaluación — antes de cada invocación
 
-**Cuándo subir a `opus`:** solo si la tarea es ambigua, requiere razonamiento profundo sobre decisiones de producto/arquitectura no resueltas, o el agente de menor modelo produjo un output claramente insuficiente.
+Hazte estas 3 preguntas sobre la tarea concreta que va a realizar el agente:
 
-**Regla:** empieza con el modelo mínimo. Si el output no es suficiente, sube uno. No al revés.
+| Pregunta | Si la respuesta es SÍ |
+|----------|----------------------|
+| ¿El output es predecible y sigue un formato conocido? (checklist, tabla, metadata, texto estructurado) | `haiku` puede hacerlo |
+| ¿Requiere razonamiento técnico, juicio de diseño, análisis de seguridad, o generación de código no trivial? | `sonnet` como mínimo |
+| ¿Es genuinamente ambiguo, sin respuesta clara en el dominio, o el agente de nivel inferior produjo output insuficiente? | Sube a `opus` |
+
+**Regla base:** empieza siempre desde el mínimo. No subas de modelo por precaución — solo cuando el nivel inferior realmente falle.
+
+### Defaults por agente — punto de partida, no regla fija
+
+La tabla es el punto de partida. Si una tarea específica del agente es más sencilla o más compleja que la típica, ajusta el modelo para esa invocación.
+
+| Agente | Tarea típica | Modelo por defecto | Baja a `haiku` si... | Sube a `opus` si... |
+|--------|-------------|-------------------|---------------------|---------------------|
+| Scott | Roadmap, PRD.md | `haiku` | — ya es el mínimo | La idea es radicalmente nueva o hay bifurcaciones estratégicas sin respuesta clara |
+| Avie | Arquitectura, TRD.md | `sonnet` | El stack ya está decidido y solo documenta | La arquitectura implica tradeoffs técnicos profundos sin precedente claro |
+| Ivan | Threat model, auditoría | `sonnet` | — siempre necesita razonamiento adversarial | App con superficie de ataque alta: auth compleja, datos sensibles, distribución directa |
+| Jonny | Diseño, pantallas | `sonnet` | Solo ajustar un componente ya diseñado | Flujo nuevo complejo sin referencia visual definida |
+| Woz | Código Swift | `sonnet` | Fix trivial de una línea, rename, ajuste de layout simple | Arquitectura nueva, integración compleja, migración de datos |
+| Larry | Checklist HIG | `haiku` | — ya es el mínimo | — rara vez justifica subir |
+| Bertrand | Tests, TEST_PLAN.md | `haiku` | — ya es el mínimo | Estrategia de testing para sistema complejo sin precedente |
+| Sarah | Auditoría a11y | `haiku` | — ya es el mínimo | Componente custom muy no estándar |
+| Chris | Auditoría de compatibilidad | `sonnet` | — ya necesita razonar sobre edge cases reales | — rara vez justifica subir |
+| Phil | Metadata, APPSTORE.md | `haiku` | — ya es el mínimo | — rara vez justifica subir |
+| Craig | CI/CD, pipelines | `sonnet` | Pipeline simple ya conocido | Configuración multi-target, signing complejo, entornos múltiples |
+| Kara | StoreKit 2, paywall | `sonnet` | — combina lógica de negocio y código | — rara vez justifica subir |
+| Eve | Widgets, App Intents | `sonnet` | — APIs complejas de Apple | — rara vez justifica subir |
+| Tim | Analytics, ANALYTICS.md | `haiku` | — ya es el mínimo | — rara vez justifica subir |
+| John | Core ML, AI_SPEC.md | `sonnet` | Solo recomendar herramienta nativa de Apple | Decisión de arquitectura de IA con múltiples tradeoffs sin respuesta evidente |
+| Updater | Pipeline Sparkle | `sonnet` | — requiere técnico para entitlements | — rara vez justifica subir |
+
+### Lo que NO justifica subir de modelo
+
+- "Prefiero más calidad por si acaso" — sin evidencia de que el nivel inferior fallaría
+- Tareas largas o con mucho contexto — longitud no es complejidad cognitiva
+- Primera vez que se hace — el modelo mínimo puede hacerlo igualmente bien
+
+### Lo que SÍ justifica subir de modelo
+
+- El agente de nivel inferior produjo output manifiestamente insuficiente o incorrecto en esta misma tarea
+- La tarea tiene ambigüedad genuina que requiere juicio estratégico profundo
+- El dominio es nuevo para el equipo y no hay precedente claro en los documentos del proyecto
 
 ---
 
