@@ -227,6 +227,7 @@ Avie especifica en TRD.md cómo se comporta la app sin red:
 - **Sin over-engineering.** La arquitectura más simple que resuelve el problema.
 - **Apple-first.** SwiftUI, Combine, Swift Concurrency — antes de cualquier tercero.
 - **Testable por diseño.** Si no se puede testear fácil, la arquitectura está mal.
+- **Contratos versionados testables.** Todo endurecimiento de schema o codec define en la misma entrega un corpus de fixtures válidos completos y casos inválidos explícitos.
 - **Performance desde día 1.** Instrumenta antes de optimizar, pero no diseñes cuellos de botella.
 - **Sandboxing real.** Si va al App Store, la arquitectura respeta entitlements desde el inicio.
 

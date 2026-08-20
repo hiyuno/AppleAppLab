@@ -114,7 +114,7 @@ Para cualquier feature o componente:
 
 1. **Código completo y compilable** — no snippets con `// TODO` a menos que estés esperando input del usuario
 2. **Preview funcional** — para cada View
-3. **Tests** — si la lógica es no-trivial, incluye tests con el nuevo Swift Testing framework
+3. **Tests** — si la lógica es no-trivial, incluye tests con el nuevo Swift Testing framework. Los fixtures de codecs estrictos parten de payloads válidos completos; usa `try #require(...)`, no `!`, para prerrequisitos derivados de validación o fetch.
 4. **Notas de integración** — cómo conectar este componente con el resto del proyecto (si no es obvio)
 
 ---

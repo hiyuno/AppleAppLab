@@ -22,6 +22,7 @@ Base curada de problemas reutilizables en apps Apple. No sustituye la documentac
 | AAL-MAC-012 | conditional | Swift concurrency | `assumeIsolated` solo con garantía documentada de ejecución en main |
 | AAL-MAC-013 | deprecated | Observation | Mito: `@Bindable var model = model` copia una instancia observable |
 | AAL-MAC-014 | verified | SwiftUI/macOS | `editMode` no está disponible en macOS |
+| AAL-TEST-001 | verified | Testing/codecs | Fixtures válidos y `#require` evitan traps del host de pruebas |
 
 ## Entradas verificadas
 
@@ -92,6 +93,23 @@ Base curada de problemas reutilizables en apps Apple. No sustituye la documentac
 - **Verificación:** build macOS y pruebas de teclado, VoiceOver, selección, borrado y reordenamiento.
 - **Prevención:** revisar disponibilidad y HIG por plataforma antes de compartir vistas.
 - **Relacionadas:** AAL-MAC-006
+
+### AAL-TEST-001 — Mantener fixtures válidos y fallar con diagnósticos
+
+- **Fingerprint:** `testing/strict-codec/complete-fixture-no-force-unwrap`
+- **Categoría:** testing / payloads versionados
+- **Plataformas:** Apple platforms; observado en macOS 14+; Xcode 26.3, SDK macOS 26.2
+- **Proyecto fuente / fechas:** ToDoPro; first seen 2026-08-20; last verified 2026-08-20
+- **Owner / status:** Woz + Bertrand / `verified`
+- **Síntoma:** una suite cierra su host al probar un payload después de endurecer su validación.
+- **Reproducción/evidencia:** en ToDoPro, un fixture conservó revisiones parciales del contrato anterior; el codec lo rechazó y un force unwrap posterior produjo `SIGTRAP`. El test focalizado y la suite completa pasaron tras corregir ambos puntos, sin nuevos crash reports.
+- **Hipótesis/causa raíz:** confirmada en el proyecto fuente: el fixture ya no representaba un envelope válido y el harness trataba como infalible un resultado derivado de validación.
+- **Garantía de plataforma/fuente:** ninguna; es un contrato interno del codec y del harness.
+- **Workaround:** reemplazar el force unwrap por una guarda temporal permite diagnosticar el fixture, pero no corrige sus datos.
+- **Solución durable:** construir fixtures desde un payload válido y completo, modificar solo los campos objetivo y usar `try #require(...)` para prerrequisitos críticos del test.
+- **Verificación:** test focalizado, suite macOS completa, build iOS Simulator y ausencia de nuevos `.ips` tras la corrección.
+- **Prevención:** cada cambio estricto de codec actualiza en la misma entrega el corpus válido, los casos inválidos explícitos y sus expectativas; no usar `!` sobre resultados de parseo, validación o fetch.
+- **Relacionadas:** —
 
 ## Entradas condicionales
 

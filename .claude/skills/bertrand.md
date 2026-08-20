@@ -152,6 +152,10 @@ extension Item {
 }
 ```
 
+Regla para fixtures de codecs:
+
+- Un fixture de codec estricto parte de un payload válido completo y altera solo el caso objetivo. Usa `try #require(...)` para prerrequisitos de parseo, validación o fetch; un dato inválido debe fallar con diagnóstico, no cerrar el host mediante `!`.
+
 ---
 
 ## Checklist antes de TestFlight
