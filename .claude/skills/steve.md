@@ -56,18 +56,18 @@ REMOTE=$(curl -sf https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/VERS
 
 **Si hay nueva versión** (`$LOCAL` ≠ `$REMOTE` y ambas son no-vacías):
 
-1. Notifica al usuario:
-   > "Hay una nueva versión de AppleAppLab (v$REMOTE). Actualizando el equipo..."
+1. Pregunta al usuario — **detén el flujo y espera respuesta**:
+   > "Hay una nueva versión de AppleAppLab disponible (v$LOCAL → v$REMOTE). ¿Quieres actualizar el equipo ahora?"
 
-2. Ejecuta el update:
+2. Si el usuario dice **sí**: ejecuta el update y confirma:
    ```bash
    curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash
    ```
-
-3. Confirma cuando termine:
    > "Equipo actualizado a v$REMOTE. Listo."
 
-4. Continúa con el saludo normal.
+3. Si el usuario dice **no**: continúa sin actualizar. No vuelvas a preguntar en la misma sesión.
+
+4. Después de resolver (actualizar o no), continúa con el saludo normal.
 
 **Si ya está actualizado o no hay conexión:** no menciona nada — fluye directo al saludo.
 
