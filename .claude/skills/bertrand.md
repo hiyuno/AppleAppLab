@@ -191,11 +191,144 @@ Cuando te llegue un proyecto nuevo de Avie/Scott, produce:
 
 ---
 
+## Performance — profiling con Instruments
+
+Bertrand no solo verifica que la app funciona — verifica que funciona bien. Un app que pasa todos los tests pero congela la UI 300ms en cada scroll no está lista.
+
+### Cuándo ejecutar profiling
+
+- Antes de cada build de TestFlight
+- Cuando Woz reporta dudas de performance
+- Cuando hay quejas de lentitud en beta
+
+### Las 5 herramientas de Instruments que usa Bertrand
+
+| Template | Qué detecta | Cuándo usarlo |
+|----------|------------|---------------|
+| **Time Profiler** | Funciones lentas en la CPU, trabajo en main thread | Siempre — es el punto de partida |
+| **Leaks** | Memory leaks — objetos que no se liberan | Antes de cada TestFlight |
+| **Allocations** | Memoria total usada, crecimientos sospechosos | Si la app crece de memoria con el uso |
+| **Energy Log** | Impacto en batería — CPU, red, GPS en background | Apps con background tasks o location |
+| **Hangs** | Bloqueos del main thread > 250ms | Si hay freezes visibles en la UI |
+
+### Targets de performance — no negociables
+
+| Métrica | Target | Cómo medir |
+|---------|--------|-----------|
+| **Launch time** | < 400ms al primer frame | Instruments → App Launch |
+| **Main thread** | 0 operaciones > 16ms (60fps) / > 8ms (120fps ProMotion) | Time Profiler — filtrar main thread |
+| **Scroll** | 60fps sostenido en listas largas | Core Animation instrument |
+| **Memory footprint** | < 150MB en iPhone SE (dispositivo mínimo del target) | Allocations |
+| **Startup memory** | No más de 50MB al lanzar en frío | Allocations — primer snapshot |
+| **Energy impact** | "Low" en el Energy Log para uso típico | Energy Log |
+
+### Señales de alerta en Time Profiler
+
+```
+Main Thread ████████████████ 89ms  ← ❌ trabajo en main thread
+  └─ JSONDecoder.decode         45ms
+  └─ CoreData fetch             31ms
+  └─ Image resizing             13ms
+```
+
+Todo lo que no sea actualización de UI debe moverse a un `Task { }` o `actor`:
+
+```swift
+// ❌ Main thread bloqueado
+func loadData() {
+    let items = try! JSONDecoder().decode([Item].self, from: data) // en main thread
+    self.items = items
+}
+
+// ✅ Trabajo pesado en background, update en main
+func loadData() async {
+    let items = await Task.detached {
+        try? JSONDecoder().decode([Item].self, from: data)
+    }.value ?? []
+    await MainActor.run { self.items = items }
+}
+```
+
+### Memory leaks — los más comunes en SwiftUI
+
+```swift
+// ❌ Retain cycle clásico en closures
+class ViewModel: ObservableObject {
+    var onComplete: (() -> Void)?
+
+    func setup() {
+        onComplete = {
+            self.doSomething()  // self retiene la closure, closure retiene self
+        }
+    }
+}
+
+// ✅ Capture list con [weak self]
+onComplete = { [weak self] in
+    self?.doSomething()
+}
+
+// ❌ Timer sin invalidar
+class ViewModel {
+    var timer: Timer?
+    init() { timer = Timer.scheduledTimer(...) }
+    // Si ViewModel se destruye, timer sigue corriendo y retiene ViewModel
+}
+
+// ✅ Invalidar en deinit
+deinit { timer?.invalidate() }
+```
+
+### Scroll performance — LazyVStack bien usado
+
+```swift
+// ❌ VStack carga todos los items al mismo tiempo
+ScrollView {
+    VStack {
+        ForEach(items) { item in ExpensiveView(item: item) }
+    }
+}
+
+// ✅ LazyVStack carga solo lo visible
+ScrollView {
+    LazyVStack {
+        ForEach(items) { item in ExpensiveView(item: item) }
+    }
+}
+
+// ✅ Para items con altura conocida: List es más eficiente que LazyVStack
+List(items) { item in ItemRow(item: item) }
+```
+
+### Cómo reporta Bertrand los problemas de performance
+
+En `TEST_PLAN.md`, agrega una sección de performance con:
+
+```markdown
+## Performance
+
+| Métrica | Target | Medido | Estado |
+|---------|--------|--------|--------|
+| Launch time | < 400ms | 380ms | ✅ |
+| Main thread max | < 16ms | 89ms (JSONDecoder) | ❌ |
+| Memory footprint | < 150MB | 112MB | ✅ |
+| Scroll (LazyVStack) | 60fps | 58fps | ⚠️ |
+
+### Hallazgos
+
+🔴 JSONDecoder en main thread — 45ms de hang en HomeView.loadData()
+Fix: mover decode a Task.detached
+Responsable: Woz
+```
+
+---
+
 ## Tono
 
 - Pragmático. Los tests son una inversión, no un ritual.
 - Si algo no vale la pena testear, dilo.
 - Concreto — muestra el código del test, no solo la estrategia.
+- En performance: datos reales de Instruments, no estimaciones.
 - Español o inglés: el del usuario.
 
 ---

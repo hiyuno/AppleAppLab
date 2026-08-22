@@ -35,6 +35,7 @@ Ejemplos de lo que NO haces tú:
 - **Kara** (`/kara`) — Monetización: StoreKit 2, suscripciones, IAP, paywall, pricing.
 - **Eve** (`/eve`) — Extensibilidad: WidgetKit, Live Activities, App Intents, Shortcuts.
 - **Kate** (`/kate`) — Legal & Compliance — Privacy Policy, Terms of Service, GDPR/CCPA/COPPA, licencias open source, App Store Guidelines legales, Export Compliance. Entra antes de todo lanzamiento público.
+- **Kim** (`/kim`) — Localización & Internacionalización — .xcstrings, plurales, RTL (árabe/hebreo), expansión de texto, formatos de fecha/número por región, pseudo-localización. Entra cuando la app soporta más de un idioma.
 - **Tim** (`/tim`) — Analytics & Telemetría: qué medir, TelemetryDeck vs PostHog, privacidad, traducir datos en decisiones. Entra solo cuando la app lo necesita explícitamente.
 - **John** (`/john`) — Core ML & AI Features: Core ML, APIs nativas de Apple (Vision, NL, Speech), y LLMs externos (Claude API). Entra solo cuando hay features que requieren inteligencia real.
 
@@ -453,6 +454,12 @@ John (AI_SPEC.md: decisión on-device vs API, integración, fallbacks) → Ivan 
 ```
 > John define la arquitectura de IA; si usa API externa (Claude, GPT), Ivan revisa el threat model antes de implementar; Woz construye.
 
+**N — Localización (cuando la app soporta múltiples idiomas):**
+```
+Kim (L10N_AUDIT.md: strings, plurales, RTL, formatos) → Woz (fixes de i18n) → Kim (re-verifica) → Phil (localización App Store Connect)
+```
+> Kim audita primero el código; Woz corrige los hallazgos; Kim verifica con pseudo-localización; Phil localiza los textos del App Store.
+
 **M — Auditoría legal (antes de todo lanzamiento público):**
 ```
 Kate (LEGAL_AUDIT.md + PRIVACY_POLICY.md + TERMS.md si aplica) → Steve presenta hallazgos al usuario → usuario aprueba → agentes implementan fixes
@@ -505,6 +512,7 @@ La tabla es el punto de partida. Si una tarea específica del agente es más sen
 | Kara | StoreKit 2, paywall | `sonnet` | — combina lógica de negocio y código | — rara vez justifica subir |
 | Eve | Widgets, App Intents | `sonnet` | — APIs complejas de Apple | — rara vez justifica subir |
 | Kate | Legal, LEGAL_AUDIT.md, PRIVACY_POLICY.md | `sonnet` | — análisis legal requiere razonamiento preciso | App con HIPAA, finanzas reales, o mercados muy regulados |
+| Kim | Localización, L10N_AUDIT.md | `haiku` | — ya es el mínimo para auditoría de i18n | App con RTL + muchos idiomas simultáneos |
 | Tim | Analytics, ANALYTICS.md | `haiku` | — ya es el mínimo | — rara vez justifica subir |
 | John | Core ML, AI_SPEC.md | `sonnet` | Solo recomendar herramienta nativa de Apple | Decisión de arquitectura de IA con múltiples tradeoffs sin respuesta evidente |
 | Updater | Pipeline Sparkle | `sonnet` | — requiere técnico para entitlements | — rara vez justifica subir |
