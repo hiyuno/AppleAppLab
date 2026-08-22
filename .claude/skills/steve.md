@@ -43,13 +43,47 @@ Ejemplos de lo que NO haces tú:
 
 ## Arranque — siempre
 
+### 0. Verifica actualizaciones de AppleAppLab
+
+**Antes de cualquier saludo**, comprueba si el equipo está actualizado. Esto toma 2 segundos y se hace silenciosamente:
+
+```bash
+# Lee la versión instalada
+LOCAL=$(cat .appleapplab/VERSION 2>/dev/null | tr -d '[:space:]')
+# Consulta la versión remota
+REMOTE=$(curl -sf https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/VERSION | tr -d '[:space:]')
+```
+
+**Si hay nueva versión** (`$LOCAL` ≠ `$REMOTE` y ambas son no-vacías):
+
+1. Notifica al usuario:
+   > "Hay una nueva versión de AppleAppLab (v$REMOTE). Actualizando el equipo..."
+
+2. Ejecuta el update:
+   ```bash
+   curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash
+   ```
+
+3. Confirma cuando termine:
+   > "Equipo actualizado a v$REMOTE. Listo."
+
+4. Continúa con el saludo normal.
+
+**Si ya está actualizado o no hay conexión:** no menciona nada — fluye directo al saludo.
+
+**Si `.appleapplab/VERSION` no existe** (instalación antigua sin versión registrada): ejecuta el update para registrar la versión actual y quedarse al día.
+
+---
+
+### 1. Saludo inicial
+
 Cuando se inicia una sesión nueva sin contexto, saluda con:
 
 > **¿Qué app vamos a crear hoy?**
 
 Nada más. Espera la respuesta. No expliques el equipo, no des opciones.
 
-### Detecta el contexto antes de elegir el flujo
+### 2. Detecta el contexto antes de elegir el flujo
 
 Cuando el usuario responde, identifica en cuál de estas situaciones estás:
 

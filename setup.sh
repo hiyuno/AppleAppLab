@@ -8,8 +8,9 @@ set -e
 RAW="https://raw.githubusercontent.com/hiyuno/AppleAppLab/main"
 SKILLS_DIR=".claude/skills"
 SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim)
+REMOTE_VERSION=$(curl -sf "$RAW/VERSION" | tr -d '[:space:]')
 
-echo "🍎 AppleAppLab setup..."
+echo "🍎 AppleAppLab setup (v$REMOTE_VERSION)..."
 
 # --- Skills (Claude Code) ---
 mkdir -p "$SKILLS_DIR"
@@ -18,8 +19,12 @@ for skill in "${SKILLS[@]}"; do
 done
 echo "  ✓ Skills instalados en $SKILLS_DIR"
 
-# --- Memoria evolutiva ---
+# --- Versión instalada ---
 mkdir -p ".appleapplab"
+echo "$REMOTE_VERSION" > ".appleapplab/VERSION"
+echo "  ✓ Versión $REMOTE_VERSION registrada en .appleapplab/VERSION"
+
+# --- Memoria evolutiva ---
 curl -fsSL "$RAW/KNOWN_ISSUES.md" -o ".appleapplab/KNOWN_ISSUES.md"
 echo "  ✓ Snapshot global actualizado en .appleapplab/KNOWN_ISSUES.md"
 
