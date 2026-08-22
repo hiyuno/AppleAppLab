@@ -19,6 +19,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/sarah` | Sarah | Accesibilidad — VoiceOver, Dynamic Type, inclusión |
 | `/phil` | Phil | App Store — metadata, screenshots, submission |
 | `/chris` | Chris | Compatibility Auditor — dispositivos, OS, red, permisos, configuraciones reales |
+| `/kate` | Kate | Legal & Compliance — Privacy Policy, GDPR/CCPA/COPPA, licencias, App Store Guidelines legales, Export Compliance |
 | `/tim` | Tim | Analytics — qué medir, TelemetryDeck/PostHog, privacidad, datos → decisiones (solo si la app lo necesita) |
 | `/john` | John | Core ML & AI — on-device vs API, Core ML, LLMs, fallbacks (solo si hay features de IA) |
 | `/updater` | — | Sparkle — actualizaciones automáticas fuera del App Store |
@@ -35,6 +36,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **Revisar accesibilidad** → `/sarah`
 - **Auditar compatibilidad en dispositivos reales** → `/chris`
 - **Preparar lanzamiento** → `/phil`
+- **Legal, Privacy Policy, cumplimiento regulatorio** → `/kate` (antes de todo lanzamiento público)
 - **Analytics y métricas de uso** → `/tim` (solo cuando la app lo necesita)
 - **Features de IA o ML** → `/john` (solo cuando hay inteligencia real en la app)
 - **Actualizaciones automáticas fuera del App Store** → `/updater`
