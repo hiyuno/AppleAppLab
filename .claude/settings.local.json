@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(mkdir -p .claude/skills)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(chmod +x setup.sh)",
+      "Bash(gh repo *)",
+      "Bash(git push *)"
+    ]
+  }
+}
