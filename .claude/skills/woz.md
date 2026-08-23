@@ -961,6 +961,114 @@ URLCache.shared = URLCache(
 )
 ```
 
+### Equatable para evitar redraws en subvistas
+
+SwiftUI redibuja una subvista cada vez que su vista padre cambia. Si la subvista recibe los mismos valores, ese redraw es trabajo inútil. `Equatable` lo elimina:
+
+```swift
+// ❌ — ItemRow se redibuja aunque item no haya cambiado
+struct ItemRow: View {
+    let item: Item
+    var body: some View { ... }
+}
+
+// ✅ — SwiftUI compara antes de redibujar
+struct ItemRow: View, Equatable {
+    let item: Item
+    var body: some View { ... }
+
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.item.id == rhs.item.id && lhs.item.updatedAt == rhs.item.updatedAt
+    }
+}
+
+// Uso: EquatableView envuelve cualquier View sin Equatable propio
+EquatableView(content: ItemRow(item: item))
+```
+
+**Cuándo aplicarlo:** subvistas que aparecen en listas largas y reciben structs grandes como parámetro. No lo apliques a todo — solo donde Instruments muestra redraws excesivos.
+
+### drawingGroup() para vistas con muchos elementos gráficos
+
+```swift
+// Rasteriza la vista en un solo layer de Metal — útil para composición compleja
+ZStack {
+    ForEach(particles) { p in ParticleView(p) }
+}
+.drawingGroup()  // todo el ZStack → un solo texture en GPU
+```
+
+**Cuándo:** animaciones con 50+ elementos superpuestos, canvas con muchas capas. **No uses** en vistas con texto o interactividad — pierde hit testing y accesibilidad.
+
+### Reducir trabajo en body con computación memo
+
+```swift
+// ❌ — filtra y ordena en cada redraw
+var body: some View {
+    List(items.filter { $0.isActive }.sorted { $0.name < $1.name }) { ... }
+}
+
+// ✅ — computación cacheada en el ViewModel
+@Observable final class ViewModel {
+    private(set) var items: [Item] = []
+    private(set) var activeItemsSorted: [Item] = []  // se actualiza solo cuando items cambia
+
+    func setItems(_ newItems: [Item]) {
+        items = newItems
+        activeItemsSorted = newItems.filter { $0.isActive }.sorted { $0.name < $1.name }
+    }
+}
+```
+
+### Tamaño del binario — lo que engrosa la app sin valor
+
+| Causa | Fix |
+|-------|-----|
+| Assets en formato PNG de alta resolución | Usar HEIC en el Asset Catalog (50% menos tamaño) |
+| Imágenes duplicadas en distintos targets | Mover a un shared Asset Catalog |
+| JSON/datos hardcodeados grandes en el bundle | Cargar bajo demanda con On-Demand Resources |
+| Frameworks innecesarios enlazados | Auditar `Link Binary With Libraries` — quitar los no usados |
+| Código muerto (features deprecadas) | Activar `Dead Code Stripping = YES` en Build Settings |
+
+```bash
+# Ver qué ocupa el binario — ejecutar en el .app compilado
+find AppName.app -name "*.dylib" -exec du -sh {} \; | sort -rh | head -20
+```
+
+### Startup time — reducir tiempo hasta primer frame
+
+El objetivo es < 400ms. Las causas más comunes de startup lento:
+
+| Causa | Fix |
+|-------|-----|
+| Trabajo pesado en `App.init` o `.onAppear` del root | Diferir con `Task { }` — ejecutar después del primer frame |
+| `@MainActor` en un `init` que hace operaciones lentas | Mover a `task { }` de la vista |
+| Demasiados singletons inicializados al arrancar | Lazy initialization — solo crear cuando se usen por primera vez |
+| Imágenes grandes en la pantalla de launch | Usar versiones reducidas para el splash |
+
+```swift
+// ❌ — bloquea el arranque
+@main struct MyApp: App {
+    init() {
+        loadConfiguration()    // síncrono y lento
+        setupAnalytics()       // síncrono
+    }
+}
+
+// ✅ — arranque instantáneo, trabajo después del primer frame
+@main struct MyApp: App {
+    var body: some Scene {
+        WindowGroup {
+            ContentView()
+                .task {
+                    await loadConfiguration()
+                    await setupAnalytics()
+                }
+        }
+    }
+}
+```
+
 ### Paginación
 
 ```swift
