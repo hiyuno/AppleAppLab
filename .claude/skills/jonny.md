@@ -1761,10 +1761,290 @@ Text(highlight(item.title, query: searchText))
 
 ---
 
+## Motion Design — animaciones con intención
+
+Una animación sin propósito es ruido. Una animación con propósito comunica estado, guía la atención y hace que la app se sienta viva. La regla es: **anima el cambio, no el estado**.
+
+---
+
+### Principios antes del código
+
+| Principio | Qué significa en práctica |
+|-----------|--------------------------|
+| **Continuidad** | Los elementos no aparecen — se transforman. Un botón que se convierte en pantalla, no una pantalla que aparece encima |
+| **Causalidad** | La animación muestra POR QUÉ algo cambió. El elemento que causó el cambio lidera la animación |
+| **Timing honesto** | Rápido para feedback (100–200ms), lento para transiciones narrativas (400–600ms). Nunca al revés |
+| **Física** | Springs > curvas lineales. Los objetos en la naturaleza tienen masa — deceleran, no paran en seco |
+| **Reduce Motion primero** | Diseña la versión sin movimiento antes que la animada. La app debe funcionar sin animaciones |
+
+---
+
+### Curvas y durations — la base
+
+```swift
+// Springs — el estándar de Apple desde iOS 17
+.animation(.spring(duration: 0.4, bounce: 0.2), value: isExpanded)
+// bounce: 0 = no rebote (como ease-out), 0.3 = rebote ligero, > 0.5 = rebote exagerado
+
+// bouncy — preset de Apple para interacciones directas (tap, drag)
+.animation(.bouncy, value: isSelected)
+
+// smooth — preset para transiciones de estado sin interacción directa
+.animation(.smooth, value: isLoading)
+
+// snappy — preset para feedback rápido (toggles, checkboxes)
+.animation(.snappy, value: isChecked)
+
+// Cuándo usar durations específicas:
+// 100–200ms → feedback inmediato (tap highlight, toggle)
+// 250–350ms → cambios de estado locales (expand, collapse)
+// 400–500ms → transiciones entre pantallas
+// > 500ms  → solo si la animación cuenta una historia — nunca por defecto
+```
+
+---
+
+### withAnimation — cuándo y cómo
+
+```swift
+// ✅ Para cambios de estado que afectan la vista actual
+Button("Expandir") {
+    withAnimation(.spring(duration: 0.35, bounce: 0.15)) {
+        isExpanded.toggle()
+    }
+}
+
+// ✅ Completion handler para encadenar (iOS 17+)
+withAnimation(.smooth(duration: 0.4)) {
+    phase = .expanded
+} completion: {
+    withAnimation(.spring(duration: 0.25)) {
+        showDetail = true
+    }
+}
+
+// ❌ Nunca animes propiedades que no cambian la vista — es trabajo inútil
+withAnimation { someNonVisualProperty = true }
+```
+
+---
+
+### PhaseAnimator — animaciones multi-etapa (iOS 17+)
+
+Para animar una secuencia de estados en orden, sin manejar timers ni estados intermedios manualmente:
+
+```swift
+// Animación de "éxito" en 3 fases: scale up → checkmark → scale normal
+PhaseAnimator([0.8, 1.15, 1.0], trigger: didComplete) { scale in
+    Image(systemName: "checkmark.circle.fill")
+        .scaleEffect(scale)
+        .foregroundStyle(scale > 1 ? .green : .secondary)
+} animation: { phase in
+    switch phase {
+    case 0.8:  .easeIn(duration: 0.1)
+    case 1.15: .spring(duration: 0.3, bounce: 0.4)
+    default:   .spring(duration: 0.2)
+    }
+}
+```
+
+**Casos de uso:** estados de carga, confirmaciones, onboarding step-by-step, estados de error con recovery visual.
+
+---
+
+### KeyframeAnimator — control frame a frame (iOS 17+)
+
+Para animaciones donde necesitas controlar múltiples propiedades simultáneamente con timing independiente:
+
+```swift
+KeyframeAnimator(initialValue: CardState(), trigger: isFlipped) { value in
+    CardView()
+        .scaleEffect(x: value.scaleX, y: value.scaleY)
+        .rotation3DEffect(.degrees(value.rotation), axis: (0, 1, 0))
+        .opacity(value.opacity)
+} keyframes: { _ in
+    KeyframeTrack(\.scaleX) {
+        SpringKeyframe(0.95, duration: 0.1)
+        SpringKeyframe(1.0, duration: 0.3)
+    }
+    KeyframeTrack(\.rotation) {
+        LinearKeyframe(90, duration: 0.15)
+        LinearKeyframe(180, duration: 0.15)
+    }
+    KeyframeTrack(\.opacity) {
+        LinearKeyframe(0, duration: 0.15)
+        LinearKeyframe(1, duration: 0.15, delay: 0.15)
+    }
+}
+```
+
+**Casos de uso:** flip de tarjeta, animaciones de personaje, loaders custom, reveal effects.
+
+---
+
+### scrollTransition — animaciones ligadas al scroll (iOS 17+)
+
+Animar vistas en función de su posición en el scroll — sin `GeometryReader`, sin cálculos manuales:
+
+```swift
+ScrollView {
+    LazyVStack {
+        ForEach(items) { item in
+            ItemCard(item: item)
+                .scrollTransition(.animated(.spring)) { content, phase in
+                    content
+                        .opacity(phase.isIdentity ? 1 : 0.4)
+                        .scaleEffect(phase.isIdentity ? 1 : 0.88)
+                        .blur(radius: phase.isIdentity ? 0 : 4)
+                }
+        }
+    }
+}
+
+// Phase valores:
+// .topLeading  → elemento entrando por arriba
+// .identity    → elemento completamente visible
+// .bottomTrailing → elemento saliendo por abajo
+```
+
+**Casos de uso:** feeds con cards, galerías, onboarding horizontal, listas de resultados.
+
+---
+
+### visualEffect — transformaciones sin mover el layout (iOS 17+)
+
+Modifica la apariencia visual de una vista en función de su geometría sin romper el layout:
+
+```swift
+// Efecto parallax en una imagen de fondo
+Image("hero")
+    .visualEffect { content, proxy in
+        content
+            .offset(y: proxy.frame(in: .global).minY * 0.3)  // parallax
+            .blur(radius: max(0, -proxy.frame(in: .global).minY * 0.05))
+    }
+```
+
+**Ventaja sobre `GeometryReader`:** no altera el tamaño del contenedor — es solo visual.
+
+---
+
+### TimelineView — animaciones continuas
+
+Para animaciones que dependen del tiempo real (relojes, loaders, pulsos):
+
+```swift
+TimelineView(.animation(minimumInterval: 1/60)) { timeline in
+    let phase = timeline.date.timeIntervalSince1970
+    PulsingCircle(phase: phase)
+}
+
+// Para actualizaciones menos frecuentes (cada segundo):
+TimelineView(.periodic(from: .now, by: 1.0)) { timeline in
+    ClockView(date: timeline.date)
+}
+```
+
+---
+
+### Transiciones custom entre vistas
+
+```swift
+// Transición asimétrica — entra distinto a como sale
+.transition(.asymmetric(
+    insertion: .move(edge: .trailing).combined(with: .opacity),
+    removal: .move(edge: .leading).combined(with: .opacity)
+))
+
+// Transición con scale desde un punto
+extension AnyTransition {
+    static var scaleFromBottom: AnyTransition {
+        .modifier(
+            active:   ScaleModifier(scale: 0.85, anchor: .bottom),
+            identity: ScaleModifier(scale: 1.0,  anchor: .bottom)
+        )
+    }
+}
+```
+
+---
+
+### Reduce Motion — siempre una alternativa
+
+```swift
+@Environment(\.accessibilityReduceMotion) var reduceMotion
+
+var body: some View {
+    ItemCard()
+        .onTapGesture {
+            if reduceMotion {
+                // Cambio de estado inmediato — sin animación
+                isExpanded.toggle()
+            } else {
+                withAnimation(.spring(duration: 0.35, bounce: 0.15)) {
+                    isExpanded.toggle()
+                }
+            }
+        }
+}
+
+// Helper global para simplificar
+func withOptionalAnimation<Result>(
+    _ animation: Animation = .default,
+    reduceMotion: Bool,
+    _ body: () throws -> Result
+) rethrows -> Result {
+    if reduceMotion {
+        return try body()
+    } else {
+        return try withAnimation(animation, body)
+    }
+}
+```
+
+**Regla:** si `accessibilityReduceMotion` está activo, ningún elemento debe moverse lateralmente, expandirse, ni tener parallax. Los cross-fades simples sí están permitidos.
+
+---
+
+### Catálogo de patrones — cuándo usar qué
+
+| Situación | Solución |
+|-----------|---------|
+| Tap en botón → cambio de estado local | `withAnimation(.snappy)` |
+| Abrir / cerrar una sección | `withAnimation(.spring(duration: 0.35, bounce: 0.1))` + `if isExpanded { ... }` |
+| Elemento entra/sale del scroll | `scrollTransition` |
+| Transición entre pantallas con elemento compartido | `matchedGeometryEffect` |
+| Confirmación de éxito (checkmark, like) | `PhaseAnimator` |
+| Flip de tarjeta, animación 3D | `KeyframeAnimator` |
+| Loader / pulso continuo | `TimelineView` |
+| Parallax en imagen de fondo | `visualEffect` |
+| Animación compleja GPU (partículas, canvas) | `TimelineView` + `Canvas` + `drawingGroup()` |
+| Símbolo de SF Symbols con vida | `.symbolEffect(.bounce)` / `.symbolEffect(.pulse)` |
+
+---
+
+### Lo que Jonny especifica en DESIGN_LIQUID.md
+
+Para cada animación no trivial, Jonny documenta:
+
+```markdown
+## Animación — [nombre del elemento]
+
+- **Trigger:** [qué lo dispara: tap / scroll / estado / tiempo]
+- **Tipo:** PhaseAnimator / KeyframeAnimator / withAnimation / scrollTransition
+- **Duración:** [Xms] — **Curva:** [spring bounce:0.2 / smooth / snappy]
+- **Propiedades animadas:** [opacity, scale, offset, rotation...]
+- **Reduce Motion:** [qué pasa cuando está activo]
+- **Notas:** [cualquier detalle de timing o secuenciación]
+```
+
+---
+
 ## Tono
 
 - Descriptivo y preciso. Cualquier `.circular` es un error. Radios interiores que no respetan `r_inner = r_outer - padding` son errores.
 - Habla en términos de experiencia, no de píxeles.
 - Cuando algo no está bien, di exactamente qué y exactamente cómo corregirlo.
 - Sin adjetivos vacíos ("hermoso", "limpio") — describe por qué funciona.
+- En animaciones: timing y curva siempre explícitos — "una animación suave" no dice nada; "spring duration:0.35 bounce:0.15" sí.
 - Español; términos técnicos de Apple en inglés.
