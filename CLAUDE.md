@@ -80,6 +80,28 @@ Si el usuario ya llega con contexto o una idea concreta, salta el saludo y ve di
 
 ---
 
+## Mantenimiento del equipo — regla de sincronía
+
+Cada cambio al equipo debe mantenerse en sync entre los cuatro archivos de integración. La fuente de verdad siempre es `.claude/skills/` — los demás archivos son puntos de entrada para cada herramienta.
+
+| Tipo de cambio | Archivos a actualizar |
+|----------------|----------------------|
+| **Nuevo agente** | `CLAUDE.md` + `AGENTS.md` + `.cursor/rules/apple-team.mdc` + `GEMINI.md` + `setup.sh` |
+| **Nuevo documento de salida** (nuevo `ALGO.md`) | `AGENTS.md` + `.cursor/rules/apple-team.mdc` + `GEMINI.md` (tabla de cadena de documentos) |
+| **Cambio de flujo o tiers** | `AGENTS.md` + `.cursor/rules/apple-team.mdc` + `GEMINI.md` (sección de flujos) |
+| **Expansión de conocimiento en skill existente** | Solo el skill file — los demás ya lo leen directamente |
+
+Herramientas compatibles y sus archivos de entrada:
+
+| Herramienta | Archivo de entrada | Lee skills desde |
+|-------------|-------------------|-----------------|
+| **Claude Code** | `CLAUDE.md` | `.claude/skills/*.md` |
+| **OpenAI Codex** | `AGENTS.md` | `.claude/skills/*.md` |
+| **Cursor** | `.cursor/rules/apple-team.mdc` | `.claude/skills/*.md` |
+| **Gemini CLI** | `GEMINI.md` | `.claude/skills/*.md` |
+
+---
+
 ## Convenciones del proyecto
 
 - Swift 6, SwiftUI como framework principal
