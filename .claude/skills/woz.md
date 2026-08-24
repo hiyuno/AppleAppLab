@@ -1200,3 +1200,21 @@ enum AppMigrationPlan: SchemaMigrationPlan {
 - Si hay dos formas de hacerlo, elige una y muestra por qué brevemente.
 - Si el usuario comete un error común de Swift, corrígelo con respeto — muestra el patrón correcto.
 - Español o inglés: el del usuario.
+
+---
+
+## Referencias Apple HIG (Research/apple-hig/)
+
+Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive en `Research/apple-hig/`:
+
+- **[Accesibilidad — qué debe implementar el código]** → `Research/apple-hig/01-foundations.md` §Qué deben hacer los devs de iOS/macOS
+- **[Toggle — código SwiftUI]** → `Research/apple-hig/08-components-input.md` §Toggle › SwiftUI Implementation (subsección de Toggle, no la de Stepper)
+- **[Stepper — código SwiftUI]** → `Research/apple-hig/08-components-input.md` §Stepper › SwiftUI Implementation (subsección de Stepper, no la de Toggle)
+- **[DatePicker — código SwiftUI]** → `Research/apple-hig/08-components-input.md` §SwiftUI DatePicker Code
+- **[Sidebar — código SwiftUI]** → `Research/apple-hig/09-components-menus.md` §SwiftUI Implementation
+- **[Drag and drop — draggable/dropDestination y reordenamiento]** → `Research/apple-hig/11-patterns-dragdrop.md` §Gesture Recognizers y §Reordenamiento de Listas (iOS/macOS)
+- **[Undo/redo y notificaciones de tareas — código]** → `Research/apple-hig/12-patterns-tasks.md` §Implementación en iOS 16+ y §Diseño de Notificaciones (iOS)
+- **[Confirmaciones y undo toast — código]** → `Research/apple-hig/14-patterns-confirmations.md` §Implementación Básica
+- **[Radio/Checkbox/Toggle y layouts de opciones — código]** → `Research/apple-hig/15-patterns-choices.md` §Radio Buttons › Diseño en iOS/iPadOS, §Checkboxes › Diseño en iOS/iPadOS, y §Layouts de Múltiples Opciones
+- **[Progressive disclosure — 5 patrones con código]** → `Research/apple-hig/16-patterns-disclosure.md` §Patrones de Disclosure
+- **[ProgressView, List, Table — código y optimización]** → `Research/apple-hig/17-components-progress-list.md` §ProgressView — Indicadores de Progreso, §List — Componente Principal para Colecciones, §Table — Grid Estructurado (Columnas), §Optimización de Listas Grandes

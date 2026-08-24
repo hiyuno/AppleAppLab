@@ -2175,3 +2175,23 @@ Para cada animación no trivial, Jonny documenta:
 - Sin adjetivos vacíos ("hermoso", "limpio") — describe por qué funciona.
 - En animaciones: timing y curva siempre explícitos — "una animación suave" no dice nada; "spring duration:0.35 bounce:0.15" sí.
 - Español; términos técnicos de Apple en inglés.
+
+---
+
+## Referencias Apple HIG (Research/apple-hig/)
+
+Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive en `Research/apple-hig/`:
+
+- **[Split Views — layouts 2/3 columnas, responsive behavior]** → `Research/apple-hig/02-patterns.md` §2. Split Views
+- **[Onboarding — timing y re-trigger]** → detalle adicional en `Research/apple-hig/02-patterns.md` §Timing y §Puntos críticos (ya cubierto arriba en "Onboarding y feature discovery"; esto añade cuándo mostrar solo una vez y cómo re-exponerlo desde Settings)
+- **[Search — accesibilidad y Liquid Glass updates]** → detalle adicional en `Research/apple-hig/05-patterns-search.md` §Accesibilidad & VoiceOver y §iOS 26 / Liquid Glass Updates (ya cubierto arriba en "Search UX — diseño de búsqueda")
+- **[Sign in with Apple — flujo y botón]** → `Research/apple-hig/06-patterns-auth.md` §Flujo de Sign in with Apple y §Sign in with Apple Button
+- **[Sharing — Share Sheet y AirDrop]** → `Research/apple-hig/07-patterns-sharing.md` §Share Sheet (iOS/macOS) y §AirDrop
+- **[Input components — Toggle, Picker, Stepper, Slider]** → `Research/apple-hig/08-components-input.md` completo
+- **[Menús, Toolbar, Sidebar, Tab Bar]** → `Research/apple-hig/09-components-menus.md` completo
+- **[Drag and drop — cuándo usar y feedback visual]** → `Research/apple-hig/11-patterns-dragdrop.md` §Cuándo Usar Drag and Drop y §Diseño en iOS/iPadOS
+- **[Permisos — principios de solicitud]** → `Research/apple-hig/13-patterns-permissions.md` §Principios de Solicitud (HIG Oficial) (ya cubierto arriba en "Permisos — pide en contexto, nunca al arrancar"; esta sección tiene el detalle de purpose strings)
+- **[Confirmaciones — filosofía forgiveness over prevention y patrones]** → `Research/apple-hig/14-patterns-confirmations.md` §Filosofía: Forgiveness Over Prevention y §Patrones de Confirmación
+- **[Choices — árbol de decisión de control type]** → `Research/apple-hig/15-patterns-choices.md` §Control Type Decision Tree
+- **[Progressive disclosure — catálogo de patrones]** → `Research/apple-hig/16-patterns-disclosure.md` §Patrones de Disclosure
+- **[ProgressView y List/Table — casos de uso]** → `Research/apple-hig/17-components-progress-list.md` completo

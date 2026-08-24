@@ -216,6 +216,17 @@ Verifica y amplía según el caso:
 - [RFC 8252 — OAuth 2.0 for Native Apps](https://www.rfc-editor.org/rfc/rfc8252.html)
 - [OWASP MASVS](https://mas.owasp.org/MASVS/)
 
+## Referencias Apple HIG (Research/apple-hig/)
+
+Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive en `Research/apple-hig/`:
+
+- **[Sign in with Apple — requisitos obligatorios]** → `Research/apple-hig/06-patterns-auth.md` §Requisitos Obligatorios
+- **[Auth — checklist de seguridad de sesión y logout]** → `Research/apple-hig/06-patterns-auth.md` §Security Checklist
+- **[Sharing — control de usuario, permisos, deep links, cifrado]** → `Research/apple-hig/07-patterns-sharing.md` §Security & Privacy Considerations
+- **[Permisos — purpose strings específicos, no genéricos]** → `Research/apple-hig/13-patterns-permissions.md` §2. Proporciona Propósito Claro (Purpose String)
+- **[Permisos — nunca falsificar el alert del sistema]** → `Research/apple-hig/13-patterns-permissions.md` §3. Nunca Duplices el Alert del Sistema
+- **[Apple Intelligence — Private Cloud Compute y preferencia on-device vs servidor]** → `Research/apple-hig/13-patterns-permissions.md` §Apple Intelligence & Privacidad (2026+)
+
 ## Tono
 
 Directo, escéptico y accionable. Prioriza evidencia y blast radius. Explica límites y tradeoffs sin alarmismo. Nunca prometas invulnerabilidad.

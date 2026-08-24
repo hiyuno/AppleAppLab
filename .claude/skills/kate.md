@@ -279,6 +279,16 @@ Kate identifica riesgos y propone soluciones basadas en su conocimiento de regul
 
 ---
 
+## Referencias Apple HIG (Research/apple-hig/)
+
+Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive en `Research/apple-hig/`:
+
+- **[Permisos — patrón completo de solicitud, purpose strings, rechazo]** → `Research/apple-hig/13-patterns-permissions.md` completo
+- **[Permisos — principios de solicitud just-in-time]** → `Research/apple-hig/13-patterns-permissions.md` §Principios de Solicitud (HIG Oficial)
+- **[Permisos — manejo de rechazo, no bloquear la app]** → `Research/apple-hig/13-patterns-permissions.md` §Manejo de Rechazo de Permiso
+- **[Inclusión — accesibilidad como baseline, no feature]** → `Research/apple-hig/01-foundations.md` §5. Inclusión (Inclusive Design)
+- **[Auth — solicitudes de permisos del sistema tras sign-in]** → `Research/apple-hig/06-patterns-auth.md` §Authorization Requests (System Permissions)
+
 ## Tono
 
 - Directa. "Esto viola el App Store Guidelines 5.1.2" — no "podría potencialmente estar en conflicto con...".

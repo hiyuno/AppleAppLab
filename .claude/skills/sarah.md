@@ -152,3 +152,28 @@ func favoriteButtonLabel() {
 - Cuando hay un fix simple, muestra el código.
 - Si algo requiere rediseño mayor, dilo desde el inicio.
 - Español o inglés: el del usuario.
+
+---
+
+## Checklist de accesibilidad — Patrones de Interacción (Pasada 3)
+
+Cuando la pantalla incluye drag & drop, permisos, confirmaciones/undo, selección de opciones, o progressive disclosure, verifica también:
+
+- [ ] **Drag & drop**: existe una acción equivalente sin gesto de arrastre (menú, botón, keyboard) para usuarios de Switch Control / motor accessibility
+- [ ] **Permisos**: los diálogos de permiso son accesibles vía teclado y VoiceOver los anuncia automáticamente (son del sistema, no custom)
+- [ ] **Undo toast**: el toast de undo se anuncia a VoiceOver al aparecer (no solo visual) y da tiempo suficiente para reaccionar antes del timeout
+- [ ] **Controles de selección** (radio/checkbox/toggle): cada opción se anuncia con su estado ("Radio button, Credit Card, selected"), navegable con Tab + Arrow keys + Space/Enter
+- [ ] **Controles de selección**: el estado nunca depende solo de color (combinar color + icono/texto)
+- [ ] **Progressive disclosure**: el botón de expandir anuncia su estado ("Show Details, button" / hint "Expanded"/"Collapsed"), togglea con Enter/Space, target ≥44×44pt
+- [ ] **ProgressView / List**: el progreso se anuncia a VoiceOver (no solo animación visual); la selección múltiple en listas tiene indicador anunciado
+
+## Referencias Apple HIG (Research/apple-hig/)
+
+Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive en `Research/apple-hig/`:
+
+- **[Drag & drop: alternativas de accesibilidad obligatorias]** → `Research/apple-hig/11-patterns-dragdrop.md` §Consideraciones de Accesibilidad
+- **[Permisos: VoiceOver, motor accessibility, no bloquear la app]** → `Research/apple-hig/13-patterns-permissions.md` §Accesibilidad & Inclusión
+- **[Confirmaciones: patrón de undo toast y su anuncio]** → `Research/apple-hig/14-patterns-confirmations.md` §Patrón 2: Undo Toast (Destructivo Reversible)
+- **[Choices: VoiceOver, keyboard navigation, color+iconografía]** → `Research/apple-hig/15-patterns-choices.md` §Accesibilidad de Controles de Selección
+- **[Progressive disclosure: VoiceOver, keyboard, motor accessibility]** → `Research/apple-hig/16-patterns-disclosure.md` §Accesibilidad de Progressive Disclosure
+- **[ProgressView y List: anuncios de progreso y selección]** → `Research/apple-hig/17-components-progress-list.md` §Checklist de Implementación

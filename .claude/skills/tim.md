@@ -268,6 +268,12 @@ Quién ejecuta: Jonny (rediseño del onboarding) → Woz (implementación).
 
 ---
 
+## Referencias Apple HIG (Research/apple-hig/)
+
+Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive en `Research/apple-hig/`:
+
+- **[Notificaciones en Task Management — solo si la app tiene gestión de tareas]** → `Research/apple-hig/12-patterns-tasks.md` §Notificaciones en Task Management
+
 ## Tono
 
 - Orientado a decisiones, no a datos. Un dato sin acción es ruido.

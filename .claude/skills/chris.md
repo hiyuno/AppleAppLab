@@ -271,3 +271,15 @@ Chris → Jonny (rediseña) → Woz (implementa) → Chris (re-verifica)
 - Sin especulación. Si no lo probaste, no lo reportes.
 - Impacto estimado siempre. "Afecta a usuarios con región MX" es más útil que solo "bug de formato de fecha".
 - Español o inglés: el del usuario.
+
+---
+
+## Referencias Apple HIG (Research/apple-hig/)
+
+Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive en `Research/apple-hig/`:
+
+- **[Diferencias iOS vs macOS — navegación, menús, input, multitasking, checklists por plataforma]** → `Research/apple-hig/10-platform-differences.md` completo
+- **[Auth — diferencias de plataforma]** → `Research/apple-hig/06-patterns-auth.md` §Platform Differences
+- **[Sharing — diferencias de plataforma]** → `Research/apple-hig/07-patterns-sharing.md` §Platform Differences
+- **[Drag & drop — diseño específico iOS/iPadOS vs macOS]** → `Research/apple-hig/11-patterns-dragdrop.md` §Diseño en iOS/iPadOS y §Diseño en macOS
+- **[Table vs List — cuándo Table aplica solo en macOS/iPad]** → `Research/apple-hig/17-components-progress-list.md` §Cuándo Usar Table

@@ -157,3 +157,32 @@ Para apps que usan Liquid Glass (iOS 26+ / macOS 26+), revisa estas reglas espec
 - No subjetivo. "Esto viola el principio X" no "esto no me gusta".
 - Constructivo — siempre incluye la corrección, no solo el problema.
 - Español o inglés: el del usuario.
+
+---
+
+## Checklist HIG — Patrones de Interacción (Pasada 3)
+
+Cuando la pantalla o flujo incluye drag & drop, task management, permisos, confirmaciones, selección de opciones, disclosure progresivo, o listas/progreso, verifica también:
+
+- [ ] **Drag & drop**: ¿hay siempre una alternativa sin drag (botón, menú, keyboard) para la misma acción?
+- [ ] **Task management**: ¿operaciones destructivas tienen undo/redo? ¿hay `ProgressView` para operaciones >1 segundo?
+- [ ] **Permisos**: ¿se piden just-in-time (no en launch) con purpose string específico, no genérico?
+- [ ] **Confirmaciones**: ¿las acciones irreversibles tienen confirmación explícita, y las reversibles usan undo toast en vez de dialog?
+- [ ] **Confirmaciones**: ¿acciones reversibles NO tienen confirmación innecesaria (fricción sin razón)?
+- [ ] **Choices**: ¿el control type es correcto (radio vs checkbox vs toggle) y el target size es >=44×44pt?
+- [ ] **Disclosure**: ¿el contenido básico es visible por defecto y el avanzado está claramente indicado (no oculto sin pista)?
+- [ ] **Disclosure**: ¿máximo 2 niveles de nesting antes de pasar a tabs?
+- [ ] **List/Table**: ¿`Table` se reserva para macOS/iPad y `List` para iPhone? ¿swipe actions destructivos están diferenciados visualmente?
+
+## Referencias Apple HIG (Research/apple-hig/)
+
+Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive en `Research/apple-hig/`:
+
+- **[Drag & drop: cuándo usar, feedback visual, accesibilidad]** → `Research/apple-hig/11-patterns-dragdrop.md` §Consideraciones de Accesibilidad
+- **[Task management: undo, notificaciones, progreso]** → `Research/apple-hig/12-patterns-tasks.md` §Checklist de Implementación
+- **[Permisos: principios de solicitud y purpose strings]** → `Research/apple-hig/13-patterns-permissions.md` §Principios de Solicitud (HIG Oficial)
+- **[Permisos: checklist completo]** → `Research/apple-hig/13-patterns-permissions.md` §Checklist de Implementación
+- **[Confirmaciones: cuándo confirmar vs usar undo]** → `Research/apple-hig/14-patterns-confirmations.md` §Checklist de Implementación
+- **[Choices: radio/checkbox/toggle, accesibilidad de selección]** → `Research/apple-hig/15-patterns-choices.md` §Checklist de Implementación
+- **[Progressive disclosure: anti-patrones y checklist]** → `Research/apple-hig/16-patterns-disclosure.md` §Checklist de Implementación
+- **[ProgressView, List, Table: checklist de implementación]** → `Research/apple-hig/17-components-progress-list.md` §Checklist de Implementación
