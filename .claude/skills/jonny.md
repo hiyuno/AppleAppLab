@@ -287,6 +287,133 @@ Lo que es idéntico en ambos (tipografía, color semántico, espaciado, radios) 
 - **Definido en:** Assets.xcassets > AccentColor
 - **Uso:** botones CTA, links, iconos activos
 
+---
+
+### Sistema de paleta desde un accent color
+
+Cuando el usuario da un accent color, Jonny genera la paleta completa de tokens. El proceso es siempre el mismo:
+
+#### Paso 1 — Descomponer el accent en HSL
+
+Convierte el hex a HSL: `H` (hue 0–360), `S` (saturation 0–100%), `L` (lightness 0–100%).
+
+Ejemplo con `#4F7CFF` (azul):
+- H: 225 — S: 100% — L: 65%
+
+#### Paso 2 — Generar la escala de 9 tonos
+
+Mantén H y S constantes. Varía L en pasos fijos:
+
+| Token | Lightness (Light mode) | Lightness (Dark mode) | Uso típico |
+|-------|----------------------|----------------------|-----------|
+| `accent-50` | L: 95% | L: 10% | Fondos tintados muy sutiles |
+| `accent-100` | L: 88% | L: 15% | Fondos de badge, chip seleccionado |
+| `accent-200` | L: 78% | L: 22% | Bordes suaves, separadores de acento |
+| `accent-300` | L: 65% | L: 32% | Estados hover en light mode |
+| `accent-400` | L: 55% | L: 45% | Iconos secundarios activos |
+| `accent-500` | **L original** | **L original** | **El accent base — no cambia** |
+| `accent-600` | L: 45% | L: 60% | Pressed state, botones en dark mode |
+| `accent-700` | L: 35% | L: 72% | Texto sobre fondo accent |
+| `accent-800` | L: 25% | L: 82% | Texto de alto contraste |
+| `accent-900` | L: 15% | L: 92% | Texto sobre superficies muy claras |
+
+**Regla de inversión en dark mode:** los tonos claros (50–300) se vuelven oscuros y los oscuros (600–900) se vuelven claros. El `accent-500` es el único que no cambia — es el color de marca.
+
+#### Paso 3 — Derivar los tokens semánticos
+
+Con la escala generada, asigna los roles semánticos:
+
+| Token semántico | Light mode | Dark mode | Uso |
+|----------------|-----------|-----------|-----|
+| `accent` | `accent-500` | `accent-500` | Botones CTA, links, iconos activos |
+| `accentSubtle` | `accent-100` | `accent-100` (dark) | Fondo de chip seleccionado, badge |
+| `accentBorder` | `accent-300` | `accent-300` (dark) | Bordes de componentes con acento |
+| `accentForeground` | `accent-800` | `accent-800` (dark) | Texto sobre superficies de acento |
+| `accentPressed` | `accent-600` | `accent-600` (dark) | Estado pressed de botones |
+| `accentDisabled` | `accent-200` | `accent-200` (dark) | Estado disabled |
+
+#### Paso 4 — Verificar contraste WCAG en cada combinación crítica
+
+Antes de cerrar la paleta, verifica estas 4 combinaciones obligatorias:
+
+| Combinación | Ratio mínimo | Cómo calcular |
+|-------------|-------------|---------------|
+| Texto blanco sobre `accent-500` | 4.5:1 (texto normal) | Si L > 55%, el blanco falla — usar texto oscuro |
+| Texto negro sobre `accent-500` | 4.5:1 | Si L < 45%, el negro falla — usar texto claro |
+| `accent-500` sobre `systemBackground` | 3:1 (elementos UI grandes) | Casi siempre pasa si L está entre 30–70% |
+| `accentSubtle` como fondo con texto `primary` | 4.5:1 | El texto del sistema suele pasar — verificar igual |
+
+**Regla de texto sobre accent:** si `L(accent-500) > 55%` → texto en `accent-900` (oscuro). Si `L < 55%` → texto en blanco (`accent-50`).
+
+```swift
+// Fórmula de relative luminance simplificada para verificación rápida:
+// Si L en HSL > 55% → el color es "claro" → usa texto oscuro
+// Si L en HSL < 55% → el color es "oscuro" → usa texto blanco
+// Zona gris 45–65%: verifica con una herramienta (Contrast.app, Polychrome)
+```
+
+#### Paso 5 — Definir en Asset Catalog
+
+Cada token semántico va como un `Color Set` en `Assets.xcassets` con variante Any/Dark:
+
+```
+Assets.xcassets/
+├── AccentColor.colorset        ← accent-500, mismo en light y dark
+├── Colors/
+│   ├── AccentSubtle.colorset   ← accent-100 light / accent-100 dark
+│   ├── AccentBorder.colorset   ← accent-300 light / accent-300 dark
+│   ├── AccentForeground.colorset
+│   ├── AccentPressed.colorset
+│   └── AccentDisabled.colorset
+```
+
+En SwiftUI:
+```swift
+// Extensión para acceder por nombre sin strings sueltos
+extension Color {
+    static let accentSubtle    = Color("AccentSubtle")
+    static let accentBorder    = Color("AccentBorder")
+    static let accentForeground = Color("AccentForeground")
+    static let accentPressed   = Color("AccentPressed")
+    static let accentDisabled  = Color("AccentDisabled")
+}
+```
+
+#### Ejemplo completo — accent `#4F7CFF`
+
+HSL base: H 225 / S 100% / L 65%
+
+| Token | Light (hex aprox.) | Dark (hex aprox.) |
+|-------|------------------|------------------|
+| `accent-50` | `#EEF3FF` | `#0A1029` |
+| `accent-100` | `#D6E2FF` | `#0F1A40` |
+| `accent-200` | `#ADC5FF` | `#1A2D6B` |
+| `accent-300` | `#7BA4FF` | `#2A47A8` |
+| `accent-400` | `#6490FF` | `#3D5FD4` |
+| **`accent-500`** | **`#4F7CFF`** | **`#4F7CFF`** |
+| `accent-600` | `#3A68E8` | `#7BA4FF` |
+| `accent-700` | `#2A52C4` | `#ADC5FF` |
+| `accent-800` | `#1A3A9A` | `#D6E2FF` |
+| `accent-900` | `#0D2270` | `#EEF3FF` |
+
+Texto sobre `accent-500` (L: 65% → claro): usar `accent-900` (`#0D2270`) en light, blanco en dark.
+
+#### Colores adicionales — estados semánticos
+
+Además de la paleta de acento, toda app necesita estos colores de estado — siempre usando los colores del sistema de Apple, no custom:
+
+| Estado | Color SwiftUI | Cuándo |
+|--------|--------------|--------|
+| Éxito / confirmación | `Color.green` / `.systemGreen` | Guardado, completado, válido |
+| Error / destructivo | `Color.red` / `.systemRed` | Error, eliminar, crítico |
+| Advertencia | `Color.orange` / `.systemOrange` | Alerta no crítica, expiración |
+| Información | `Color.blue` / `.systemBlue` | Neutral informativo |
+| Deshabilitado | `.secondary.opacity(0.4)` | Controles no interactivos |
+
+Nunca uses hex custom para estos — el sistema los adapta a dark mode, Increase Contrast y accesibilidad automáticamente.
+
+---
+
 ### Colores custom (si los hay)
 | Nombre | Light | Dark | Uso |
 |--------|-------|------|-----|
