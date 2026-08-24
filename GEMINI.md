@@ -16,15 +16,20 @@ Cuando el usuario necesite un agente específico, lee su skill file y adopta ese
 | Scott | `.claude/skills/scott.md` | PM — idea → roadmap | `PRD.md` |
 | Avie | `.claude/skills/avie.md` | Arquitecto — decisiones técnicas | `TRD.md` |
 | Ivan | `.claude/skills/ivan.md` | Security Architect & Independent Reviewer | `SECURITY.md` + `SECURITY_AUDIT.md` |
-| Jonny | `.claude/skills/jonny.md` | Diseño — HIG, pantallas | `DESIGN_LIQUID.md` + `DESIGN_FROST.md` |
-| Woz | `.claude/skills/woz.md` | SwiftUI/Swift — código idiomático | código, `.xcodeproj` |
+| Jonny | `.claude/skills/jonny.md` | Diseño — HIG, pantallas, motion design | `DESIGN_LIQUID.md` + `DESIGN_FROST.md` |
+| Woz | `.claude/skills/woz.md` | SwiftUI/Swift — código idiomático, optimización | código, `.xcodeproj` |
 | Larry | `.claude/skills/larry.md` | HIG Reviewer — auditoría | notas de auditoría |
-| Bertrand | `.claude/skills/bertrand.md` | QA — testing, TestFlight | `TEST_PLAN.md` |
+| Bertrand | `.claude/skills/bertrand.md` | QA — testing, TestFlight, performance profiling | `TEST_PLAN.md` |
 | Sarah | `.claude/skills/sarah.md` | Accesibilidad — VoiceOver, Dynamic Type | notas de auditoría |
+| Chris | `.claude/skills/chris.md` | Compatibility Auditor — dispositivos reales, OS, red, permisos | `COMPAT_AUDIT.md` |
 | Phil | `.claude/skills/phil.md` | App Store — metadata, lanzamiento | `APPSTORE.md` |
 | Craig | `.claude/skills/craig.md` | CI/CD — Xcode Cloud, GitHub Actions | pipeline config |
 | Kara | `.claude/skills/kara.md` | Monetización — StoreKit 2, IAP | código StoreKit 2 |
 | Eve | `.claude/skills/eve.md` | Widgets, Live Activities, App Intents | código WidgetKit |
+| Kate | `.claude/skills/kate.md` | Legal & Compliance — Privacy Policy, GDPR/CCPA/COPPA, licencias, Export Compliance | `LEGAL_AUDIT.md` + `PRIVACY_POLICY.md` |
+| Kim | `.claude/skills/kim.md` | Localización & i18n — .xcstrings, plurales, RTL (solo si multi-idioma) | `L10N_AUDIT.md` |
+| Tim | `.claude/skills/tim.md` | Analytics — TelemetryDeck/PostHog (solo si la app lo necesita) | `ANALYTICS.md` |
+| John | `.claude/skills/john.md` | Core ML & AI — on-device vs API, LLMs (solo si hay features de IA) | `AI_SPEC.md` |
 
 ## Cadena de documentos
 
@@ -41,6 +46,12 @@ Cada agente produce un documento y los siguientes lo leen:
 | `KNOWN_ISSUES.md` o `.appleapplab/KNOWN_ISSUES.md` | App Master | Steve filtra entradas relevantes |
 | `PROJECT_LEARNINGS.md` | Agente propietario; Steve coordina | Equipo del proyecto |
 | `TEST_PLAN.md` | Bertrand | Phil |
+| `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
+| `LEGAL_AUDIT.md` | Kate | Steve → usuario → agentes |
+| `PRIVACY_POLICY.md` | Kate | Phil |
+| `ANALYTICS.md` | Tim | Woz |
+| `AI_SPEC.md` | John | Ivan, Woz |
+| `L10N_AUDIT.md` | Kim | Woz, Phil |
 | `APPSTORE.md` | Phil | — |
 
 Steve consulta la memoria global y local antes de trabajo relevante. El especialista propietario documenta y verifica incidentes en `PROJECT_LEARNINGS.md`; Steve coordina retrospectivas y App Master decide promociones globales.

@@ -26,37 +26,55 @@ Cuando el flujo requiera un agente, lee su skill file y adopta ese rol completam
 | Scott | `.claude/skills/scott.md` | PM — idea → roadmap | `PRD.md` |
 | Avie | `.claude/skills/avie.md` | Arquitecto — stack y estructura | `TRD.md` |
 | Ivan | `.claude/skills/ivan.md` | Security Architect & Independent Reviewer | `SECURITY.md` + `SECURITY_AUDIT.md` |
-| Jonny | `.claude/skills/jonny.md` | Diseño UI/UX, HIG, pantallas | `DESIGN_LIQUID.md` + `DESIGN_FROST.md` |
-| Woz | `.claude/skills/woz.md` | SwiftUI/Swift — código idiomático Apple | código, `.xcodeproj` |
+| Jonny | `.claude/skills/jonny.md` | Diseño UI/UX, HIG, pantallas, motion design | `DESIGN_LIQUID.md` + `DESIGN_FROST.md` |
+| Woz | `.claude/skills/woz.md` | SwiftUI/Swift — código idiomático Apple, optimización | código, `.xcodeproj` |
 | Larry | `.claude/skills/larry.md` | HIG Reviewer — auditoría Apple guidelines | notas de auditoría |
-| Bertrand | `.claude/skills/bertrand.md` | QA — testing, TestFlight | `TEST_PLAN.md` |
+| Bertrand | `.claude/skills/bertrand.md` | QA — testing, TestFlight, profiling de performance | `TEST_PLAN.md` |
 | Sarah | `.claude/skills/sarah.md` | Accesibilidad — VoiceOver, Dynamic Type | notas de auditoría |
+| Chris | `.claude/skills/chris.md` | Compatibility Auditor — dispositivos reales, OS, red, permisos | `COMPAT_AUDIT.md` |
 | Phil | `.claude/skills/phil.md` | App Store — metadata, lanzamiento | `APPSTORE.md` |
 | Craig | `.claude/skills/craig.md` | CI/CD — Xcode Cloud, GitHub Actions, fastlane | pipeline config |
 | Kara | `.claude/skills/kara.md` | Monetización — StoreKit 2, IAP, suscripciones | código StoreKit 2 |
 | Eve | `.claude/skills/eve.md` | Widgets, Live Activities, App Intents | código WidgetKit |
+| Kate | `.claude/skills/kate.md` | Legal & Compliance — Privacy Policy, GDPR/CCPA/COPPA, licencias, Export Compliance | `LEGAL_AUDIT.md` + `PRIVACY_POLICY.md` |
+| Kim | `.claude/skills/kim.md` | Localización & i18n — .xcstrings, plurales, RTL, formatos por región | `L10N_AUDIT.md` |
+| Tim | `.claude/skills/tim.md` | Analytics — TelemetryDeck/PostHog, privacidad (solo si la app lo necesita) | `ANALYTICS.md` |
+| John | `.claude/skills/john.md` | Core ML & AI — on-device vs API, Core ML, LLMs (solo si hay features de IA) | `AI_SPEC.md` |
 
 ## Flujo estándar
 
 ```
-Scott (PRD) → Avie (TRD) → Ivan (plan si aplica) → Jonny (DESIGN) → Woz (código) → Ivan (auditoría) → Larry (HIG) → Bertrand (QA) → Sarah (a11y) → Ivan (archive recheck) → Phil (App Store)
+Scott (PRD) → Avie (TRD) → Ivan (plan si aplica) → Jonny (DESIGN) → Woz (código) → Ivan (auditoría) → Larry (HIG) → Bertrand (QA) → Sarah (a11y) → Chris (compat) → Ivan (archive recheck) → Kate (legal) → Phil (App Store)
 ```
 
 Agregar según necesidad:
 - **CI/CD** → Ivan hace archive recheck antes de Craig
 - **Monetización** → Kara (después de Woz) → Ivan (auditoría)
 - **Widgets** → Eve (después de Woz) → Ivan (auditoría)
+- **Analytics** → Tim (cuando el usuario lo pide o antes del primer lanzamiento)
+- **Features de IA** → John (solo si hay inteligencia real) → Ivan (si hay API externa)
+- **Multi-idioma** → Kim → Woz (fixes) → Phil (App Store l10n)
 - **Seguridad sensible** → Ivan después de Avie, después de Woz y sobre el archive antes de Phil/Craig
+
+## Fast Track — tiers de complejidad
+
+| Tier | Perfil | Flujo |
+|------|--------|-------|
+| **1 — Fast Track** | 1–4 pantallas, sin auth, sin APIs externas, datos locales | Scott → Avie → Jonny → Woz → Bertrand |
+| **2 — Estándar** | Auth O APIs externas O 5+ pantallas O monetización | Scott → Avie → Ivan → Jonny → Woz → Ivan → Larry → Bertrand → Sarah |
+| **3 — Completo** | Auth + datos sensibles, múltiples integraciones, distribución pública inminente | Flujo completo — todos los agentes |
 
 ## Flujos por contexto
 
-- **Idea nueva** → Scott → Avie → Ivan (plan si aplica) → Jonny → Woz → Ivan → Larry → Bertrand → Sarah → Ivan (archive recheck) → Phil
+- **Idea nueva** → Scott → Avie → Ivan (plan si aplica) → Jonny → Woz → Ivan → Larry → Bertrand → Sarah → Chris → Ivan (archive recheck) → Kate → Phil
 - **Feature nueva** → flujo mínimo + gates de Ivan según riesgo
 - **Bug** → Avie (diagnóstico) → Woz (fix) → Bertrand (regresión)
 - **Bug de seguridad** → Ivan (diagnóstico) → Woz (fix) → Ivan (recheck) → Bertrand (regresión)
-- **Revisión antes de lanzar** → Ivan (auditoría/archive) → Larry → Sarah → Phil
-
-Toda app recibe una auditoría de seguridad proporcional. Ambos pases de Ivan son obligatorios con APIs externas, auth, datos sensibles, entitlements/helpers/App Groups, webhooks o distribución directa. Ivan no implementa fixes; Woz los ejecuta. Critical/High bloquean release salvo aceptación explícita con owner y expiración.
+- **Revisión antes de lanzar** → Ivan (auditoría/archive) → Larry → Sarah → Chris → Kate → Phil
+- **Analytics** → Tim → Woz (implementación)
+- **Features de IA** → John → Ivan (si API externa) → Woz
+- **Localización** → Kim → Woz (fixes) → Kim (re-verifica) → Phil
+- **Legal** → Kate → Steve presenta hallazgos al usuario → usuario aprueba → agentes implementan
 
 ## Cadena de documentos del proyecto
 
@@ -73,6 +91,12 @@ Antes de lanzar cualquier agente, lee los documentos existentes y pásalos como 
 | `KNOWN_ISSUES.md` o `.appleapplab/KNOWN_ISSUES.md` | App Master | Steve filtra entradas relevantes |
 | `PROJECT_LEARNINGS.md` | Agente propietario; Steve coordina | Equipo del proyecto |
 | `TEST_PLAN.md` | Bertrand | Phil |
+| `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
+| `LEGAL_AUDIT.md` | Kate | Steve → usuario → agentes |
+| `PRIVACY_POLICY.md` | Kate | Phil |
+| `ANALYTICS.md` | Tim | Woz |
+| `AI_SPEC.md` | John | Ivan, Woz |
+| `L10N_AUDIT.md` | Kim | Woz, Phil |
 | `APPSTORE.md` | Phil | — |
 
 Steve consulta la memoria global y local antes de trabajo relevante. El especialista propietario documenta reproducción y verificación en `PROJECT_LEARNINGS.md`; App Master es el único curador de la base global.
