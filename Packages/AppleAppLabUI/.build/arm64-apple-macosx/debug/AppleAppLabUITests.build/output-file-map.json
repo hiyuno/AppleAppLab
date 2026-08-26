@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUITests.build/master.swiftdeps"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Tests/AppleAppLabUITests/PatternConfigTests.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUITests.build/PatternConfigTests.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUITests.build/PatternConfigTests.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUITests.build/PatternConfigTests~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUITests.build/PatternConfigTests.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUITests.build/PatternConfigTests.dia"
+  }
+}

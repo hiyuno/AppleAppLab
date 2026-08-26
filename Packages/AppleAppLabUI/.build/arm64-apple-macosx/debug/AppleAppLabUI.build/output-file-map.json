@@ -1,0 +1,299 @@
+{
+  "": {
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/master.swiftdeps"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Badges/BadgePattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/BadgePattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/BadgePattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/BadgePattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/BadgePattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/BadgePattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Badges/LabBadge.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabBadge.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabBadge.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabBadge~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabBadge.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabBadge.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Buttons/ButtonsPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ButtonsPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ButtonsPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ButtonsPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ButtonsPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ButtonsPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Buttons/LabButton.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabButton.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabButton.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabButton~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabButton.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabButton.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Cards/CardsPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CardsPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CardsPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CardsPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CardsPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CardsPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Cards/LabCard.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabCard.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabCard.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabCard.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabCard.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Cards/LabDashboardCards.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabDashboardCards.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabDashboardCards.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabDashboardCards~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabDashboardCards.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabDashboardCards.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Cards/LabNestedCard.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabNestedCard.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabNestedCard.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabNestedCard~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabNestedCard.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabNestedCard.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/CheckboxRadio/CheckboxRadioPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CheckboxRadioPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CheckboxRadioPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CheckboxRadioPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CheckboxRadioPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CheckboxRadioPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/CheckboxRadio/LabCheckboxGroup.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabCheckboxGroup.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabCheckboxGroup.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabCheckboxGroup~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabCheckboxGroup.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabCheckboxGroup.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/CheckboxRadio/LabRadioGroup.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabRadioGroup.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabRadioGroup.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabRadioGroup~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabRadioGroup.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabRadioGroup.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/EmptyStates/EmptyStatesPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/EmptyStatesPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/EmptyStatesPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/EmptyStatesPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/EmptyStatesPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/EmptyStatesPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/EmptyStates/LabEmptyState.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabEmptyState.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabEmptyState.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabEmptyState~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabEmptyState.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabEmptyState.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Forms/FormsPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/FormsPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/FormsPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/FormsPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/FormsPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/FormsPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Forms/LabTextField.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTextField.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTextField.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTextField~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTextField.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTextField.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Lists/LabList.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabList.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabList.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabList~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabList.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabList.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Lists/ListsPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ListsPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ListsPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ListsPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ListsPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ListsPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Loading/LabProgressIndicator.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabProgressIndicator.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabProgressIndicator.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabProgressIndicator~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabProgressIndicator.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabProgressIndicator.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Loading/LoadingPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LoadingPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LoadingPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LoadingPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LoadingPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LoadingPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Navigation/LabTabBar.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTabBar.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTabBar.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTabBar~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTabBar.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTabBar.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Navigation/NavigationPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/NavigationPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/NavigationPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/NavigationPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/NavigationPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/NavigationPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Onboarding/LabOnboardingStep.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabOnboardingStep.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabOnboardingStep.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabOnboardingStep~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabOnboardingStep.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabOnboardingStep.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Onboarding/OnboardingPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/OnboardingPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/OnboardingPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/OnboardingPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/OnboardingPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/OnboardingPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Sheets/SheetsPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/SheetsPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/SheetsPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/SheetsPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/SheetsPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/SheetsPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/TodoList/LabTodoList.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTodoList.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTodoList.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTodoList~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTodoList.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabTodoList.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/TodoList/TodoListPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TodoListPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TodoListPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TodoListPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TodoListPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TodoListPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Toggles/LabToggleRow.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabToggleRow.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabToggleRow.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabToggleRow~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabToggleRow.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabToggleRow.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Components/Toggles/TogglesPattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TogglesPattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TogglesPattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TogglesPattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TogglesPattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TogglesPattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Support/InspectablePattern.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/InspectablePattern.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/InspectablePattern.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/InspectablePattern~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/InspectablePattern.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/InspectablePattern.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Support/InspectableProperty.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/InspectableProperty.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/InspectableProperty.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/InspectableProperty~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/InspectableProperty.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/InspectableProperty.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Support/LabWindowFrame.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabWindowFrame.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabWindowFrame.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabWindowFrame~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabWindowFrame.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/LabWindowFrame.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Support/PatternConfig.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/PatternConfig.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/PatternConfig.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/PatternConfig~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/PatternConfig.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/PatternConfig.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Tokens/AccentPalette.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/AccentPalette.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/AccentPalette.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/AccentPalette~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/AccentPalette.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/AccentPalette.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Tokens/AccentPaletteView.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/AccentPaletteView.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/AccentPaletteView.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/AccentPaletteView~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/AccentPaletteView.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/AccentPaletteView.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Tokens/ColorTokens.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ColorTokens.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ColorTokens.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ColorTokens~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ColorTokens.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ColorTokens.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Tokens/CornerStyle.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CornerStyle.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CornerStyle.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CornerStyle~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CornerStyle.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/CornerStyle.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Tokens/ElevationLevel.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ElevationLevel.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ElevationLevel.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ElevationLevel~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ElevationLevel.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/ElevationLevel.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Tokens/MotionTokens.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/MotionTokens.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/MotionTokens.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/MotionTokens~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/MotionTokens.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/MotionTokens.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Tokens/SpacingTokens.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/SpacingTokens.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/SpacingTokens.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/SpacingTokens~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/SpacingTokens.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/SpacingTokens.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Tokens/TypographyTokens.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TypographyTokens.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TypographyTokens.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TypographyTokens~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TypographyTokens.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/TypographyTokens.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Tokens/WindowMaterial.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/WindowMaterial.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/WindowMaterial.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/WindowMaterial~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/WindowMaterial.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/WindowMaterial.dia"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/Sources/AppleAppLabUI/Tokens/WindowTitleBarStyle.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/WindowTitleBarStyle.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/WindowTitleBarStyle.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/WindowTitleBarStyle~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/WindowTitleBarStyle.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUI.build/WindowTitleBarStyle.dia"
+  }
+}

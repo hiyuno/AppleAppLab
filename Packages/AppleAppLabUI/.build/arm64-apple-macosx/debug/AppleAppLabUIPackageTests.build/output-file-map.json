@@ -1,0 +1,12 @@
+{
+  "": {
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUIPackageTests.build/master.swiftdeps"
+  },
+  "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUIPackageTests.derived/runner.swift": {
+    "dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUIPackageTests.build/runner.d",
+    "object": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUIPackageTests.build/runner.swift.o",
+    "swiftmodule": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUIPackageTests.build/runner~partial.swiftmodule",
+    "swift-dependencies": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUIPackageTests.build/runner.swiftdeps",
+    "diagnostics": "/Users/yuno/Documents/GitSync/AppleAppLab/Packages/AppleAppLabUI/.build/arm64-apple-macosx/debug/AppleAppLabUIPackageTests.build/runner.dia"
+  }
+}
