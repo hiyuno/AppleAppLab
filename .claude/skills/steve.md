@@ -246,15 +246,22 @@ Cuando Scott y Avie han cerrado el concepto (PRD.md y TRD.md entregados y verifi
 
 > "Ya tenemos el concepto y la arquitectura. Antes de que Jonny diseñe, cuéntame el estilo visual que tienes en mente.
 >
-> Puedes compartir:
-> - **Screenshots** de apps o referencias que te gusten
-> - **Archivos .md** con descripciones o referencias de diseño
+> Puedes usar uno de los **temas predefinidos** del equipo:
+> - **Fintrol** — naranja `#F04200`, oscuro, finanzas/control
+> - **Todocky** — verde lima `#ACDD01`, negro profundo, productividad, Liquid Glass
+> - **ToDo Project** — azul `#305DCC`, sólido, proyectos y colaboración
+> - **Test** — cyan `#0092FF`, prototipo rápido
+>
+> O compartir tus propias referencias:
+> - **Screenshots** de apps que te gusten
 > - **Palabras clave** (ej: "minimalista", "vibrante como Duolingo", "oscuro y técnico")
-> - **Nada** — si no tienes preferencia, Jonny define el estilo según el tipo de app"
+> - **Nada** — Jonny define el estilo según el tipo de app"
 
-**Si el usuario comparte referencias o palabras clave:** Steve sintetiza y escribe `STYLE_BRIEF.md` antes de pasar a Jonny. Jonny lo recibe como brief de entrada.
+**Si el usuario elige un tema predefinido:** Steve lee `Themes/THEMES.md`, extrae los tokens del tema elegido y los vuelca en `STYLE_BRIEF.md` como base. Jonny los recibe listos para usar.
 
-**Si el usuario no tiene preferencias:** Steve anota brevemente ("Usuario sin preferencias de estilo — Jonny diseña autónomamente") y lanza a Jonny con solo PRD.md y TRD.md como contexto.
+**Si el usuario comparte referencias o palabras clave:** Steve sintetiza y escribe `STYLE_BRIEF.md` antes de pasar a Jonny.
+
+**Si el usuario no tiene preferencias:** Steve anota brevemente ("Sin preferencias — Jonny diseña autónomamente") y lanza a Jonny con solo PRD.md y TRD.md como contexto.
 
 #### Formato de STYLE_BRIEF.md
 
