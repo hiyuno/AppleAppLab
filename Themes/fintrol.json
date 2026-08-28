@@ -1,0 +1,255 @@
+{
+  "windowMaterial": "frost",
+  "wallpaper": {
+    "fileName": "wallpaper-07",
+    "displayName": "Wallpaper 07",
+    "id": "wallpaper-07"
+  },
+  "name": "Fintrol",
+  "titleBarStyle": "full",
+  "cornerStyle": "squircle",
+  "fontDesign": "standard",
+  "iconRenderingMode": "hierarchical",
+  "elevation": "flat",
+  "appearanceMode": "dark",
+  "backgroundColor": {
+    "red": 0.19607843137254902,
+    "blue": 0.19607843137254902,
+    "opacity": 1,
+    "green": 0.19607843137254902
+  },
+  "accentColor": {
+    "red": 0.9435559511184692,
+    "blue": 0,
+    "opacity": 1,
+    "green": 0.25933265686035156
+  },
+  "transparency": 0.5,
+  "fontWeight": "regular",
+  "motionSpeedMultiplier": 1,
+  "id": "630ED843-89C7-4BAE-9B26-72800BE9E646",
+  "patternOverrides": {
+    "Checkbox & Radio": {
+      "duration": 0.2,
+      "accentOutlineColor": {
+        "opacity": 1,
+        "green": 0.36078429222106934,
+        "red": 0.36862748861312866,
+        "blue": 0.9019607901573181
+      },
+      "spacing": 15.317571271929822,
+      "cornerRadius": 999,
+      "accentColor": {
+        "opacity": 1,
+        "green": 0.25933265686035156,
+        "red": 0.9435559511184692,
+        "blue": 0
+      },
+      "secondaryOutlineColor": {
+        "opacity": 1,
+        "green": 0.7686275243759155,
+        "red": 0.4156862497329712,
+        "blue": 0.8627451658248901
+      },
+      "tertiaryColor": {
+        "opacity": 1,
+        "green": 0.6235294938087463,
+        "red": 1,
+        "blue": 0.03921568766236305
+      },
+      "secondaryColor": {
+        "opacity": 1,
+        "green": 0.7686275243759155,
+        "red": 0.4156862497329712,
+        "blue": 0.8627451658248901
+      },
+      "surfaceOpacityMultiplier": 1,
+      "variant": "",
+      "tertiaryOutlineColor": {
+        "green": 0.6235294938087463,
+        "blue": 0.03921568766236305,
+        "opacity": 1,
+        "red": 1
+      },
+      "borderWidth": 1
+    },
+    "Listas/tablas": {
+      "duration": 0.2,
+      "accentOutlineColor": {
+        "opacity": 1,
+        "green": 0.36078429222106934,
+        "red": 0.36862748861312866,
+        "blue": 0.9019607901573181
+      },
+      "spacing": 7.259457236842106,
+      "cornerRadius": 7.48218201754386,
+      "accentColor": {
+        "opacity": 1,
+        "green": 0.25933265686035156,
+        "red": 0.9435559511184692,
+        "blue": 0
+      },
+      "secondaryOutlineColor": {
+        "opacity": 1,
+        "green": 0.7686275243759155,
+        "red": 0.4156862497329712,
+        "blue": 0.8627451658248901
+      },
+      "tertiaryColor": {
+        "opacity": 1,
+        "green": 0.6235294938087463,
+        "red": 1,
+        "blue": 0.03921568766236305
+      },
+      "secondaryColor": {
+        "opacity": 1,
+        "green": 0.7686275243759155,
+        "red": 0.4156862497329712,
+        "blue": 0.8627451658248901
+      },
+      "surfaceOpacityMultiplier": 1,
+      "variant": "",
+      "tertiaryOutlineColor": {
+        "green": 0.6235294938087463,
+        "blue": 0.03921568766236305,
+        "opacity": 1,
+        "red": 1
+      },
+      "borderWidth": 1
+    },
+    "Navegaci\u00f3n (tabs/sidebar)": {
+      "tertiaryOutlineColor": {
+        "green": 0.6235294938087463,
+        "blue": 0.03921568766236305,
+        "opacity": 1,
+        "red": 1
+      },
+      "borderWidth": 1,
+      "surfaceOpacityMultiplier": 1,
+      "accentColor": {
+        "opacity": 1,
+        "green": 0.25933265686035156,
+        "blue": 0,
+        "red": 0.9435559511184692
+      },
+      "spacing": 10.701206140350877,
+      "secondaryOutlineColor": {
+        "opacity": 1,
+        "green": 0.7686275243759155,
+        "blue": 0.8627451658248901,
+        "red": 0.4156862497329712
+      },
+      "secondaryColor": {
+        "opacity": 1,
+        "green": 0.7686275243759155,
+        "blue": 0.8627451658248901,
+        "red": 0.4156862497329712
+      },
+      "duration": 0.33752055921052626,
+      "variant": "",
+      "tertiaryColor": {
+        "opacity": 1,
+        "green": 0.6235294938087463,
+        "blue": 0.03921568766236305,
+        "red": 1
+      },
+      "accentOutlineColor": {
+        "opacity": 1,
+        "green": 0.36078429222106934,
+        "blue": 0.9019607901573181,
+        "red": 0.36862748861312866
+      },
+      "cornerRadius": 16
+    },
+    "Formularios/inputs": {
+      "duration": 0.15798125685307018,
+      "tertiaryColor": {
+        "green": 0.6235294938087463,
+        "red": 1,
+        "opacity": 1,
+        "blue": 0.03921568766236305
+      },
+      "spacing": 11.740953947368421,
+      "variant": "",
+      "cornerRadius": 9.610677083333332,
+      "secondaryColor": {
+        "green": 0.7686275243759155,
+        "red": 0.4156862497329712,
+        "opacity": 1,
+        "blue": 0.8627451658248901
+      },
+      "borderWidth": 1,
+      "surfaceOpacityMultiplier": 1,
+      "secondaryOutlineColor": {
+        "green": 0.7686275243759155,
+        "red": 0.4156862497329712,
+        "opacity": 1,
+        "blue": 0.8627451658248901
+      },
+      "accentColor": {
+        "green": 0.25933265686035156,
+        "red": 0.9435559511184692,
+        "opacity": 1,
+        "blue": 0
+      },
+      "tertiaryOutlineColor": {
+        "green": 0.6235294938087463,
+        "blue": 0.03921568766236305,
+        "opacity": 1,
+        "red": 1
+      },
+      "accentOutlineColor": {
+        "green": 0.36078429222106934,
+        "red": 0.36862748861312866,
+        "opacity": 1,
+        "blue": 0.9019607901573181
+      }
+    },
+    "Botones y controles": {
+      "duration": 0.41824801260964917,
+      "accentOutlineColor": {
+        "opacity": 1,
+        "green": 0.36078429222106934,
+        "red": 0.36862748861312866,
+        "blue": 0.9019607901573181
+      },
+      "spacing": 12,
+      "cornerRadius": 9.93421052631579,
+      "accentColor": {
+        "opacity": 1,
+        "green": 0.25933265686035156,
+        "red": 0.9435559511184692,
+        "blue": 0
+      },
+      "secondaryOutlineColor": {
+        "opacity": 1,
+        "green": 0.7686275243759155,
+        "red": 0.4156862497329712,
+        "blue": 0.8627451658248901
+      },
+      "tertiaryColor": {
+        "opacity": 1,
+        "green": 0.6235294938087463,
+        "red": 1,
+        "blue": 0.03921568766236305
+      },
+      "secondaryColor": {
+        "opacity": 1,
+        "green": 0.7686275243759155,
+        "red": 0.4156862497329712,
+        "blue": 0.8627451658248901
+      },
+      "surfaceOpacityMultiplier": 1,
+      "variant": "",
+      "tertiaryOutlineColor": {
+        "green": 0.6235294938087463,
+        "blue": 0.03921568766236305,
+        "opacity": 1,
+        "red": 1
+      },
+      "borderWidth": 1
+    }
+  },
+  "blurIntensity": 0.5,
+  "density": "regular"
+}

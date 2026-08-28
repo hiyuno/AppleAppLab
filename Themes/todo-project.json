@@ -1,0 +1,123 @@
+{
+  "windowMaterial": "solid",
+  "wallpaper": {
+    "fileName": "wallpaper-07",
+    "displayName": "Wallpaper 07",
+    "id": "wallpaper-07"
+  },
+  "name": "ToDo Project",
+  "titleBarStyle": "full",
+  "cornerStyle": "squircle",
+  "fontDesign": "standard",
+  "iconRenderingMode": "hierarchical",
+  "elevation": "subtle",
+  "appearanceMode": "dark",
+  "backgroundColor": {
+    "red": 0.19607838988304138,
+    "blue": 0.19607838988304138,
+    "opacity": 1,
+    "green": 0.19607838988304138
+  },
+  "accentColor": {
+    "red": 0.18981820344924927,
+    "blue": 0.8021087646484375,
+    "opacity": 1,
+    "green": 0.3663446307182312
+  },
+  "transparency": 0.5,
+  "fontWeight": "medium",
+  "motionSpeedMultiplier": 1,
+  "id": "265A8F1B-7EDC-4A02-8138-E0ABD9C54906",
+  "patternOverrides": {
+    "Navegaci\u00f3n (tabs/sidebar)": {
+      "surfaceOpacityMultiplier": 1,
+      "cornerRadius": 16,
+      "accentOutlineColor": {
+        "green": 0.36078429222106934,
+        "blue": 0.9019607901573181,
+        "opacity": 1,
+        "red": 0.36862748861312866
+      },
+      "secondaryColor": {
+        "green": 0.7686275243759155,
+        "blue": 0.8627451658248901,
+        "opacity": 1,
+        "red": 0.4156862497329712
+      },
+      "tertiaryColor": {
+        "green": 0.6235294938087463,
+        "blue": 0.03921568766236305,
+        "opacity": 1,
+        "red": 1
+      },
+      "variant": "",
+      "spacing": 12,
+      "secondaryOutlineColor": {
+        "green": 0.7686275243759155,
+        "blue": 0.8627451658248901,
+        "opacity": 1,
+        "red": 0.4156862497329712
+      },
+      "tertiaryOutlineColor": {
+        "green": 0.6235294938087463,
+        "blue": 0.03921568766236305,
+        "opacity": 1,
+        "red": 1
+      },
+      "duration": 0.3,
+      "borderWidth": 1,
+      "accentColor": {
+        "green": 0.36078429222106934,
+        "blue": 0.9019607901573181,
+        "opacity": 1,
+        "red": 0.36862748861312866
+      }
+    },
+    "Cards": {
+      "surfaceOpacityMultiplier": 2,
+      "cornerRadius": 24,
+      "tertiaryColor": {
+        "opacity": 1,
+        "blue": 0.24609845876693726,
+        "green": 0.11222297698259354,
+        "red": 0.06045539677143097
+      },
+      "secondaryColor": {
+        "opacity": 1,
+        "blue": 0.10617444664239883,
+        "green": 0.04766567796468735,
+        "red": 0.027741385623812675
+      },
+      "accentOutlineColor": {
+        "opacity": 1,
+        "blue": 0.07691335678100586,
+        "green": 0.03498077020049095,
+        "red": 0.019631046801805496
+      },
+      "variant": "Nested (No Content)",
+      "spacing": 20,
+      "secondaryOutlineColor": {
+        "opacity": 1,
+        "blue": 0.10617444664239883,
+        "green": 0.04766567796468735,
+        "red": 0.027741385623812675
+      },
+      "tertiaryOutlineColor": {
+        "green": 0.11222297698259354,
+        "blue": 0.24609845876693726,
+        "opacity": 1,
+        "red": 0.06045539677143097
+      },
+      "duration": 0.2,
+      "borderWidth": 1,
+      "accentColor": {
+        "opacity": 1,
+        "blue": 0.07691335678100586,
+        "green": 0.03498077020049095,
+        "red": 0.019631046801805496
+      }
+    }
+  },
+  "blurIntensity": 0.5,
+  "density": "regular"
+}

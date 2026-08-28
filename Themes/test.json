@@ -1,0 +1,34 @@
+{
+  "windowMaterial": "frost",
+  "wallpaper": {
+    "fileName": "wallpaper-30",
+    "displayName": "Wallpaper 30",
+    "id": "wallpaper-30"
+  },
+  "name": "Test",
+  "titleBarStyle": "full",
+  "cornerStyle": "squircle",
+  "fontDesign": "standard",
+  "iconRenderingMode": "hierarchical",
+  "elevation": "subtle",
+  "appearanceMode": "dark",
+  "backgroundColor": {
+    "red": 0.05865491181612015,
+    "blue": 0.05865491181612015,
+    "opacity": 1,
+    "green": 0.05865491181612015
+  },
+  "accentColor": {
+    "red": 0,
+    "blue": 1,
+    "opacity": 1,
+    "green": 0.576283872127533
+  },
+  "transparency": 0.5121217757936508,
+  "fontWeight": "regular",
+  "motionSpeedMultiplier": 1,
+  "id": "86D8BD91-1205-4925-921F-A709029D8D3F",
+  "patternOverrides": {},
+  "blurIntensity": 0,
+  "density": "regular"
+}

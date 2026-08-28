@@ -24,6 +24,14 @@ mkdir -p ".appleapplab"
 echo "$REMOTE_VERSION" > ".appleapplab/VERSION"
 echo "  ✓ Versión $REMOTE_VERSION registrada en .appleapplab/VERSION"
 
+# --- Temas predefinidos ---
+mkdir -p "Themes"
+for theme in fintrol todocky todo-project test; do
+  curl -sf "$RAW/Themes/${theme}.json" -o "Themes/${theme}.json" && true
+done
+curl -sf "$RAW/Themes/THEMES.md" -o "Themes/THEMES.md"
+echo "  ✓ Temas instalados en Themes/ (Fintrol, Todocky, ToDo Project, Test)"
+
 # --- Memoria evolutiva ---
 curl -fsSL "$RAW/KNOWN_ISSUES.md" -o ".appleapplab/KNOWN_ISSUES.md"
 echo "  ✓ Snapshot global actualizado en .appleapplab/KNOWN_ISSUES.md"
