@@ -47,6 +47,7 @@ Cada agente produce un documento y los siguientes lo leen:
 | `PROJECT_LEARNINGS.md` | Agente propietario; Steve coordina | Equipo del proyecto |
 | `TEST_PLAN.md` | Bertrand | Phil |
 | `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
+| `STYLE_BRIEF.md` | Steve (síntesis de referencias del usuario) | Jonny |
 | `LEGAL_AUDIT.md` | Kate | Steve → usuario → agentes |
 | `PRIVACY_POLICY.md` | Kate | Phil |
 | `ANALYTICS.md` | Tim | Woz |

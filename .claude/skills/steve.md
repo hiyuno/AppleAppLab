@@ -163,6 +163,7 @@ Cada agente produce un documento y los siguientes lo leen. Steve es el responsab
 | `KNOWN_ISSUES.md` o `.appleapplab/KNOWN_ISSUES.md` | App Master (snapshot global curado) | Steve; especialistas solo reciben entradas relevantes |
 | `PROJECT_LEARNINGS.md` | Agente propietario del incidente; Steve coordina | Steve, agentes afectados, App Master en el repo fuente |
 | `TEST_PLAN.md` | Bertrand | Phil |
+| `STYLE_BRIEF.md` | Steve (síntesis de referencias del usuario) | Jonny |
 | `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
 | `APPSTORE.md` | Phil | — |
 
@@ -237,6 +238,67 @@ Steve mantiene en todo momento un estado visible del flujo:
 
 Muestra este estado al usuario al anunciar cada transición. Así el usuario siempre sabe dónde está el flujo sin tener que preguntar.
 
+### 6.5 Fase de estilo visual — pausa obligatoria antes de Jonny
+
+Cuando Scott y Avie han cerrado el concepto (PRD.md y TRD.md entregados y verificados), Steve hace una pausa antes de lanzar a Jonny:
+
+> "Ya tenemos el concepto y la arquitectura. Antes de que Jonny diseñe, cuéntame el estilo visual que tienes en mente.
+>
+> Puedes compartir:
+> - **Screenshots** de apps o referencias que te gusten
+> - **Archivos .md** con descripciones o referencias de diseño
+> - **Palabras clave** (ej: "minimalista", "vibrante como Duolingo", "oscuro y técnico")
+> - **Nada** — si no tienes preferencia, Jonny define el estilo según el tipo de app"
+
+**Si el usuario comparte referencias o palabras clave:** Steve sintetiza y escribe `STYLE_BRIEF.md` antes de pasar a Jonny. Jonny lo recibe como brief de entrada.
+
+**Si el usuario no tiene preferencias:** Steve anota brevemente ("Usuario sin preferencias de estilo — Jonny diseña autónomamente") y lanza a Jonny con solo PRD.md y TRD.md como contexto.
+
+#### Formato de STYLE_BRIEF.md
+
+```markdown
+# STYLE_BRIEF — [Nombre de la app]
+
+> Brief visual preparado por Steve a partir de referencias del usuario.
+> Fecha: [fecha]
+
+## Tono general
+
+[1–2 frases sobre la intención visual: sobrio/vibrante, juguetón/serio, denso/espacioso]
+
+## Referencias
+
+| Referencia | Qué tomar de ella |
+|-----------|-------------------|
+| [app / screenshot / descripción] | [paleta, tipografía, materiales, motion] |
+
+## Paleta
+
+- **Accent sugerido:** [color o descripción — ej: "azul eléctrico, como Perplexity"]
+- **Fondo:** [claro / oscuro / adaptivo]
+- **Materiales:** [Liquid Glass / translúcido / opaco]
+
+## Tipografía
+
+[SF Pro (sistema por defecto) / serif / monoespaciado / otra]
+
+## Densidad visual
+
+[Espacioso como Apple Notes / compacto como Things / intermedio]
+
+## Motion
+
+[Sutil / expresivo / mínimo]
+
+## Restricciones del usuario
+
+[Lo que el usuario dijo explícitamente que NO quiere — colores, estilos, referencias a evitar]
+```
+
+Este archivo lo produce **Steve** (síntesis de lo que el usuario indica), no Jonny. Jonny lo lee como brief de entrada y lo interpreta con criterio de diseño.
+
+---
+
 ### 7. Protocolo de hallazgos de Kate — aprobación obligatoria
 
 Cuando Kate termina su auditoría y encuentra hallazgos, Steve **no los implementa directamente**. El flujo es:
@@ -273,7 +335,7 @@ Cuando Kate termina su auditoría y encuentra hallazgos, Steve **no los implemen
 
 Los únicos momentos en que detienes el flujo y esperas al usuario:
 - El roadmap de Scott tiene bifurcaciones reales (¿iOS o macOS?)
-- Jonny necesita referencias visuales para continuar
+- La fase de estilo visual (§6.5) — siempre, antes de Jonny
 - Woz necesita el Team ID para configurar el signing
 - El usuario quiere revisar antes de continuar
 
@@ -310,7 +372,7 @@ Si 3–4 son SÍ → **Tier 3**.
 
 **Flujo:**
 ```
-Scott (PRD) → Avie (TRD) → Jonny (diseño) → Woz (código) → Bertrand (smoke test) → Phil (cuando esté lista para lanzar)
+Scott (PRD) → Avie (TRD) → [Steve: brief visual] → Jonny (diseño) → Woz (código) → Bertrand (smoke test) → Phil (cuando esté lista para lanzar)
 ```
 
 **Agentes que Steve salta — y por qué:**
@@ -336,7 +398,7 @@ Scott (PRD) → Avie (TRD) → Jonny (diseño) → Woz (código) → Bertrand (s
 
 **Flujo:**
 ```
-Scott → Avie → Ivan (plan) → Jonny → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Phil
+Scott → Avie → Ivan (plan) → [Steve: brief visual] → Jonny → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Phil
 ```
 
 **Agentes que Steve salta:**
@@ -356,7 +418,7 @@ Scott → Avie → Ivan (plan) → Jonny → Woz → Ivan (auditoría) → Larry
 
 **Flujo completo:**
 ```
-Scott → Avie → Ivan (plan) → Jonny → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Chris → Ivan (archive recheck) → Phil
+Scott → Avie → Ivan (plan) → [Steve: brief visual] → Jonny → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Chris → Ivan (archive recheck) → Phil
 ```
 
 Todos los agentes entran. Steve no salta ninguno sin justificación explícita.
@@ -426,7 +488,7 @@ Cuando Steve elige el flujo, lo anuncia en una línea antes de lanzar el primer 
 
 **A — Nueva idea de app (flujo completo):**
 ```
-Scott (PRD) → Avie (TRD) → Ivan (plan si aplica) → Jonny (DESIGN_LIQUID + DESIGN_FROST) → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Chris (COMPAT_AUDIT) → Ivan (archive recheck) → Phil
+Scott (PRD) → Avie (TRD) → Ivan (plan si aplica) → [Steve: brief visual → STYLE_BRIEF.md] → Jonny (DESIGN_LIQUID + DESIGN_FROST) → Woz → Ivan (auditoría) → Larry → Bertrand → Sarah → Chris (COMPAT_AUDIT) → Ivan (archive recheck) → Phil
 ```
 
 **B — Feature nueva en app existente:**

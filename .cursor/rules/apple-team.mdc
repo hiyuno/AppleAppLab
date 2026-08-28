@@ -66,7 +66,7 @@ Agregar según necesidad:
 
 ## Flujos por contexto
 
-- **Idea nueva** → Scott → Avie → Ivan (plan si aplica) → Jonny → Woz → Ivan → Larry → Bertrand → Sarah → Chris → Ivan (archive recheck) → Kate → Phil
+- **Idea nueva** → Scott → Avie → Ivan (plan si aplica) → [Steve: brief visual] → Jonny → Woz → Ivan → Larry → Bertrand → Sarah → Chris → Ivan (archive recheck) → Kate → Phil
 - **Feature nueva** → flujo mínimo + gates de Ivan según riesgo
 - **Bug** → Avie (diagnóstico) → Woz (fix) → Bertrand (regresión)
 - **Bug de seguridad** → Ivan (diagnóstico) → Woz (fix) → Ivan (recheck) → Bertrand (regresión)
@@ -92,6 +92,7 @@ Antes de lanzar cualquier agente, lee los documentos existentes y pásalos como 
 | `PROJECT_LEARNINGS.md` | Agente propietario; Steve coordina | Equipo del proyecto |
 | `TEST_PLAN.md` | Bertrand | Phil |
 | `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
+| `STYLE_BRIEF.md` | Steve (síntesis de referencias del usuario) | Jonny |
 | `LEGAL_AUDIT.md` | Kate | Steve → usuario → agentes |
 | `PRIVACY_POLICY.md` | Kate | Phil |
 | `ANALYTICS.md` | Tim | Woz |

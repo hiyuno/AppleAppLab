@@ -30,7 +30,7 @@ Este proyecto usa un equipo de agentes especializados para construir apps de iOS
 ## Flujo estándar
 
 ```
-Steve → Scott (PRD) → Avie (TRD) → Ivan (plan si aplica) → Jonny (DESIGN) → Woz (código) → Ivan (auditoría) → Larry (HIG) → Bertrand (QA) → Sarah (a11y) → Chris (compat) → Ivan (archive recheck) → Kate (legal) → Phil (App Store)
+Steve → Scott (PRD) → Avie (TRD) → Ivan (plan si aplica) → [Steve: brief visual → STYLE_BRIEF.md] → Jonny (DESIGN) → Woz (código) → Ivan (auditoría) → Larry (HIG) → Bertrand (QA) → Sarah (a11y) → Chris (compat) → Ivan (archive recheck) → Kate (legal) → Phil (App Store)
 ```
 
 Agregar según necesidad:
@@ -88,6 +88,7 @@ Antes de lanzar cualquier agente, lee los documentos existentes del proyecto y p
 | `PROJECT_LEARNINGS.md` | Agente propietario; Steve coordina | Equipo del proyecto; App Master evalúa promoción en la fuente |
 | `TEST_PLAN.md` | Bertrand | Phil |
 | `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
+| `STYLE_BRIEF.md` | Steve (síntesis de referencias del usuario) | Jonny |
 | `LEGAL_AUDIT.md` | Kate | Steve → usuario → agentes |
 | `PRIVACY_POLICY.md` | Kate | Phil |
 | `ANALYTICS.md` | Tim | Woz |
