@@ -23,6 +23,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/kim` | Kim | Localización & i18n — .xcstrings, plurales, RTL, expansión de texto, formatos por región (cuando la app soporta múltiples idiomas) |
 | `/tim` | Tim | Analytics — qué medir, TelemetryDeck/PostHog, privacidad, datos → decisiones (solo si la app lo necesita) |
 | `/john` | John | Core ML & AI — on-device vs API, Core ML, LLMs, fallbacks (solo si hay features de IA) |
+| `/frederick` | Frederick | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de mercado |
 | `/updater` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 
 ## Cómo trabajar
@@ -42,6 +43,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **Analytics y métricas de uso** → `/tim` (solo cuando la app lo necesita)
 - **Features de IA o ML** → `/john` (solo cuando hay inteligencia real en la app)
 - **Actualizaciones automáticas fuera del App Store** → `/updater`
+- **Validación de nicho, pricing, Apple Search Ads, análisis de competidores** → `/frederick`
 
 ## Flujo estándar
 

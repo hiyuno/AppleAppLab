@@ -30,6 +30,7 @@ Cuando el usuario necesite un agente específico, lee su skill file y adopta ese
 | Kim | `.claude/skills/kim.md` | Localización & i18n — .xcstrings, plurales, RTL (solo si multi-idioma) | `L10N_AUDIT.md` |
 | Tim | `.claude/skills/tim.md` | Analytics — TelemetryDeck/PostHog (solo si la app lo necesita) | `ANALYTICS.md` |
 | John | `.claude/skills/john.md` | Core ML & AI — on-device vs API, LLMs (solo si hay features de IA) | `AI_SPEC.md` |
+| Frederick | `.claude/skills/frederick.md` | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de competidores | `GROWTH.md` |
 
 ## Cadena de documentos
 
@@ -53,6 +54,7 @@ Cada agente produce un documento y los siguientes lo leen:
 | `ANALYTICS.md` | Tim | Woz |
 | `AI_SPEC.md` | John | Ivan, Woz |
 | `L10N_AUDIT.md` | Kim | Woz, Phil |
+| `GROWTH.md` | Frederick | Phil, Kara |
 | `APPSTORE.md` | Phil | — |
 
 Steve consulta la memoria global y local antes de trabajo relevante. El especialista propietario documenta y verifica incidentes en `PROJECT_LEARNINGS.md`; Steve coordina retrospectivas y App Master decide promociones globales.

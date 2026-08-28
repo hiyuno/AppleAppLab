@@ -38,6 +38,7 @@ Ejemplos de lo que NO haces tú:
 - **Kim** (`/kim`) — Localización & Internacionalización — .xcstrings, plurales, RTL (árabe/hebreo), expansión de texto, formatos de fecha/número por región, pseudo-localización. Entra cuando la app soporta más de un idioma.
 - **Tim** (`/tim`) — Analytics & Telemetría: qué medir, TelemetryDeck vs PostHog, privacidad, traducir datos en decisiones. Entra solo cuando la app lo necesita explícitamente.
 - **John** (`/john`) — Core ML & AI Features: Core ML, APIs nativas de Apple (Vision, NL, Speech), y LLMs externos (Claude API). Entra solo cuando hay features que requieren inteligencia real.
+- **Frederick** (`/frederick`) — Growth Advisor: valida el potencial de monetización de la idea, define pricing y estructura del paywall, investiga competidores y mercado activamente, diseña la estrategia de Apple Search Ads y analiza datos post-lanzamiento para escalar lo que funciona. Produce `GROWTH.md`.
 
 ---
 
@@ -164,6 +165,7 @@ Cada agente produce un documento y los siguientes lo leen. Steve es el responsab
 | `PROJECT_LEARNINGS.md` | Agente propietario del incidente; Steve coordina | Steve, agentes afectados, App Master en el repo fuente |
 | `TEST_PLAN.md` | Bertrand | Phil |
 | `STYLE_BRIEF.md` | Steve (síntesis de referencias del usuario) | Jonny |
+| `GROWTH.md` | Frederick | Phil, Kara |
 | `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
 | `APPSTORE.md` | Phil | — |
 
@@ -425,6 +427,24 @@ Todos los agentes entran. Steve no salta ninguno sin justificación explícita.
 
 ---
 
+### Cuándo entra Frederick (Growth)
+
+Frederick entra en tres momentos del flujo — siempre que la app vaya a distribución pública:
+
+| Momento | Cuándo | Qué hace |
+|---------|--------|---------|
+| **1 — Validación** | Después de Scott (PRD listo) | Valida el nicho, el deseo core y el pricing. Investiga competidores en el App Store. |
+| **2 — Lanzamiento** | Antes de Phil (App Store prep) | Define estrategia de screenshots, setup de Apple Search Ads, pipeline de datos RevenueCat. |
+| **3 — Post-lanzamiento** | Después del primer mes en producción | Analiza ad spend + conversiones, recomienda qué keywords escalar y qué matar. |
+
+Frederick también entra cuando el usuario pregunta directamente: "¿cómo monetizo esto?", "¿cómo consigo usuarios?", "analiza mis competidores", "¿cuál es mi siguiente paso?".
+
+**Frederick NO entra** en apps sin distribución pública, uso personal, prototipos internos, o cuando el usuario dice explícitamente que no quiere ads ni monetización.
+
+**Modelo:** `sonnet` — necesita razonar sobre mercado, datos y estrategia. Baja a `haiku` solo si la tarea es puramente estructurar un dato ya analizado.
+
+---
+
 ### Cuándo entra Tim (Analytics)
 
 Tim entra solo en estas situaciones — no en el flujo base:
@@ -464,6 +484,7 @@ Steve puede subir de tier en cualquier momento si aparece una señal que lo just
 - Woz descubre una integración con datos sensibles no anticipada → Ivan entra inmediatamente
 - El usuario menciona analytics, métricas, o "qué usan los usuarios" → Tim entra
 - El usuario menciona IA, ML, búsqueda semántica, resumir, clasificar o generar → John entra
+- El usuario pregunta sobre monetización, usuarios, competidores, ads o "cuál es mi siguiente paso" → Frederick entra
 
 **Steve nunca baja de tier.** Una vez que Ivan entró, sigue en el flujo.
 
@@ -611,6 +632,7 @@ La tabla es el punto de partida. Si una tarea específica del agente es más sen
 | Kim | Localización, L10N_AUDIT.md | `haiku` | — ya es el mínimo para auditoría de i18n | App con RTL + muchos idiomas simultáneos |
 | Tim | Analytics, ANALYTICS.md | `haiku` | — ya es el mínimo | — rara vez justifica subir |
 | John | Core ML, AI_SPEC.md | `sonnet` | Solo recomendar herramienta nativa de Apple | Decisión de arquitectura de IA con múltiples tradeoffs sin respuesta evidente |
+| Frederick | Validación de nicho, análisis de mercado, estrategia de ads | `sonnet` | Solo estructurar datos ya analizados | Mercado muy complejo o análisis de múltiples competidores |
 | Updater | Pipeline Sparkle | `sonnet` | — requiere técnico para entitlements | — rara vez justifica subir |
 
 ### Lo que NO justifica subir de modelo

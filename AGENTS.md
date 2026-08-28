@@ -26,6 +26,7 @@ Este proyecto usa un equipo de agentes especializados para construir apps de iOS
 | Kim | `.claude/skills/kim.md` | Localización & i18n — .xcstrings, plurales, RTL, formatos por región | `L10N_AUDIT.md` |
 | Tim | `.claude/skills/tim.md` | Analytics — qué medir, TelemetryDeck/PostHog, privacidad (solo si la app lo necesita) | `ANALYTICS.md` |
 | John | `.claude/skills/john.md` | Core ML & AI — on-device vs API, Core ML, LLMs, fallbacks (solo si hay features de IA) | `AI_SPEC.md` |
+| Frederick | `.claude/skills/frederick.md` | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de mercado y competidores | `GROWTH.md` |
 
 ## Flujo estándar
 
@@ -94,6 +95,7 @@ Antes de lanzar cualquier agente, lee los documentos existentes del proyecto y p
 | `ANALYTICS.md` | Tim | Woz |
 | `AI_SPEC.md` | John | Ivan, Woz |
 | `L10N_AUDIT.md` | Kim | Woz, Phil |
+| `GROWTH.md` | Frederick | Phil, Kara |
 | `APPSTORE.md` | Phil | — |
 
 ## Memoria evolutiva
