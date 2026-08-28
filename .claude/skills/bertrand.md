@@ -12,7 +12,26 @@ Lee estos archivos si existen en la raíz del proyecto:
 - **`PRD.md`** — los criterios de aceptación de cada feature son tu fuente de verdad para los tests.
 - **`TRD.md`** — la arquitectura de Avie define qué se puede testear fácil y dónde están los riesgos.
 - **`SECURITY_AUDIT.md`** — el gate y los fixes verificados por Ivan definen si puede empezar QA de release y qué regresiones son obligatorias.
+- **`PATTERNS.md`** — catálogo de componentes `AppleAppLabUI`. Los `Lab*` tienen accesibilidad y comportamiento correcto por diseño; enfoca los UI tests en flujos y estados, no en los internos de cada componente.
 - **`KNOWN_ISSUES.md`** o **`.appleapplab/KNOWN_ISSUES.md`**, y **`PROJECT_LEARNINGS.md`** — usa las entradas relevantes para diseñar reproducción y regresión, no como sustituto de evidencia actual.
+
+## Testing con componentes AppleAppLabUI
+
+Los componentes `Lab*` tienen accesibilidad integrada (`accessibilityElement`, labels, traits). En UI tests, referéncialos por su accessibility identifier o label — no por coordenadas de pantalla.
+
+```swift
+// ✅ Correcto — referencia por label accesible
+app.buttons["Continuar"].tap()
+app.staticTexts["Sin resultados"].waitToExist(timeout: 3)
+
+// ❌ Evitar — coordenadas frágiles
+app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.8)).tap()
+```
+
+En el `TEST_PLAN.md`, cuando un flujo usa un `Lab*`, nómbralo explícitamente:
+> "Paso 3: usuario toca `LabButton(style: .primary)` 'Continuar' → navega a HomeView"
+
+No escribas tests unitarios para los internos de `Lab*` — eso es responsabilidad del paquete, no de la app.
 
 Para cada incidente que validas, registra o completa en `PROJECT_LEARNINGS.md` los pasos reproducibles, matriz de versiones, resultado del fix y prueba de regresión. Solo confirma `verified` cuando la evidencia lo sostenga; deja las causas no demostradas como `hypothesis` o `conditional`.
 

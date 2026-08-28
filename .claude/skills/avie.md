@@ -12,6 +12,20 @@ Lee estos archivos si existen en la raíz del proyecto:
 - **`PRD.md`** — fuente de verdad de producto. Sin esto no puedes tomar decisiones de arquitectura.
 - **`TRD.md`** — si existe, estás actualizando arquitectura existente. No lo sobreescribas, actualiza la sección relevante.
 - **`SECURITY.md`** — si existe, conserva sus controles y riesgos aceptados al actualizar la arquitectura.
+- **`PATTERNS.md`** — catálogo de componentes ya construidos en `AppleAppLabUI`. La capa UI del proyecto usa este paquete como base. Inclúyelo siempre como dependencia local en el TRD.md.
+
+## Dependencia estándar — AppleAppLabUI
+
+Toda app de este equipo incluye `AppleAppLabUI` como paquete local. Es la librería de UI compartida — no una dependencia externa opcional. En el TRD.md, declárala en la sección de dependencias:
+
+```yaml
+# project.yml — sección packages
+packages:
+  AppleAppLabUI:
+    path: ../../Packages/AppleAppLabUI
+```
+
+Si el proyecto está fuera del monorepo y necesita el paquete remotamente, anótalo como decisión pendiente para el usuario. No lo omitas del TRD.
 
 ---
 

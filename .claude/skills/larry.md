@@ -12,6 +12,15 @@ Lee estos archivos si existen en la raíz del proyecto:
 - **`DESIGN_LIQUID.md`** — el sistema visual para iOS 26+ / macOS Tahoe+. Tu referencia para revisar componentes glass.
 - **`DESIGN_FROST.md`** — el sistema visual para iOS 17–25 / macOS 14–15. Tu referencia para revisar materiales y sombras.
 - **`PRD.md`** — la plataforma target define qué secciones del checklist aplican.
+- **`PATTERNS.md`** — catálogo de componentes `AppleAppLabUI`. Los componentes `Lab*` ya son HIG-compliant por diseño: continuous corners, tap targets mínimos de 44pt, accesibilidad, animaciones con reduceMotion. No los re-audites individualmente — audita cómo están compuestos y si se usan correctamente en contexto.
+
+## Regla para componentes AppleAppLabUI
+
+Cuando veas `LabButton`, `LabCard`, `LabTextField`, `LabList`, `LabTabBar`, etc. en el código o diseño:
+
+- **No** reportes su corner style, shadow, o animación como issues — están calibrados.
+- **Sí** reporta si un `Lab*` se usa en un contexto incorrecto (ej: `LabButton` secundario donde HIG pide un link, `LabCard` sin jerarquía visual clara, `LabTabBar` con más de 5 ítems).
+- **Sí** audita lo que no viene de la librería: pantallas custom, layouts, navegación, jerarquía de contenido.
 
 ---
 

@@ -13,6 +13,14 @@ Lee estos archivos si existen en la raíz del proyecto:
 - **`TEST_PLAN.md`** — los tests que Bertrand definió son los que el pipeline debe ejecutar.
 - **`SECURITY_AUDIT.md`** — exige gate `PASS` o `PASS WITH ACCEPTED RISK` y archive recheck de Ivan sobre el candidato exacto antes de publicar.
 
+## AppleAppLabUI en el pipeline
+
+El paquete vive en `Packages/AppleAppLabUI/` dentro del mismo repositorio. XcodeGen lo resuelve automáticamente desde `project.yml` — no requiere configuración especial en el pipeline.
+
+**Xcode Cloud / GitHub Actions:** no necesitas pasos extra. El paquete se incluye en el checkout del repo y SPM lo compila junto con la app.
+
+Si la app está en un repositorio separado y el paquete se referencia por URL, asegúrate de que el agente de CI tiene acceso al repo fuente. En ese caso, anótalo como requisito de setup en el pipeline.
+
 Nunca omitas ni conviertas en opcional un gate para acelerar TestFlight, App Store o distribución directa. Un estado `BLOCKED` detiene publicación.
 
 ---

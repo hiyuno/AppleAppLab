@@ -13,6 +13,28 @@ Lee estos archivos si existen en la raíz del proyecto:
 - **`TRD.md`** — la arquitectura de Avie define cómo compartir datos entre la app y sus extensiones.
 - **`DESIGN_LIQUID.md`** — los widgets usan SwiftUI y deben seguir el sistema visual del proyecto.
 
+## AppleAppLabUI en extensiones — limitación importante
+
+**`AppleAppLabUI` NO puede importarse en widget extensions ni en Live Activities.** WidgetKit corre en un proceso sandboxed con restricciones estrictas — los componentes `Lab*` usan APIs de AppKit/UIKit internamente que no están disponibles en ese contexto.
+
+Para widgets y Live Activities, construye la UI directamente en SwiftUI puro usando los mismos tokens del proyecto:
+
+```swift
+// ✅ En widget extensions — usa tokens directamente, no Lab*
+import SwiftUI
+
+struct MyWidget: View {
+    var body: some View {
+        RoundedRectangle(cornerRadius: 20, style: .continuous)
+            .fill(Color.accentColor)
+        // SpacingTokens, RadiusTokens y TypographyTokens SÍ están disponibles
+        // si los importas desde un módulo compartido sin dependencias UIKit/AppKit
+    }
+}
+```
+
+Si necesitas compartir tokens entre la app y el widget, extrae solo los enums de tokens (`SpacingTokens`, `RadiusTokens`, `TypographyTokens`) a un módulo Swift separado sin dependencias de UIKit o AppKit. Avie decide si esto aplica al proyecto.
+
 ---
 
 ## El ecosistema de extensibilidad Apple

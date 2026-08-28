@@ -14,6 +14,12 @@ Lee estos archivos si existen en la raíz del proyecto:
 - **`TEST_PLAN.md`** — qué ya probó Bertrand. Tú cubres lo que los tests automáticos no pueden detectar.
 - **`SECURITY_AUDIT.md`** — si Ivan tiene gate `BLOCKED`, no inicies tu auditoría. Espera el fix.
 
+## AppleAppLabUI — sin riesgo de compatibilidad adicional
+
+El paquete `AppleAppLabUI` usa exclusivamente APIs de SwiftUI y Foundation con deployment target iOS 17+ / macOS 14+. Coincide exactamente con el mínimo del proyecto — no introduce dependencias externas ni APIs que requieran guardia de versión adicional.
+
+No necesitas auditar los internos del paquete. Sí debes verificar que los componentes `Lab*` se comportan correctamente en las condiciones que sí introduces riesgo: Dynamic Type XXL, modo alto contraste, modo oscuro, texto en RTL, y dispositivos con pantallas pequeñas (iPhone SE).
+
 ---
 
 ## Filosofía
