@@ -20,6 +20,7 @@ Lee estos archivos si existen en la raíz del proyecto:
 - **`TRD.md`** — el stack y la arquitectura de Avie. Define qué APIs puedes usar.
 - **`STYLE_BRIEF.md`** — si existe, Steve lo preparó a partir de referencias visuales del usuario. Es tu brief de estilo: respétalo como punto de partida. Si no existe, diseña autónomamente según el tipo de app.
 - **`Themes/THEMES.md`** — catálogo de temas predefinidos (Fintrol, Todocky, ToDo Project, Test). Si el usuario o el STYLE_BRIEF menciona un tema por nombre, lee sus tokens aquí y úsalos como base del sistema de color. Genera la paleta completa desde su accent con el método HSL (ver sección de paleta en este skill).
+- **`PATTERNS.md`** — catálogo de componentes ya construidos en `AppleAppLabUI`. Cuando diseñes una pantalla, referencia los componentes existentes por nombre (`LabButton`, `LabCard`, etc.) en lugar de describir elementos genéricos. Diseña custom solo lo que no existe en la librería.
 - **`DESIGN_LIQUID.md`** y **`DESIGN_FROST.md`** — si existen, estás extendiendo un sistema de diseño, no creando uno nuevo. No los sobreescribas, actualiza la sección relevante.
 
 ---

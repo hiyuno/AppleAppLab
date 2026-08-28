@@ -9,12 +9,54 @@ Tu trabajo: escribir código Swift y SwiftUI idiomático, limpio y que funcione 
 ## Antes de empezar
 
 Lee estos archivos si existen en la raíz del proyecto:
+- **`PATTERNS.md`** — catálogo de componentes ya construidos en `AppleAppLabUI`. **Léelo primero.** Si el elemento que vas a codificar está ahí, úsalo directamente — no lo recrees.
 - **`PRD.md`** — plataforma target, bundle ID, Team ID y features. Léelo antes de preguntar cualquier cosa.
 - **`TRD.md`** — arquitectura, stack y modelo de datos decididos por Avie. No los reinterpretes.
 - **`SECURITY.md`** — controles vinculantes de Ivan. Léelo antes de implementar y no los sustituyas por supuestos propios.
 - **`SECURITY_AUDIT.md`** — si corriges hallazgos, implementa exactamente la remediación acordada y conserva evidencia para el recheck.
 - **`DESIGN_LIQUID.md`** y **`DESIGN_FROST.md`** — sistema visual de Jonny. Impleméntalos con `#available`, no los ignores.
 - **`KNOWN_ISSUES.md`** o **`.appleapplab/KNOWN_ISSUES.md`**, y **`PROJECT_LEARNINGS.md`** — lee solo las entradas relevantes al componente. Reproduce antes de aplicar una solución histórica.
+
+## Regla de componentes — AppleAppLabUI primero
+
+**Antes de escribir cualquier componente de UI**, verifica si ya existe en `AppleAppLabUI`:
+
+| Necesitas | Usa |
+|-----------|-----|
+| Botón primario o secundario | `LabButton(style: .primary / .secondary)` |
+| Card con contenido | `LabCard` · `LabNestedCard` · `LabDashboardCards` |
+| Lista de filas | `LabList` |
+| Todo list con drag & drop | `LabTodoList` |
+| Campo de texto | `LabTextField` |
+| Tab bar | `LabTabBar` |
+| Toggle en fila | `LabToggleRow` |
+| Checkbox / radio | `LabCheckboxGroup` · `LabRadioGroup` |
+| Loading / progreso | `LabProgressIndicator` |
+| Empty state | `LabEmptyState` |
+| Step de onboarding | `LabOnboardingStep` |
+| Badge / etiqueta | `LabBadge` |
+
+Si el componente **no existe en la librería**, lo construyes desde cero — pero usando los mismos tokens (`PatternConfig`, `SpacingTokens`, `RadiusTokens`, `TypographyTokens`) para mantener coherencia visual.
+
+### Agregar AppleAppLabUI al proyecto
+
+```yaml
+# project.yml
+packages:
+  AppleAppLabUI:
+    path: ../../Packages/AppleAppLabUI
+
+targets:
+  NombreApp:
+    dependencies:
+      - package: AppleAppLabUI
+        product: AppleAppLabUI
+```
+
+```swift
+// En cada vista que lo necesite
+import AppleAppLabUI
+```
 
 Cuando un incidente técnico quede reproducido, actualiza su entrada en `PROJECT_LEARNINGS.md` con causa o hipótesis explícita, fix, evidencia, versiones y prevención. No marques `verified` hasta tener build/test/regresión; nunca conviertas una calibración visual local en regla global.
 

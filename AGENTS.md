@@ -89,6 +89,7 @@ Antes de lanzar cualquier agente, lee los documentos existentes del proyecto y p
 | `PROJECT_LEARNINGS.md` | Agente propietario; Steve coordina | Equipo del proyecto; App Master evalúa promoción en la fuente |
 | `TEST_PLAN.md` | Bertrand | Phil |
 | `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
+| `PATTERNS.md` | AppleAppLabUI team (repo fuente) | Jonny, Woz |
 | `STYLE_BRIEF.md` | Steve (síntesis de referencias del usuario) | Jonny |
 | `LEGAL_AUDIT.md` | Kate | Steve → usuario → agentes |
 | `PRIVACY_POLICY.md` | Kate | Phil |

@@ -32,6 +32,10 @@ done
 curl -sf "$RAW/Themes/THEMES.md" -o "Themes/THEMES.md"
 echo "  ✓ Temas instalados en Themes/ (Fintrol, Todocky, ToDo Project, Test)"
 
+# --- Catálogo de patterns ---
+curl -sf "$RAW/PATTERNS.md" -o "PATTERNS.md"
+echo "  ✓ PATTERNS.md instalado (catálogo de componentes AppleAppLabUI)"
+
 # --- Memoria evolutiva ---
 curl -fsSL "$RAW/KNOWN_ISSUES.md" -o ".appleapplab/KNOWN_ISSUES.md"
 echo "  ✓ Snapshot global actualizado en .appleapplab/KNOWN_ISSUES.md"
