@@ -19,6 +19,13 @@ if [ -n "$1" ]; then
     echo "  ✓ Carpeta '$PROJECT_NAME' creada"
   fi
   cd "$PROJECT_NAME"
+
+  # Inicializar repo git propio para que Claude Code lo trate como proyecto independiente
+  if [ ! -d ".git" ]; then
+    git init -q
+    echo "  ✓ Repositorio git inicializado (proyecto independiente de AppleAppLab)"
+  fi
+
   echo "  ✓ Instalando en: $(pwd)"
   echo ""
 fi
