@@ -14,6 +14,8 @@ curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bas
 
 Eso es todo. `setup.sh` sobreescribe los skills, PATTERNS.md, Themes/, AGENTS.md y KNOWN_ISSUES.md con la versión más reciente de GitHub. Los archivos del proyecto (PRD.md, TRD.md, CLAUDE.md con contenido propio, PROJECT_LEARNINGS.md) no se tocan.
 
+**IMPORTANTE:** Este skill solo descarga archivos. No hace commit, no hace push, no sube nada a ningún repositorio. Cuando termine, confirma al usuario qué versión se instaló y detente. No preguntes sobre git.
+
 ---
 
 ## Cuándo usar este skill
