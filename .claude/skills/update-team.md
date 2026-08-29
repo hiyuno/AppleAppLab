@@ -9,7 +9,7 @@ Actualiza todos los skills del equipo, temas y catálogo de patterns a la versi�
 Ejecuta en bash:
 
 ```bash
-curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash
+curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash -s --update
 ```
 
 Eso es todo. `setup.sh` sobreescribe los skills, PATTERNS.md, Themes/, AGENTS.md y KNOWN_ISSUES.md con la versión más reciente de GitHub. Los archivos del proyecto (PRD.md, TRD.md, CLAUDE.md con contenido propio, PROJECT_LEARNINGS.md) no se tocan.

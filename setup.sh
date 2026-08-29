@@ -1,17 +1,33 @@
 #!/bin/bash
 # AppleAppLab — setup
-# Uso sin argumento (actualizar proyecto existente):
-#   curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash
-# Uso con nombre de proyecto (crear proyecto nuevo):
-#   curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash -s MiApp
+# Proyecto nuevo:  curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash
+# Actualizar:      curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash -s --update
 
 set -e
 
 RAW="https://raw.githubusercontent.com/hiyuno/AppleAppLab/main"
 
-# --- Crear carpeta del proyecto si se pasa nombre como argumento ---
-if [ -n "$1" ]; then
-  PROJECT_NAME="$1"
+# --- Modo actualización (desde /update-team en un proyecto existente) ---
+if [ "$1" = "--update" ]; then
+  echo "🔄 Actualizando equipo AppleAppLab en $(pwd)..."
+  echo ""
+else
+  # --- Modo instalación nuevo proyecto: siempre pide nombre ---
+  if [ -t 0 ]; then
+    # Terminal interactiva
+    printf "Nombre del nuevo proyecto: "
+    read -r PROJECT_NAME
+  else
+    # Pipe (curl | bash) — leer desde /dev/tty
+    printf "Nombre del nuevo proyecto: " > /dev/tty
+    read -r PROJECT_NAME < /dev/tty
+  fi
+
+  if [ -z "$PROJECT_NAME" ]; then
+    echo "Error: debes ingresar un nombre para el proyecto."
+    exit 1
+  fi
+
   if [ -d "$PROJECT_NAME" ]; then
     echo "⚠️  La carpeta '$PROJECT_NAME' ya existe. Instalando dentro de ella..."
   else
@@ -20,10 +36,10 @@ if [ -n "$1" ]; then
   fi
   cd "$PROJECT_NAME"
 
-  # Inicializar repo git propio para que Claude Code lo trate como proyecto independiente
+  # Repo git propio para que Claude Code lo trate como proyecto independiente
   if [ ! -d ".git" ]; then
     git init -q
-    echo "  ✓ Repositorio git inicializado (proyecto independiente de AppleAppLab)"
+    echo "  ✓ Repositorio git inicializado"
   fi
 
   echo "  ✓ Instalando en: $(pwd)"
