@@ -1,11 +1,27 @@
 #!/bin/bash
 # AppleAppLab — setup
-# Instala el equipo de agentes en el proyecto actual
-# Uso: curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash
+# Uso sin argumento (actualizar proyecto existente):
+#   curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash
+# Uso con nombre de proyecto (crear proyecto nuevo):
+#   curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash -s MiApp
 
 set -e
 
 RAW="https://raw.githubusercontent.com/hiyuno/AppleAppLab/main"
+
+# --- Crear carpeta del proyecto si se pasa nombre como argumento ---
+if [ -n "$1" ]; then
+  PROJECT_NAME="$1"
+  if [ -d "$PROJECT_NAME" ]; then
+    echo "⚠️  La carpeta '$PROJECT_NAME' ya existe. Instalando dentro de ella..."
+  else
+    mkdir "$PROJECT_NAME"
+    echo "  ✓ Carpeta '$PROJECT_NAME' creada"
+  fi
+  cd "$PROJECT_NAME"
+  echo "  ✓ Instalando en: $(pwd)"
+  echo ""
+fi
 SKILLS_DIR=".claude/skills"
 SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick update-team)
 REMOTE_VERSION=$(curl -sf "$RAW/VERSION" | tr -d '[:space:]')
@@ -119,4 +135,4 @@ echo "  Cursor      → .cursor/rules/apple-team.mdc"
 echo "  Codex       → AGENTS.md"
 echo "  Gemini CLI  → GEMINI.md"
 echo ""
-echo "→ Abre tu herramienta — Steve arranca solo."
+echo "→ Abre $(pwd) en Claude Code — Steve arranca solo."
