@@ -46,7 +46,7 @@ else
   echo ""
 fi
 SKILLS_DIR=".claude/skills"
-SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick update-team)
+SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick update-team optimize-app)
 REMOTE_VERSION=$(curl -sf "$RAW/VERSION" | tr -d '[:space:]')
 
 echo "🍎 AppleAppLab setup (v$REMOTE_VERSION)..."
@@ -150,7 +150,8 @@ echo "  /craig    → CI/CD"
 echo "  /kara     → Monetización"
 echo "  /eve      → Widgets y extensiones"
 echo "  /frederick → Growth: nicho, pricing, Apple Search Ads, análisis de mercado
-  /update-team → Sincronizar equipo con la última versión de AppleAppLab"
+  /update-team → Sincronizar equipo con la última versión de AppleAppLab
+  /optimize-app → Auditoría de performance + plan por etapas (go <n> aplica cada una)"
 echo ""
 echo "Compatibilidad:"
 echo "  Claude Code → .claude/skills/ + CLAUDE.md"

@@ -24,6 +24,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/tim` | Tim | Analytics — qué medir, TelemetryDeck/PostHog, privacidad, datos → decisiones (solo si la app lo necesita) |
 | `/john` | John | Core ML & AI — on-device vs API, Core ML, LLMs, fallbacks (solo si hay features de IA) |
 | `/frederick` | Frederick | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de mercado |
+| `/optimize-app` | — | Rutina de performance — Bertrand mide, Avie revisa el código, Steve entrega plan por etapas; `go <n>` aplica cada etapa |
 | `/updater` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 
 ## Cómo trabajar
@@ -44,6 +45,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **Features de IA o ML** → `/john` (solo cuando hay inteligencia real en la app)
 - **Actualizaciones automáticas fuera del App Store** → `/updater`
 - **Validación de nicho, pricing, Apple Search Ads, análisis de competidores** → `/frederick`
+- **App lenta, se traba, loops, código repetido, auditoría de performance** → `/optimize-app` (entrega plan por etapas; `/optimize-app go <n>` aplica cada una)
 
 ## Flujo estándar
 

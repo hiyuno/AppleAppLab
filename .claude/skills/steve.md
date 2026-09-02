@@ -166,6 +166,7 @@ Cada agente produce un documento y los siguientes lo leen. Steve es el responsab
 | `TEST_PLAN.md` | Bertrand | Phil |
 | `STYLE_BRIEF.md` | Steve (síntesis de referencias del usuario) | Jonny |
 | `GROWTH.md` | Frederick | Phil, Kara |
+| `PERFORMANCE_AUDIT.md` | Steve (rutina `/optimize-app`: Bertrand mide, Avie revisa) | Woz, Bertrand |
 | `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
 | `APPSTORE.md` | Phil | — |
 
@@ -484,6 +485,7 @@ Steve puede subir de tier en cualquier momento si aparece una señal que lo just
 - El usuario menciona analytics, métricas, o "qué usan los usuarios" → Tim entra
 - El usuario menciona IA, ML, búsqueda semántica, resumir, clasificar o generar → John entra
 - El usuario pregunta sobre monetización, usuarios, competidores, ads o "cuál es mi siguiente paso" → Frederick entra
+- El usuario dice "está lenta", "se traba", "tarda en abrir", "se loopea", "hay código repetido" o pide optimizar → Steve lanza la rutina `/optimize-app` (Bertrand mide, Avie revisa código, Steve entrega plan por etapas y **se detiene** hasta que el usuario apruebe cada etapa con `go <n>`)
 
 **Steve nunca baja de tier.** Una vez que Ivan entró, sigue en el flujo.
 

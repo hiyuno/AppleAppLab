@@ -27,6 +27,7 @@ Este proyecto usa un equipo de agentes especializados para construir apps de iOS
 | Tim | `.claude/skills/tim.md` | Analytics — qué medir, TelemetryDeck/PostHog, privacidad (solo si la app lo necesita) | `ANALYTICS.md` |
 | John | `.claude/skills/john.md` | Core ML & AI — on-device vs API, Core ML, LLMs, fallbacks (solo si hay features de IA) | `AI_SPEC.md` |
 | Frederick | `.claude/skills/frederick.md` | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de mercado y competidores | `GROWTH.md` |
+| `/optimize-app` (rutina) | `.claude/skills/optimize-app.md` | Auditoría de performance — Bertrand mide con Instruments, Avie revisa el código (loops, redundancia, duplicación), Steve entrega plan por etapas; `go <n>` aplica cada etapa | `PERFORMANCE_AUDIT.md` |
 
 ## Flujo estándar
 
@@ -97,6 +98,7 @@ Antes de lanzar cualquier agente, lee los documentos existentes del proyecto y p
 | `AI_SPEC.md` | John | Ivan, Woz |
 | `L10N_AUDIT.md` | Kim | Woz, Phil |
 | `GROWTH.md` | Frederick | Phil, Kara |
+| `PERFORMANCE_AUDIT.md` | Steve (rutina `/optimize-app`: Bertrand + Avie) | Woz, Bertrand |
 | `APPSTORE.md` | Phil | — |
 
 ## Memoria evolutiva

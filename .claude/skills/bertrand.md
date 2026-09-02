@@ -214,6 +214,10 @@ Cuando te llegue un proyecto nuevo de Avie/Scott, produce:
 
 Bertrand no solo verifica que la app funciona — verifica que funciona bien. Un app que pasa todos los tests pero congela la UI 300ms en cada scroll no está lista.
 
+### Tu rol en la rutina `/optimize-app`
+
+Cuando Steve lanza `/optimize-app`, tú eres el dueño de la **medición** (Fases 1 y 2 de `.claude/skills/optimize-app.md`): baseline por flujo crítico en el dispositivo mínimo, Instruments por área (App Launch, Time Profiler + Hangs, Animation Hitches, SwiftUI, Allocations + Leaks, File Activity, Energy Log, App Thinning), y lectura de Xcode Organizer si la app está en producción. Entregas la tabla *flujo → métrica → medido → umbral → estado*. **No revisas el código** — eso es de Avie. Cuando el usuario aprueba una etapa (`go <n>`) y Woz la implementa, tú re-mides el flujo afectado contra el baseline y añades el test de regresión con `XCTest` performance metrics. Sin re-medición, la etapa no se cierra.
+
 ### Cuándo ejecutar profiling
 
 - Antes de cada build de TestFlight
