@@ -28,6 +28,7 @@ Este proyecto usa un equipo de agentes especializados para construir apps de iOS
 | John | `.claude/skills/john.md` | Core ML & AI — on-device vs API, Core ML, LLMs, fallbacks (solo si hay features de IA) | `AI_SPEC.md` |
 | Frederick | `.claude/skills/frederick.md` | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de mercado y competidores | `GROWTH.md` |
 | `/optimize-app` (rutina) | `.claude/skills/optimize-app.md` | Auditoría de performance — Bertrand mide con Instruments, Avie revisa el código (loops, redundancia, duplicación), Steve entrega plan por etapas; `go <n>` aplica cada etapa | `PERFORMANCE_AUDIT.md` |
+| `/architecture-audit` (rutina) | `.claude/skills/architecture-audit.md` | Auditoría de arquitectura — Avie mapea estructura real vs TRD y roadmap, 6 criterios de salud, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración strangler por etapas; `go <n>` aplica cada etapa y actualiza TRD.md | `ARCHITECTURE_AUDIT.md` |
 
 ## Flujo estándar
 
@@ -98,7 +99,8 @@ Antes de lanzar cualquier agente, lee los documentos existentes del proyecto y p
 | `AI_SPEC.md` | John | Ivan, Woz |
 | `L10N_AUDIT.md` | Kim | Woz, Phil |
 | `GROWTH.md` | Frederick | Phil, Kara |
-| `PERFORMANCE_AUDIT.md` | Steve (rutina `/optimize-app`: Bertrand + Avie) | Woz, Bertrand |
+| `PERFORMANCE_AUDIT.md` | Steve (rutina `/optimize-app`: Bertrand + Avie) | Woz, Bertrand, `/architecture-audit` (hallazgos 🏗) |
+| `ARCHITECTURE_AUDIT.md` | Steve (rutina `/architecture-audit`: Avie lidera) | Woz, Bertrand, Avie (actualiza TRD.md al cerrar etapas) |
 | `APPSTORE.md` | Phil | — |
 
 ## Memoria evolutiva

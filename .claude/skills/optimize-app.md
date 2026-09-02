@@ -136,6 +136,23 @@ Salida de la fase: tabla *flujo → métrica → medido → umbral → estado*.
 
 Guiada por la Fase 2: primero el código de los flujos que fallaron, después el resto. Si no hubo Fase 2 (`quick`), toda la app.
 
+### Frontera con `/architecture-audit` — regla del tag 🏗
+
+`/optimize-app` = **síntoma medible + fix local**. `/architecture-audit` = **estructura**.
+
+Si el fix de un hallazgo exige cambiar estructura — mover una fuente de verdad, crear una capa, cambiar cómo se inyecta un servicio, migrar el modelo de observación de toda la app, reorganizar carpetas — Avie **no lo planifica aquí**. Lo reporta con el tag `🏗 arquitectura`, con causa y evidencia, y queda como entrada para `/architecture-audit`. Aquí se planifica solo lo que se arregla en su sitio.
+
+| Hallazgo | Dónde va |
+|----------|----------|
+| `onChange` que se escribe a sí mismo | optimize |
+| Loop porque dos objetos tienen la misma lista (dos fuentes de verdad) | 🏗 arquitectura |
+| Extraer un formatter duplicado a un helper | optimize |
+| La misma regla de negocio copiada en varias features → falta una capa | 🏗 arquitectura |
+| Un `@Observable` por fila *en esta lista* | optimize |
+| Migrar toda la app de `ObservableObject` a `@Observable` | 🏗 arquitectura |
+| `try!` o I/O síncrono en una vista | optimize |
+| Vistas que llaman directo a `URLSession` / `modelContext` en toda la app | 🏗 arquitectura |
+
 ### 3.1 Loops y trabajo que se repite — lo más valioso
 
 Patrones que Avie busca uno por uno. Cada uno es un hallazgo con `archivo:línea`:
@@ -147,7 +164,7 @@ Patrones que Avie busca uno por uno. Cada uno es un hallazgo con `archivo:línea
 | `.task(id:)` con id que cambia cada render | `grep -n "\.task(id:"` | Cancela y relanza en cada update |
 | `.onAppear { fetch() }` / `.task { fetch() }` sin guard | `grep -n "onAppear\|\.task {"` | Se dispara cada vez que la vista reaparece (tabs, navegación atrás) |
 | `Timer` sin `invalidate`, `Task` sin `cancel` | `grep -n "Timer\.\|Task {"` y buscar el cierre | Siguen corriendo con la vista destruida |
-| Dos `@Observable` que se actualizan mutuamente | Leer los `didSet` y observaciones cruzadas | Ping-pong infinito |
+| Dos `@Observable` que se actualizan mutuamente | Leer los `didSet` y observaciones cruzadas | Ping-pong infinito. Si la causa es que ambos son fuente de verdad del mismo dato → `🏗 arquitectura` |
 | `NotificationCenter` que publica en respuesta a la misma notificación | `grep -n "post(name"` | Ciclo por eventos |
 | Vista que depende de un array completo para mostrar un ítem | `ForEach(items)` con `items` como `@Observable` de toda la lista | Un cambio en un ítem redibuja todos |
 
@@ -185,11 +202,13 @@ periphery scan --format json 2>/dev/null
 
 Si no están instalados, Avie lo hace por lectura: bloques de > 15 líneas que aparecen en 2+ archivos → hallazgo. **Lo duplicado se extrae antes de optimizarlo** — si el patrón malo está copiado 6 veces, se arregla una vez en un solo lugar.
 
+Aquí se queda la duplicación *mecánica* (un helper, un formatter, un modifier). Si lo duplicado es **lógica de negocio** repetida entre features, eso es una capa que falta → `🏗 arquitectura`.
+
 ### 3.6 Granularidad de observación
 
-- Un `@Observable` por ítem en listas, no toda la lista dependiendo del array.
-- Nada volátil (geometría, timers, scroll offset) en `Environment` — cascadea a todas las vistas dependientes.
-- `ObservableObject` + `@Published` → migrar a `@Observable` (evita redraws innecesarios por diseño).
+- Un `@Observable` por ítem en listas, no toda la lista dependiendo del array. *Fix local por lista → optimize.*
+- Nada volátil (geometría, timers, scroll offset) en `Environment` — cascadea a todas las vistas dependientes. *Fix local → optimize.*
+- `ObservableObject` + `@Published` → `@Observable` evita redraws innecesarios por diseño. *Si es una clase aislada → optimize. Si es el modelo de observación de toda la app → `🏗 arquitectura`.*
 
 Salida de la fase: hallazgos con `archivo:línea`, causa, fix sugerido, severidad.
 
@@ -228,6 +247,8 @@ Aquí está el valor del skill. Los hallazgos no se entregan como lista plana �
 3. **Una etapa = un tipo de cambio.** No mezclar "arreglar loop en HomeView" con "extraer formatters a un helper". Si algo sale mal, se sabe qué fue.
 4. **Nada de dos etapas tocando el mismo archivo a la vez.** Si dos hallazgos viven en el mismo archivo, van en la misma etapa o en etapas consecutivas.
 5. **Cada etapa dice cómo se verifica y cómo se revierte.**
+6. **Los hallazgos `🏗 arquitectura` no forman etapas aquí.** Se listan en una sección aparte del documento como entrada para `/architecture-audit`.
+7. **Un solo plan activo por zona.** Si existe `ARCHITECTURE_AUDIT.md` con etapas abiertas, Steve no crea etapas de optimización en los archivos que esas etapas van a reestructurar — no tiene sentido optimizar código que se va a mover. Esas zonas quedan marcadas *"pendiente de arquitectura"*.
 
 ### Formato de cada etapa
 
@@ -256,6 +277,10 @@ Al terminar la Fase 4, Steve muestra el resumen y **se detiene**:
 >
 > Para aplicar la primera: `/optimize-app go 1`."
 
+Si hay hallazgos `🏗 arquitectura` de severidad 🔴, Steve añade:
+
+> "Hay N hallazgos críticos que son de estructura, no de código local — están listados como entrada para `/architecture-audit`. Recomiendo correrla antes de aplicar las etapas que tocan esa zona. Las etapas [x, y] no la tocan y se pueden aplicar ya."
+
 **No implementa nada sin ese `go`.**
 
 ---
@@ -273,6 +298,8 @@ Steve (lee la etapa n del plan)
 ```
 
 Si la re-medición **no mejora** o algo se rompe: Woz revierte el commit, Steve marca la etapa como ⚠️ Revertida con la razón, y se replantea antes de continuar. Nunca se sigue a la siguiente etapa con una anterior rota.
+
+**Antes de cada `go`**, Steve cruza con `ARCHITECTURE_AUDIT.md` si existe: si la etapa toca archivos con una etapa de arquitectura abierta, avisa y no la aplica. Y si una etapa de arquitectura se cerró después del baseline, Bertrand **vuelve a tomar baseline** de los flujos afectados — el viejo ya no corresponde al código.
 
 Re-medición con comparación directa:
 
@@ -346,10 +373,21 @@ open -a Instruments baseline-launch.trace after-launch.trace
 
 ---
 
+## 🏗 Entrada para /architecture-audit
+
+> Hallazgos cuyo fix exige cambiar estructura. No se planifican aquí.
+
+| ID | Hallazgo | Evidencia | Por qué es estructura |
+|----|----------|-----------|----------------------|
+| PERF-004 | `TaskStore` y `HomeViewModel` tienen ambos la lista de tareas | Loop al editar: 2 fuentes de verdad se sincronizan mutuamente | Hay que decidir una sola fuente de verdad |
+
+---
+
 ## Plan de optimización — por etapas
 
 > Cada etapa se aplica sola. La app compila y funciona al terminar cada una.
 > Aprobar con `/optimize-app go <n>`.
+> Zonas pendientes de arquitectura: [archivos con etapas abiertas en ARCHITECTURE_AUDIT.md, o "ninguna"]
 
 ### Etapa 1 — Cortar loops de redraw en HomeView
 [formato de etapa]
@@ -394,7 +432,7 @@ open -a Instruments baseline-launch.trace after-launch.trace
 ## Lo que esta rutina NO hace
 
 - No implementa sin `go <n>`
-- No reescribe arquitectura — si el problema es estructural, Avie lo documenta como etapa final de riesgo alto y el usuario decide
+- No toca estructura — lo estructural se marca `🏗 arquitectura` y es entrada para `/architecture-audit`, que tiene su propio plan por etapas
 - No cambia el diseño visual — si un hallazgo pide cambiar UI, entra Jonny en esa etapa
 - No sustituye a Ivan: si un fix toca seguridad, entitlements o red, Ivan revisa esa etapa antes de cerrarla
 

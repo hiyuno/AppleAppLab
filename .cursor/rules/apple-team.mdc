@@ -42,6 +42,7 @@ Cuando el flujo requiera un agente, lee su skill file y adopta ese rol completam
 | John | `.claude/skills/john.md` | Core ML & AI — on-device vs API, Core ML, LLMs (solo si hay features de IA) | `AI_SPEC.md` |
 | Frederick | `.claude/skills/frederick.md` | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de mercado y competidores | `GROWTH.md` |
 | `/optimize-app` (rutina) | `.claude/skills/optimize-app.md` | Auditoría de performance — Bertrand mide con Instruments, Avie revisa el código, Steve entrega plan por etapas; `go <n>` aplica cada etapa | `PERFORMANCE_AUDIT.md` |
+| `/architecture-audit` (rutina) | `.claude/skills/architecture-audit.md` | Auditoría de arquitectura — Avie mapea estructura real vs TRD y roadmap, 6 criterios, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración strangler por etapas; `go <n>` aplica cada etapa y actualiza TRD.md | `ARCHITECTURE_AUDIT.md` |
 
 ## Flujo estándar
 
@@ -101,7 +102,8 @@ Antes de lanzar cualquier agente, lee los documentos existentes y pásalos como 
 | `AI_SPEC.md` | John | Ivan, Woz |
 | `L10N_AUDIT.md` | Kim | Woz, Phil |
 | `GROWTH.md` | Frederick | Phil, Kara |
-| `PERFORMANCE_AUDIT.md` | Steve (rutina `/optimize-app`: Bertrand + Avie) | Woz, Bertrand |
+| `PERFORMANCE_AUDIT.md` | Steve (rutina `/optimize-app`: Bertrand + Avie) | Woz, Bertrand, `/architecture-audit` (hallazgos 🏗) |
+| `ARCHITECTURE_AUDIT.md` | Steve (rutina `/architecture-audit`: Avie lidera) | Woz, Bertrand, Avie (actualiza TRD.md al cerrar etapas) |
 | `APPSTORE.md` | Phil | — |
 
 Steve consulta la memoria global y local antes de trabajo relevante. El especialista propietario documenta reproducción y verificación en `PROJECT_LEARNINGS.md`; App Master es el único curador de la base global.
