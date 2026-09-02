@@ -4,7 +4,7 @@ Laboratorio para construir apps de iOS y macOS con calidad Apple desde el primer
 
 ## Cómo funciona este equipo
 
-Este repo tiene agentes especializados. Cada uno tiene sus instrucciones completas en `.claude/skills/[nombre].md`. **Siempre empieza con Steve.**
+Este repo tiene agentes especializados. Cada uno tiene sus instrucciones completas en `.claude/skills/[nombre]/SKILL.md`. **Siempre empieza con Steve.**
 
 Cuando el usuario necesite un agente específico, lee su skill file y adopta ese rol completamente.
 
@@ -12,27 +12,27 @@ Cuando el usuario necesite un agente específico, lee su skill file y adopta ese
 
 | Agente | Skill file | Rol | Documento de salida |
 |--------|-----------|-----|---------------------|
-| **Steve** | `.claude/skills/steve.md` | Orquestador — entry point | — |
-| Scott | `.claude/skills/scott.md` | PM — idea → roadmap | `PRD.md` |
-| Avie | `.claude/skills/avie.md` | Arquitecto — decisiones técnicas | `TRD.md` |
-| Ivan | `.claude/skills/ivan.md` | Security Architect & Independent Reviewer | `SECURITY.md` + `SECURITY_AUDIT.md` |
-| Jonny | `.claude/skills/jonny.md` | Diseño — HIG, pantallas, motion design | `DESIGN_LIQUID.md` + `DESIGN_FROST.md` |
-| Woz | `.claude/skills/woz.md` | SwiftUI/Swift — código idiomático, optimización | código, `.xcodeproj` |
-| Larry | `.claude/skills/larry.md` | HIG Reviewer — auditoría | notas de auditoría |
-| Bertrand | `.claude/skills/bertrand.md` | QA — testing, TestFlight, performance profiling | `TEST_PLAN.md` |
-| Sarah | `.claude/skills/sarah.md` | Accesibilidad — VoiceOver, Dynamic Type | notas de auditoría |
-| Chris | `.claude/skills/chris.md` | Compatibility Auditor — dispositivos reales, OS, red, permisos | `COMPAT_AUDIT.md` |
-| Phil | `.claude/skills/phil.md` | App Store — metadata, lanzamiento | `APPSTORE.md` |
-| Craig | `.claude/skills/craig.md` | CI/CD — Xcode Cloud, GitHub Actions | pipeline config |
-| Kara | `.claude/skills/kara.md` | Monetización — StoreKit 2, IAP | código StoreKit 2 |
-| Eve | `.claude/skills/eve.md` | Widgets, Live Activities, App Intents | código WidgetKit |
-| Kate | `.claude/skills/kate.md` | Legal & Compliance — Privacy Policy, GDPR/CCPA/COPPA, licencias, Export Compliance | `LEGAL_AUDIT.md` + `PRIVACY_POLICY.md` |
-| Kim | `.claude/skills/kim.md` | Localización & i18n — .xcstrings, plurales, RTL (solo si multi-idioma) | `L10N_AUDIT.md` |
-| Tim | `.claude/skills/tim.md` | Analytics — TelemetryDeck/PostHog (solo si la app lo necesita) | `ANALYTICS.md` |
-| John | `.claude/skills/john.md` | Core ML & AI — on-device vs API, LLMs (solo si hay features de IA) | `AI_SPEC.md` |
-| Frederick | `.claude/skills/frederick.md` | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de competidores | `GROWTH.md` |
-| `/optimize-app` (rutina) | `.claude/skills/optimize-app.md` | Auditoría de performance — Bertrand mide, Avie revisa código, Steve entrega plan por etapas; `go <n>` aplica cada etapa | `PERFORMANCE_AUDIT.md` |
-| `/architecture-audit` (rutina) | `.claude/skills/architecture-audit.md` | Auditoría de arquitectura — Avie mapea estructura vs TRD y roadmap, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración por etapas; `go <n>` aplica cada etapa | `ARCHITECTURE_AUDIT.md` |
+| **Steve** | `.claude/skills/steve/SKILL.md` | Orquestador — entry point | — |
+| Scott | `.claude/skills/scott/SKILL.md` | PM — idea → roadmap | `PRD.md` |
+| Avie | `.claude/skills/avie/SKILL.md` | Arquitecto — decisiones técnicas | `TRD.md` |
+| Ivan | `.claude/skills/ivan/SKILL.md` | Security Architect & Independent Reviewer | `SECURITY.md` + `SECURITY_AUDIT.md` |
+| Jonny | `.claude/skills/jonny/SKILL.md` | Diseño — HIG, pantallas, motion design | `DESIGN_LIQUID.md` + `DESIGN_FROST.md` |
+| Woz | `.claude/skills/woz/SKILL.md` | SwiftUI/Swift — código idiomático, optimización | código, `.xcodeproj` |
+| Larry | `.claude/skills/larry/SKILL.md` | HIG Reviewer — auditoría | notas de auditoría |
+| Bertrand | `.claude/skills/bertrand/SKILL.md` | QA — testing, TestFlight, performance profiling | `TEST_PLAN.md` |
+| Sarah | `.claude/skills/sarah/SKILL.md` | Accesibilidad — VoiceOver, Dynamic Type | notas de auditoría |
+| Chris | `.claude/skills/chris/SKILL.md` | Compatibility Auditor — dispositivos reales, OS, red, permisos | `COMPAT_AUDIT.md` |
+| Phil | `.claude/skills/phil/SKILL.md` | App Store — metadata, lanzamiento | `APPSTORE.md` |
+| Craig | `.claude/skills/craig/SKILL.md` | CI/CD — Xcode Cloud, GitHub Actions | pipeline config |
+| Kara | `.claude/skills/kara/SKILL.md` | Monetización — StoreKit 2, IAP | código StoreKit 2 |
+| Eve | `.claude/skills/eve/SKILL.md` | Widgets, Live Activities, App Intents | código WidgetKit |
+| Kate | `.claude/skills/kate/SKILL.md` | Legal & Compliance — Privacy Policy, GDPR/CCPA/COPPA, licencias, Export Compliance | `LEGAL_AUDIT.md` + `PRIVACY_POLICY.md` |
+| Kim | `.claude/skills/kim/SKILL.md` | Localización & i18n — .xcstrings, plurales, RTL (solo si multi-idioma) | `L10N_AUDIT.md` |
+| Tim | `.claude/skills/tim/SKILL.md` | Analytics — TelemetryDeck/PostHog (solo si la app lo necesita) | `ANALYTICS.md` |
+| John | `.claude/skills/john/SKILL.md` | Core ML & AI — on-device vs API, LLMs (solo si hay features de IA) | `AI_SPEC.md` |
+| Frederick | `.claude/skills/frederick/SKILL.md` | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de competidores | `GROWTH.md` |
+| `/optimize-app` (rutina) | `.claude/skills/optimize-app/SKILL.md` | Auditoría de performance — Bertrand mide, Avie revisa código, Steve entrega plan por etapas; `go <n>` aplica cada etapa | `PERFORMANCE_AUDIT.md` |
+| `/architecture-audit` (rutina) | `.claude/skills/architecture-audit/SKILL.md` | Auditoría de arquitectura — Avie mapea estructura vs TRD y roadmap, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración por etapas; `go <n>` aplica cada etapa | `ARCHITECTURE_AUDIT.md` |
 
 ## Cadena de documentos
 
@@ -79,7 +79,7 @@ Nada más. Espera la respuesta. Si el usuario ya llega con contexto, ve directo 
 
 ## Instrucciones completas del orquestador
 
-@.claude/skills/steve.md
+@.claude/skills/steve/SKILL.md
 
 ## Scope
 

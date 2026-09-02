@@ -54,7 +54,9 @@ echo "🍎 AppleAppLab setup (v$REMOTE_VERSION)..."
 # --- Skills (Claude Code) ---
 mkdir -p "$SKILLS_DIR"
 for skill in "${SKILLS[@]}"; do
-  curl -s "$RAW/.claude/skills/${skill}.md" -o "$SKILLS_DIR/${skill}.md"
+  mkdir -p "$SKILLS_DIR/${skill}"
+  curl -s "$RAW/.claude/skills/${skill}/SKILL.md" -o "$SKILLS_DIR/${skill}/SKILL.md"
+  rm -f "$SKILLS_DIR/${skill}.md"   # formato plano anterior — Claude Code no lo registra como comando
 done
 echo "  ✓ Skills instalados en $SKILLS_DIR"
 

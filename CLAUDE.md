@@ -101,10 +101,10 @@ Herramientas compatibles y sus archivos de entrada:
 
 | Herramienta | Archivo de entrada | Lee skills desde |
 |-------------|-------------------|-----------------|
-| **Claude Code** | `CLAUDE.md` | `.claude/skills/*.md` |
-| **OpenAI Codex** | `AGENTS.md` | `.claude/skills/*.md` |
-| **Cursor** | `.cursor/rules/apple-team.mdc` | `.claude/skills/*.md` |
-| **Gemini CLI** | `GEMINI.md` | `.claude/skills/*.md` |
+| **Claude Code** | `CLAUDE.md` | `.claude/skills/*/SKILL.md` |
+| **OpenAI Codex** | `AGENTS.md` | `.claude/skills/*/SKILL.md` |
+| **Cursor** | `.cursor/rules/apple-team.mdc` | `.claude/skills/*/SKILL.md` |
+| **Gemini CLI** | `GEMINI.md` | `.claude/skills/*/SKILL.md` |
 
 ---
 
