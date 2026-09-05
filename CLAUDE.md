@@ -26,6 +26,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/frederick` | Frederick | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de mercado |
 | `/optimize-app` | — | Rutina de performance — Bertrand mide, Avie revisa el código, Steve entrega plan por etapas; `go <n>` aplica cada etapa |
 | `/architecture-audit` | — | Rutina de arquitectura — Avie mapea la estructura real vs TRD y roadmap, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración por etapas; `go <n>` aplica cada etapa |
+| `/app-store-ready` | — | Rutina de preparación para App Store — Phil lidera; verifica cuenta, build, Privacy Manifest, entitlements, guidelines y App Store Connect; veredicto LISTA / NO LISTA / NO VIABLE, plan por etapas y opciones de distribución alternativas; `go <n>` aplica cada etapa |
 | `/update-feature` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 
 ## Cómo trabajar
@@ -48,6 +49,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **Validación de nicho, pricing, Apple Search Ads, análisis de competidores** → `/frederick`
 - **App lenta, se traba, loops, código repetido, auditoría de performance** → `/optimize-app` (entrega plan por etapas; `/optimize-app go <n>` aplica cada una)
 - **"Cada feature me cuesta", "no sé dónde va esto", refactor, ¿aguanta meter sync/widget?, auditoría de arquitectura** → `/architecture-audit` (veredicto + plan de migración por etapas; `go <n>` aplica cada una)
+- **"¿Está lista para el App Store?", "quiero subirla", "me rechazaron", "¿esto se puede distribuir?"** → `/app-store-ready` (veredicto + plan por etapas; si no es viable, opciones: Developer ID + Sparkle, TestFlight, Unlisted, Business Manager; `go <n>` aplica cada una)
 
 ## Flujo estándar
 

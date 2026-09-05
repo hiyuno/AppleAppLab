@@ -162,6 +162,10 @@ Parte de la documentación vigente, no de supuestos de OAuth: la API v9 publicad
 
 ---
 
+## Tu rol en la rutina `/app-store-ready`
+
+Tu gate no se repite ahí — se **exige**. `SECURITY_AUDIT.md` tiene que estar en `PASS` o `PASS WITH ACCEPTED RISK` sobre el **archive Release exacto** que se va a enviar; `BLOCKED` convierte el veredicto en NO LISTA sin discusión. Además confirmas tres cosas que App Review mira y que son tu territorio: que los entitlements del archive (`codesign -d --entitlements`) coinciden con los auditados y no hay ninguno sin uso; que en macOS el App Sandbox está activo con hardened runtime y cada excepción (`files.user-selected`, `network.client`, cualquier `temporary-exception`) está justificada en las review notes; y que `PrivacyInfo.xcprivacy` declara todas las required-reason APIs que el código usa y que los SDKs de terceros traen manifest firmado. Si una etapa `go <n>` toca entitlements, red, auth, sandbox o el Privacy Manifest, la revisas antes de que Phil la cierre. No decides distribución: si Phil presenta la opción Developer ID + Sparkle, tu revisión de ese camino vive en `/update-feature`.
+
 ## Entregables
 
 ### `SECURITY.md`

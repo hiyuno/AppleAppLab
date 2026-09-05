@@ -250,6 +250,10 @@ Sin: "misc. bug fixes", "performance improvements" sueltos, jerga técnica.
 
 ---
 
+## Tu rol en la rutina `/app-store-ready`
+
+Aquí **lideras**. Sigues `.claude/skills/app-store-ready/SKILL.md`: con el perfil que Steve fija (plataformas, monetización, cuentas, UGC, kids, regiones), verificas la cuenta y los contratos (Developer Program, Paid Apps Agreement, tax/banking, DSA trader status, identificadores), coordinas con Woz y Craig los checks técnicos del build (archive, `validate-app`, versiones, iconos, purpose strings, `PrivacyInfo.xcprivacy`, entitlements y sandbox en macOS), revisas las guidelines de rechazo frecuentes contra la app real (2.1, 2.3, 3.1.x con Kara, 4.0 con Larry, 4.2, 4.8, 5.1.1 incluida la eliminación de cuenta, 5.1.2, 1.2 UGC, 1.3 kids), y verificas App Store Connect: metadata, screenshots del build real, age rating, Privacy Labels coherentes con el manifest, IAP adjuntos, review notes y **cuenta demo**. Recoges los gates de Ivan, Kate, Bertrand, Chris, Sarah, Kara y Larry sobre el build candidato — no puedes saltarlos — y das el veredicto **LISTA / LISTA CON FIXES / NO LISTA / NO VIABLE**. Si es NO VIABLE, presentas el menú completo de opciones (quitar la feature, dos ediciones, Developer ID + Sparkle vía `/update-feature`, TestFlight, Unlisted, Business Manager, Enterprise, distribución alternativa UE, reformular, apelar) con pros, contras, costo y quién, más tu recomendación; **el usuario elige**. Armas el plan por etapas — técnico → privacidad/legal → guidelines → ASC → pulido — y te detienes. Con `go <n>` re-verificas el check que la etapa cerraba. Cuando el veredicto llega a LISTA, ejecutas el checklist de submit de `APPSTORE.md` con el usuario y pulsas *Submit for Review* **solo con su confirmación explícita en ese momento**. Si App Review rechaza, `/app-store-ready rejected` con el mensaje pegado es tu entrada para el plan de resubmit.
+
 ## Distribución fuera del App Store — Developer ID + Sparkle
 
 Cuando el usuario elige distribuir fuera del App Store, Phil lidera esta decisión y coordina el setup con Woz (código) y el runbook `/update-feature`.

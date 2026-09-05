@@ -173,6 +173,7 @@ Cada agente produce un documento y los siguientes lo leen. Steve es el responsab
 | `GROWTH.md` | Frederick | Phil, Kara |
 | `PERFORMANCE_AUDIT.md` | Steve (rutina `/optimize-app`: Bertrand mide, Avie revisa) | Woz, Bertrand, `/architecture-audit` (hallazgos 🏗) |
 | `ARCHITECTURE_AUDIT.md` | Steve (rutina `/architecture-audit`: Avie lidera) | Woz, Bertrand; Avie actualiza `TRD.md` al cerrar cada etapa |
+| `APP_STORE_READINESS.md` | Steve (rutina `/app-store-ready`: Phil lidera) | Woz, Kate, Ivan, Bertrand; Phil ejecuta el submit con confirmación del usuario |
 | `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
 | `APPSTORE.md` | Phil | — |
 
@@ -493,7 +494,8 @@ Steve puede subir de tier en cualquier momento si aparece una señal que lo just
 - El usuario pregunta sobre monetización, usuarios, competidores, ads o "cuál es mi siguiente paso" → Frederick entra
 - El usuario dice "está lenta", "se traba", "tarda en abrir", "se loopea", "hay código repetido" o pide optimizar → Steve lanza la rutina `/optimize-app` (Bertrand mide, Avie revisa código, Steve entrega plan por etapas y **se detiene** hasta que el usuario apruebe cada etapa con `go <n>`)
 - El usuario dice "cada feature me cuesta", "no sé dónde va esto", "tengo miedo de tocar ese archivo", "quiero refactorizar", o el roadmap mete sync / segundo target / multi-usuario / IA, o `/optimize-app` dejó hallazgos `🏗 arquitectura` 🔴 → Steve lanza `/architecture-audit` (Avie mapea y da veredicto MANTENER/AJUSTAR/CAMBIAR; plan de migración por etapas; **se detiene** hasta `go <n>`). Antes de una feature que cambia la estructura, Steve la propone como `/architecture-audit <feature>`
-- **Un solo plan activo por zona.** Si hay etapas abiertas en `PERFORMANCE_AUDIT.md` y `ARCHITECTURE_AUDIT.md` sobre los mismos archivos, Steve no aplica `go` de una sin cerrar o pausar la otra, y avisa cuál va primero (arquitectura suele ir antes: no se optimiza código que se va a mover)
+- El usuario dice "quiero subirla", "¿está lista para el App Store?", "vamos a lanzar", "me rechazaron", "¿esto se puede distribuir?" — o la app es Tier 3 y toca Phil — → Steve lanza `/app-store-ready` (Phil lidera; Kate, Ivan, Bertrand, Chris, Sarah, Kara y Larry confirman sus gates sobre el build candidato; veredicto LISTA / LISTA CON FIXES / NO LISTA / NO VIABLE; plan por etapas; si NO VIABLE, menú de opciones de distribución y **el usuario elige**; **se detiene** hasta `go <n>`; el *Submit for Review* solo con confirmación explícita del usuario en ese momento). Si el usuario menciona `/update-feature` sin haber descartado el App Store, Steve propone esta rutina primero
+- **Un solo plan activo por zona.** Si hay etapas abiertas en `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md` o `APP_STORE_READINESS.md` sobre los mismos archivos, Steve no aplica `go` de una sin cerrar o pausar la otra, y avisa cuál va primero (arquitectura suele ir antes: no se optimiza código que se va a mover; App Store va al final: se audita sobre el build que se va a enviar)
 
 **Steve nunca baja de tier.** Una vez que Ivan entró, sigue en el flujo.
 
