@@ -26,7 +26,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/frederick` | Frederick | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de mercado |
 | `/optimize-app` | — | Rutina de performance — Bertrand mide, Avie revisa el código, Steve entrega plan por etapas; `go <n>` aplica cada etapa |
 | `/architecture-audit` | — | Rutina de arquitectura — Avie mapea la estructura real vs TRD y roadmap, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración por etapas; `go <n>` aplica cada etapa |
-| `/updater` | — | Sparkle — actualizaciones automáticas fuera del App Store |
+| `/update-feature` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 
 ## Cómo trabajar
 
@@ -44,7 +44,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **Soporte multi-idioma, strings, RTL** → `/kim` (cuando la app soporta más de un idioma)
 - **Analytics y métricas de uso** → `/tim` (solo cuando la app lo necesita)
 - **Features de IA o ML** → `/john` (solo cuando hay inteligencia real en la app)
-- **Actualizaciones automáticas fuera del App Store** → `/updater`
+- **Actualizaciones automáticas fuera del App Store** → `/update-feature`
 - **Validación de nicho, pricing, Apple Search Ads, análisis de competidores** → `/frederick`
 - **App lenta, se traba, loops, código repetido, auditoría de performance** → `/optimize-app` (entrega plan por etapas; `/optimize-app go <n>` aplica cada una)
 - **"Cada feature me cuesta", "no sé dónde va esto", refactor, ¿aguanta meter sync/widget?, auditoría de arquitectura** → `/architecture-audit` (veredicto + plan de migración por etapas; `go <n>` aplica cada una)
