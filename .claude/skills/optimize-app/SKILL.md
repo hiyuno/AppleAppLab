@@ -209,6 +209,8 @@ Si no están instalados, Avie lo hace por lectura: bloques de > 15 líneas que a
 
 Aquí se queda la duplicación *mecánica* (un helper, un formatter, un modifier). Si lo duplicado es **lógica de negocio** repetida entre features, eso es una capa que falta → `🏗 arquitectura`.
 
+Código muerto *dentro* de un archivo (funciones, propiedades, ramas) se queda aquí. **Archivos completos** sin referencias, assets y strings sin uso, y basura en git son de `/clean-folder-project` — se reportan con el tag `🧹 estructura` y no se planifican aquí.
+
 ### 3.6 Granularidad de observación
 
 - Un `@Observable` por ítem en listas, no toda la lista dependiendo del array. *Fix local por lista → optimize.*

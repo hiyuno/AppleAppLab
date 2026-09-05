@@ -278,7 +278,7 @@ Aquí está el valor de la rutina. Mismas reglas que `/optimize-app`, más las p
 
 1. **Nunca reescritura.** Patrón *strangler*: lo nuevo convive con lo viejo; se migra una pantalla o un dato a la vez; lo viejo se borra cuando ya nada lo usa. La app funciona entre cada etapa.
 2. **Tests antes de mover.** Si una pieza no tiene tests, la primera etapa es ponérselos *en su estado actual* — así la migración demuestra que no cambió el comportamiento.
-3. **Orden:** primero lo que **desbloquea** (extraer el protocolo del servicio, definir la fuente de verdad), luego lo que **duele más** (el dato duplicado, el archivo gordo, el cuello de churn), al final lo **cosmético** (renombrar, mover carpetas).
+3. **Orden:** primero lo que **desbloquea** (extraer el protocolo del servicio, definir la fuente de verdad), luego lo que **duele más** (el dato duplicado, el archivo gordo, el cuello de churn). Lo **cosmético** (renombrar archivos, mover carpetas, reorganizar por feature) **no forma etapas aquí**: cuando la última etapa de código se cierra, Steve lo pasa a `/clean-folder-project`, que lo hace con `git mv` y su propio plan.
 4. **Una etapa = un tipo de cambio.** "Extraer `TaskRepository` con protocolo" es una etapa. "Migrar HomeView a usarlo" es otra. Si algo sale mal, se sabe qué fue.
 5. **Cada etapa es shippable sola.** Compila, tests pasan, comportamiento idéntico. Nunca una etapa deja dos mecanismos a medias sin que uno sea claramente el activo.
 6. **Nada de dos etapas tocando el mismo archivo a la vez.** Y nada de etapas en zonas con etapas abiertas de `/optimize-app`.

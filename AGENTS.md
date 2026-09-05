@@ -30,6 +30,7 @@ Este proyecto usa un equipo de agentes especializados para construir apps de iOS
 | `/optimize-app` (rutina) | `.claude/skills/optimize-app/SKILL.md` | Auditoría de performance — Bertrand mide con Instruments, Avie revisa el código (loops, redundancia, duplicación), Steve entrega plan por etapas; `go <n>` aplica cada etapa | `PERFORMANCE_AUDIT.md` |
 | `/architecture-audit` (rutina) | `.claude/skills/architecture-audit/SKILL.md` | Auditoría de arquitectura — Avie mapea estructura real vs TRD y roadmap, 6 criterios de salud, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración strangler por etapas; `go <n>` aplica cada etapa y actualiza TRD.md | `ARCHITECTURE_AUDIT.md` |
 | `/app-store-ready` (rutina) | `.claude/skills/app-store-ready/SKILL.md` | Preparación para App Store — Phil lidera; cuenta y contratos, build y validación, Info.plist, Privacy Manifest, entitlements/sandbox, guidelines de rechazo, App Store Connect; gates de Ivan, Kate, Bertrand, Chris, Sarah, Kara, Larry; veredicto LISTA / LISTA CON FIXES / NO LISTA / NO VIABLE, plan por etapas y opciones de distribución alternativas; `go <n>` aplica cada etapa; el submit requiere confirmación explícita | `APP_STORE_READINESS.md` |
+| `/clean-folder-project` (rutina) | `.claude/skills/clean-folder-project/SKILL.md` | Limpieza y organización del proyecto — Avie lidera: inventario (basura y rastreados indebidos, nombres, capa equivocada, huérfanos en assets/strings, .gitignore, project.yml), estructura objetivo feature-first adaptada al nivel del TRD, tabla archivo → destino, plan por etapas con `git mv` que compila y pasa tests en cada una; Woz mueve, Bertrand confirma, Ivan para secretos/entitlements, Kim para strings; `go <n>` aplica cada etapa; deja la convención "dónde va cada cosa" | `PROJECT_STRUCTURE.md` |
 
 ## Flujo estándar
 
@@ -103,6 +104,7 @@ Antes de lanzar cualquier agente, lee los documentos existentes del proyecto y p
 | `PERFORMANCE_AUDIT.md` | Steve (rutina `/optimize-app`: Bertrand + Avie) | Woz, Bertrand, `/architecture-audit` (hallazgos 🏗) |
 | `ARCHITECTURE_AUDIT.md` | Steve (rutina `/architecture-audit`: Avie lidera) | Woz, Bertrand, Avie (actualiza TRD.md al cerrar etapas) |
 | `APP_STORE_READINESS.md` | Steve (rutina `/app-store-ready`: Phil lidera) | Woz, Kate, Ivan, Bertrand, Phil (submit) |
+| `PROJECT_STRUCTURE.md` | Steve (rutina `/clean-folder-project`: Avie lidera) | Woz y Steve al crear archivos nuevos (convención "dónde va cada cosa"), Bertrand, Avie (C6 de `/architecture-audit`) |
 | `APPSTORE.md` | Phil | — |
 
 ## Memoria evolutiva
