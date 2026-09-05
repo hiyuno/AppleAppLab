@@ -46,7 +46,7 @@ else
   echo ""
 fi
 SKILLS_DIR=".claude/skills"
-SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick update-team optimize-app architecture-audit app-store-ready clean-folder-project)
+SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick update-team optimize-app architecture-audit app-store-ready clean-folder-project global-audit)
 REMOTE_VERSION=$(curl -sf "$RAW/VERSION" | tr -d '[:space:]')
 
 echo "🍎 AppleAppLab setup (v$REMOTE_VERSION)..."
@@ -156,7 +156,8 @@ echo "  /frederick → Growth: nicho, pricing, Apple Search Ads, análisis de me
   /optimize-app → Auditoría de performance + plan por etapas (go <n> aplica cada una)
   /architecture-audit → Auditoría de arquitectura: veredicto + migración por etapas (go <n>)
   /app-store-ready → ¿Lista para App Store? Veredicto, plan por etapas y opciones de distribución (go <n>)
-  /clean-folder-project → Limpiar y organizar carpetas y archivos: estructura objetivo + plan con git mv (go <n>)"
+  /clean-folder-project → Limpiar y organizar carpetas y archivos: estructura objetivo + plan con git mv (go <n>)
+  /global-audit → Las cuatro auditorías + reconciliación: un tablero y una secuencia global de go en rondas"
 echo ""
 echo "Compatibilidad:"
 echo "  Claude Code → .claude/skills/ + CLAUDE.md"

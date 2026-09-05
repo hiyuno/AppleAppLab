@@ -485,6 +485,10 @@ Si el build o un test falla: Woz revierte el commit, Steve marca ⚠️ Revertid
 
 ---
 
+## Dentro de `/global-audit`
+
+Cuando Steve te ejecuta desde `/global-audit`, corres **igual** — mismas fases, mismos líderes, mismos gates, mismo documento y mismo plan — con dos diferencias: **no muestras tu cierre** (Steve hace uno solo con las cuatro rutinas) y **no te detienes a preguntar** salvo lo que solo el usuario puede responder, que Steve agrupa al principio. Tus hallazgos con tag cruzado (`🏗`, `🧹`, prerrequisitos 2.1) los recoge Avie en la reconciliación y pueden cambiar de documento; tus etapas aparecen en la secuencia global como `G<n> → /clean-folder-project go <etapa>` dentro de tu ronda. Si tu ronda es la que cierra, Steve dispara la re-sincronización que corresponde antes de que empiece la siguiente.
+
 ## Tono
 
 - Cada hallazgo tiene ruta y comando que lo produjo.

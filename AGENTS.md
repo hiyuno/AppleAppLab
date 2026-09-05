@@ -31,6 +31,7 @@ Este proyecto usa un equipo de agentes especializados para construir apps de iOS
 | `/architecture-audit` (rutina) | `.claude/skills/architecture-audit/SKILL.md` | Auditoría de arquitectura — Avie mapea estructura real vs TRD y roadmap, 6 criterios de salud, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración strangler por etapas; `go <n>` aplica cada etapa y actualiza TRD.md | `ARCHITECTURE_AUDIT.md` |
 | `/app-store-ready` (rutina) | `.claude/skills/app-store-ready/SKILL.md` | Preparación para App Store — Phil lidera; cuenta y contratos, build y validación, Info.plist, Privacy Manifest, entitlements/sandbox, guidelines de rechazo, App Store Connect; gates de Ivan, Kate, Bertrand, Chris, Sarah, Kara, Larry; veredicto LISTA / LISTA CON FIXES / NO LISTA / NO VIABLE, plan por etapas y opciones de distribución alternativas; `go <n>` aplica cada etapa; el submit requiere confirmación explícita | `APP_STORE_READINESS.md` |
 | `/clean-folder-project` (rutina) | `.claude/skills/clean-folder-project/SKILL.md` | Limpieza y organización del proyecto — Avie lidera: inventario (basura y rastreados indebidos, nombres, capa equivocada, huérfanos en assets/strings, .gitignore, project.yml), estructura objetivo feature-first adaptada al nivel del TRD, tabla archivo → destino, plan por etapas con `git mv` que compila y pasa tests en cada una; Woz mueve, Bertrand confirma, Ivan para secretos/entitlements, Kim para strings; `go <n>` aplica cada etapa; deja la convención "dónde va cada cosa" | `PROJECT_STRUCTURE.md` |
+| `/global-audit` (rutina paraguas) | `.claude/skills/global-audit/SKILL.md` | Steve corre las cuatro auditorías en modo diagnóstico silencioso (solo las desactualizadas respecto al commit), Avie reconcilia hallazgos cruzados (🏗 → arquitectura, 🧹 → limpieza, 2.1 → performance; puede cambiar veredictos) y colisiones entre etapas, Steve entrega un tablero con los cuatro veredictos y una secuencia global de `go` en rondas fijas arquitectura → limpieza → performance → App Store, con re-sincronización al cerrar cada ronda (TRD, re-baseline, status); `go <n>` delega a la rutina dueña; `status` refresca sin re-auditar. No añade hallazgos propios | `GLOBAL_AUDIT.md` |
 
 ## Flujo estándar
 
@@ -105,6 +106,7 @@ Antes de lanzar cualquier agente, lee los documentos existentes del proyecto y p
 | `ARCHITECTURE_AUDIT.md` | Steve (rutina `/architecture-audit`: Avie lidera) | Woz, Bertrand, Avie (actualiza TRD.md al cerrar etapas) |
 | `APP_STORE_READINESS.md` | Steve (rutina `/app-store-ready`: Phil lidera) | Woz, Kate, Ivan, Bertrand, Phil (submit) |
 | `PROJECT_STRUCTURE.md` | Steve (rutina `/clean-folder-project`: Avie lidera) | Woz y Steve al crear archivos nuevos (convención "dónde va cada cosa"), Bertrand, Avie (C6 de `/architecture-audit`) |
+| `GLOBAL_AUDIT.md` | Steve (rutina `/global-audit`; Avie reconcilia) | Steve para cada `go`; el usuario como tablero; las cuatro rutinas para saber qué ronda está activa |
 | `APPSTORE.md` | Phil | — |
 
 ## Memoria evolutiva

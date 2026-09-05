@@ -28,6 +28,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/architecture-audit` | — | Rutina de arquitectura — Avie mapea la estructura real vs TRD y roadmap, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración por etapas; `go <n>` aplica cada etapa |
 | `/app-store-ready` | — | Rutina de preparación para App Store — Phil lidera; verifica cuenta, build, Privacy Manifest, entitlements, guidelines y App Store Connect; veredicto LISTA / NO LISTA / NO VIABLE, plan por etapas y opciones de distribución alternativas; `go <n>` aplica cada etapa |
 | `/clean-folder-project` | — | Rutina de limpieza y organización — Avie inventaría y define la estructura objetivo (feature-first según el TRD), tabla archivo → destino, plan por etapas con `git mv`; Woz mueve, Bertrand confirma build y tests; `go <n>` aplica cada etapa |
+| `/global-audit` | — | Rutina paraguas — corre las cuatro auditorías en diagnóstico, Avie reconcilia los cruces, Steve entrega un tablero con los cuatro veredictos y una sola secuencia de `go` en rondas (arquitectura → limpieza → performance → App Store); `go <n>` delega a la rutina dueña |
 | `/update-feature` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 
 ## Cómo trabajar
@@ -52,6 +53,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **"Cada feature me cuesta", "no sé dónde va esto", refactor, ¿aguanta meter sync/widget?, auditoría de arquitectura** → `/architecture-audit` (veredicto + plan de migración por etapas; `go <n>` aplica cada una)
 - **"¿Está lista para el App Store?", "quiero subirla", "me rechazaron", "¿esto se puede distribuir?"** → `/app-store-ready` (veredicto + plan por etapas; si no es viable, opciones: Developer ID + Sparkle, TestFlight, Unlisted, Business Manager; `go <n>` aplica cada una)
 - **"Está desordenado", "no encuentro nada", "¿dónde va este archivo?", basura en git, quiero que se vea profesional** → `/clean-folder-project` (inventario, estructura objetivo, tabla archivo → destino, plan por etapas con `git mv`; `go <n>` aplica cada una; deja `PROJECT_STRUCTURE.md` como convención viva)
+- **"¿Cómo está el proyecto?", "audítalo todo", "¿qué le falta?", heredé esta app, quiero dejarla bien antes de lanzar** → `/global-audit` (las cuatro auditorías + reconciliación + un tablero y una secuencia global de `go` en rondas; `/global-audit status` para saber qué `go` sigue)
 
 ## Flujo estándar
 

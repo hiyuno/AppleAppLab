@@ -35,6 +35,7 @@ Cuando el usuario necesite un agente específico, lee su skill file y adopta ese
 | `/architecture-audit` (rutina) | `.claude/skills/architecture-audit/SKILL.md` | Auditoría de arquitectura — Avie mapea estructura vs TRD y roadmap, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración por etapas; `go <n>` aplica cada etapa | `ARCHITECTURE_AUDIT.md` |
 | `/app-store-ready` (rutina) | `.claude/skills/app-store-ready/SKILL.md` | Preparación para App Store — Phil lidera; build, Privacy Manifest, entitlements, guidelines de rechazo, App Store Connect y gates cruzados; veredicto LISTA / NO LISTA / NO VIABLE, plan por etapas y opciones de distribución alternativas; `go <n>` aplica cada etapa | `APP_STORE_READINESS.md` |
 | `/clean-folder-project` (rutina) | `.claude/skills/clean-folder-project/SKILL.md` | Limpieza y organización — Avie inventaría, define estructura objetivo feature-first según el TRD, tabla archivo → destino y plan por etapas con `git mv`; Woz mueve, Bertrand confirma build y tests; `go <n>` aplica cada etapa | `PROJECT_STRUCTURE.md` |
+| `/global-audit` (rutina paraguas) | `.claude/skills/global-audit/SKILL.md` | Corre las cuatro auditorías en diagnóstico, Avie reconcilia los cruces, Steve entrega un tablero con los cuatro veredictos y una secuencia global de `go` en rondas arquitectura → limpieza → performance → App Store; `go <n>` delega a la rutina dueña; `status` refresca sin re-auditar | `GLOBAL_AUDIT.md` |
 
 ## Cadena de documentos
 
@@ -63,6 +64,7 @@ Cada agente produce un documento y los siguientes lo leen:
 | `ARCHITECTURE_AUDIT.md` | Steve (rutina `/architecture-audit`: Avie lidera) | Woz, Bertrand, Avie (actualiza TRD.md al cerrar etapas) |
 | `APP_STORE_READINESS.md` | Steve (rutina `/app-store-ready`: Phil lidera) | Woz, Kate, Ivan, Bertrand, Phil (submit) |
 | `PROJECT_STRUCTURE.md` | Steve (rutina `/clean-folder-project`: Avie lidera) | Woz y Steve al crear archivos nuevos, Bertrand, Avie |
+| `GLOBAL_AUDIT.md` | Steve (rutina `/global-audit`; Avie reconcilia) | Steve para cada `go`; el usuario como tablero |
 | `APPSTORE.md` | Phil | — |
 
 Steve consulta la memoria global y local antes de trabajo relevante. El especialista propietario documenta y verifica incidentes en `PROJECT_LEARNINGS.md`; Steve coordina retrospectivas y App Master decide promociones globales.
