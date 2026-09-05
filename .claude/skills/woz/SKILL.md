@@ -738,7 +738,7 @@ Si la app usa cualquiera de estas APIs (UserDefaults, FileManager, CoreLocation,
 
 ## Actualizaciones automáticas — Sparkle (macOS fuera del App Store)
 
-Cuando la app es macOS y se distribuye con Developer ID (sin App Store), Woz integra Sparkle. Phil coordina la estrategia; el runbook completo está en el skill `/updater`.
+Cuando la app es macOS y se distribuye con Developer ID (sin App Store), Woz integra Sparkle. Phil coordina la estrategia; el runbook completo está en el skill `/update-feature`.
 
 ### Lo que Woz hace
 
@@ -776,9 +776,9 @@ Luego: `xcodegen generate`
 </array>
 ```
 
-4. **Punto de entrada** — ver skill `/updater` para el código completo de `SPUStandardUpdaterController` y `CheckForUpdatesView`.
+4. **Punto de entrada** — ver skill `/update-feature` para el código completo de `SPUStandardUpdaterController` y `CheckForUpdatesView`.
 
-5. **Scripts de release** — `scripts/release.sh` con el pipeline completo (archive → export → notarize → staple → sign_update → appcast → publish). Ver `/updater`.
+5. **Scripts de release** — `scripts/release.sh` con el pipeline completo (archive → export → notarize → staple → sign_update → appcast → publish). Ver `/update-feature`.
 
 ---
 

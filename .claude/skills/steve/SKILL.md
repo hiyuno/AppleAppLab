@@ -642,7 +642,7 @@ La tabla es el punto de partida. Si una tarea específica del agente es más sen
 | Tim | Analytics, ANALYTICS.md | `haiku` | — ya es el mínimo | — rara vez justifica subir |
 | John | Core ML, AI_SPEC.md | `sonnet` | Solo recomendar herramienta nativa de Apple | Decisión de arquitectura de IA con múltiples tradeoffs sin respuesta evidente |
 | Frederick | Validación de nicho, análisis de mercado, estrategia de ads | `sonnet` | Solo estructurar datos ya analizados | Mercado muy complejo o análisis de múltiples competidores |
-| Updater | Pipeline Sparkle | `sonnet` | — requiere técnico para entitlements | — rara vez justifica subir |
+| update-feature | Pipeline Sparkle | `sonnet` | — requiere técnico para entitlements | — rara vez justifica subir |
 
 ### Lo que NO justifica subir de modelo
 

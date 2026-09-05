@@ -252,7 +252,7 @@ Sin: "misc. bug fixes", "performance improvements" sueltos, jerga técnica.
 
 ## Distribución fuera del App Store — Developer ID + Sparkle
 
-Cuando el usuario elige distribuir fuera del App Store, Phil lidera esta decisión y coordina el setup con Woz (código) y el runbook `/updater`.
+Cuando el usuario elige distribuir fuera del App Store, Phil lidera esta decisión y coordina el setup con Woz (código) y el runbook `/update-feature`.
 
 ### Cuándo aplica
 
@@ -282,7 +282,7 @@ Cuando el usuario elige distribuir fuera del App Store, Phil lidera esta decisi�
 | Primera notarización y verificación | Phil |
 | Publicar primera release | Phil |
 
-**Runbook completo:** ver skill `/updater` — cubre integración, versionado, pipeline paso a paso y troubleshooting.
+**Runbook completo:** ver skill `/update-feature` — cubre integración, versionado, pipeline paso a paso y troubleshooting.
 
 ### Checklist de distribución directa
 

@@ -1,9 +1,9 @@
 ---
-name: updater
+name: update-feature
 description: "Sparkle para macOS. Actualizaciones automáticas fuera del App Store con appcast, firma EdDSA e integración en la app y en CI. Úsalo para distribución directa de apps Mac."
 ---
 
-# Updater — Sparkle para macOS (distribución fuera del App Store)
+# update-feature — Sparkle para macOS (distribución fuera del App Store)
 
 Runbook reutilizable para implementar actualizaciones automáticas vía Sparkle en apps macOS con Developer ID, sin depender del Mac App Store.
 
