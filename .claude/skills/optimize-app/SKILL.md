@@ -48,6 +48,8 @@ Lee si existen:
 
 ## Fase 0 — Preparación (Steve)
 
+> **¿Hace falta?** Antes de lanzar esta rutina — suelta o dentro de `/global-audit` — Steve hace el triage de `.claude/skills/global-audit/SKILL.md` Fase 0 (sonda de 7 comandos → etapa del proyecto). En un proyecto **nuevo o recién generado por Woz desde el TRD** esta rutina no aplica: no hay flujos reales que medir ni código que revisar. Steve lo dice en una línea en vez de correrla; si el usuario insiste, se corre. En construcción, solo por señal y en modo `quick`.
+
 1. **Flujos críticos.** Del PRD, elige 3–5: siempre incluye launch y la pantalla principal; añade la lista más larga, el flujo de guardar, y cualquier flujo con red o sync.
 2. **Dispositivo de medición.** El mínimo del target (iPhone SE 3ª gen en iOS 17+; el Mac más viejo soportado en macOS). Nunca el simulador para números finales. Build `Release` con símbolos.
 3. **Detectar qué hay disponible** y anunciarlo antes de medir:

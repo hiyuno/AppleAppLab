@@ -28,7 +28,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/architecture-audit` | — | Rutina de arquitectura — Avie mapea la estructura real vs TRD y roadmap, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración por etapas; `go <n>` aplica cada etapa |
 | `/app-store-ready` | — | Rutina de preparación para App Store — Phil lidera; verifica cuenta, build, Privacy Manifest, entitlements, guidelines y App Store Connect; veredicto LISTA / NO LISTA / NO VIABLE, plan por etapas y opciones de distribución alternativas; `go <n>` aplica cada etapa |
 | `/clean-folder-project` | — | Rutina de limpieza y organización — Avie inventaría y define la estructura objetivo (feature-first según el TRD), tabla archivo → destino, plan por etapas con `git mv`; Woz mueve, Bertrand confirma build y tests; `go <n>` aplica cada etapa |
-| `/global-audit` | — | Rutina paraguas — corre las cuatro auditorías en diagnóstico, Avie reconcilia los cruces, Steve entrega un tablero con los cuatro veredictos y una sola secuencia de `go` en rondas (arquitectura → limpieza → performance → App Store); `go <n>` delega a la rutina dueña |
+| `/global-audit` | — | Rutina paraguas — Steve hace triage por etapa del proyecto (nuevo, en construcción, pre-lanzamiento, publicada, heredada) y omite con razón las auditorías que no hacen falta; corre las necesarias en diagnóstico compartiendo inventarios, Avie reconcilia los cruces, y entrega un tablero con los veredictos y una sola secuencia de `go` en rondas (arquitectura → limpieza → performance → App Store); `go <n>` delega a la rutina dueña; `all` fuerza las cuatro |
 | `/update-feature` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 
 ## Cómo trabajar

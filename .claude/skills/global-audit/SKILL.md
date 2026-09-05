@@ -22,6 +22,8 @@ Las cuatro rutinas por separado te dan cuatro planes con cuatro `go 1`. Sin esta
 | Cuatro resúmenes, cuatro paradas | Las rutinas corren en modo *silencioso* dentro de esta y Steve hace **un** cierre |
 | ¿Qué `go` sigue? | Secuencia global G1…Gn; cada paso dice a qué rutina y etapa corresponde |
 | Un audit está fresco, otro es de hace un mes | Solo se re-ejecuta lo que está **desactualizado** respecto al commit actual |
+| Un proyecto nuevo no necesita cuatro auditorías | **Triage**: Steve sonda el estado del proyecto y omite, con razón en una línea, las que no hacen falta |
+| Arquitectura y limpieza corren el mismo `find`; optimize y limpieza corren Periphery por separado | **Trabajo compartido**: cada comando se ejecuta una vez y su salida se pasa a todas |
 
 ---
 
@@ -33,6 +35,7 @@ Las cuatro rutinas por separado te dan cuatro planes con cuatro `go 1`. Sin esta
 | `/global-audit quick` | Las cuatro en su modo `quick`: sin dispositivo, sin ASC, sin roadmap. Chequeo de salud en minutos. Útil antes de un PR grande o al heredar un proyecto |
 | `/global-audit <rutinas>` | Solo las indicadas, ej: `/global-audit optimize clean` · nombres válidos: `architecture`, `clean`, `optimize`, `appstore` |
 | `/global-audit status` | No re-audita: relee los cuatro documentos y refresca el tablero y la secuencia. Para saber dónde estás |
+| `/global-audit all` | Fuerza las cuatro aunque el triage diga que alguna no hace falta |
 | `/global-audit go <n>` | Aplica el paso `n` de la secuencia global delegando a la rutina dueña (`/architecture-audit go 2`, etc.) |
 
 ---
@@ -63,14 +66,38 @@ Lee si existen:
 
 ## Fase 0 — Alcance y frescura (Steve)
 
-### Qué rutinas aplican
+### Triage — qué rutinas hacen falta, no solo cuáles aplican
 
-| Rutina | Se ejecuta si… | Se salta (con nota) si… |
-|--------|----------------|-------------------------|
-| `/architecture-audit` | siempre | — |
-| `/clean-folder-project` | siempre | — |
-| `/optimize-app` | siempre (modo `quick` si no hay dispositivo ni simulador) | — |
-| `/app-store-ready` | el PRD apunta a App Store / Mac App Store, o el usuario no lo ha descartado | el PRD dice uso personal / interno, o ya se eligió distribución directa (`/update-feature`) |
+Una auditoría que no hace falta es ruido y coste. Un proyecto que Woz acaba de generar desde el TRD no tiene nada que auditar en arquitectura (la estructura *es* el TRD), ni carpetas que ordenar (el scaffold del equipo ya viene ordenado), ni flujos que medir. Steve lo comprueba con una **sonda barata** antes de lanzar nada:
+
+```bash
+git rev-list --count HEAD                                                         # edad: commits
+find . -name "*.swift" -not -path "*/.build/*" | wc -l                             # tamaño: archivos Swift
+ls -d */Features/*/ 2>/dev/null | wc -l                                            # features reales
+ls PRD.md TRD.md TEST_PLAN.md APPSTORE.md PERFORMANCE_AUDIT.md ARCHITECTURE_AUDIT.md PROJECT_STRUCTURE.md APP_STORE_READINESS.md 2>/dev/null
+git ls-files | grep -cE "xcuserdata|\.DS_Store|DerivedData|/build/"               # basura rastreada
+ls ExportOptions.plist fastlane 2>/dev/null; grep -l "TestFlight" APPSTORE.md 2>/dev/null   # señales de lanzamiento
+git log -1 --format=%cr -- TRD.md                                                 # cuándo se decidió la arquitectura
+```
+
+Con eso ubica el proyecto en una **etapa de vida** y decide rutina por rutina:
+
+| Etapa | Señales | Arquitectura | Limpieza | Performance | App Store |
+|-------|---------|--------------|----------|-------------|-----------|
+| **Nuevo / scaffold** — Woz acaba de generar desde el TRD | < ~15 archivos Swift, < ~20 commits, TRD de hace días, 0–1 features | ❌ la estructura *es* el TRD; nada que comparar | ❌ el scaffold ya viene ordenado; `quick` solo si la sonda ve basura rastreada | ❌ no hay flujos que medir ni código que revisar | ⏸ **se posterga**: "cuando exista build Release candidato" |
+| **En construcción** — features entrando, sin release | 15–80 archivos, 2+ features, sin build Release | solo **por señal**: `🏗` abiertos, bugs repetidos en `PROJECT_LEARNINGS.md`, roadmap que mete sync / multi-target → `quick` | `quick`; completo solo si el quick da 🔴 o 🟡 | solo **por señal**: el usuario reporta lentitud, `TEST_PLAN.md` con métrica fuera de umbral → `quick` | ⏸ postergado; `quick` técnico si Phil ya está cerca |
+| **Pre-lanzamiento** — Tier 2/3, Phil próximo, TestFlight | build Release, `APPSTORE.md` o TestFlight, "quiero subirla" | ✅ completo — última oportunidad barata de mover cosas | ✅ completo | ✅ completo, con dispositivo | ✅ completo |
+| **Publicada / mantenimiento** | usuarios reales, Organizer con datos | por señal | por señal | ✅ con Organizer / MetricKit como Fase 1 | `rejected` o re-submit según el caso |
+| **Heredada** — código que el equipo no escribió | sin TRD o TRD desactualizado, historia larga | ✅ completo | ✅ completo | ✅ completo | ✅ si va al App Store |
+
+Además, `/app-store-ready` se **omite** (no se posterga) si el PRD dice uso personal / interno o ya se eligió distribución directa (`/update-feature`).
+
+**Reglas del triage:**
+- **Omitir se dice, no se calla.** Cada rutina omitida o postergada aparece en el tablero con la razón en una línea.
+- **Postergar ≠ omitir.** Lo postergado lleva su condición ("cuando exista build Release candidato") y Steve lo vuelve a evaluar cuando se cumpla.
+- **El usuario manda.** Si pide una rutina que el triage omitió, Steve se lo dice en una frase ("no hay flujos que medir todavía") y la corre igual si insiste. `/global-audit all` fuerza las cuatro.
+- **Fresco reemplaza a necesario.** Si una rutina hace falta pero su documento está fresco (siguiente sección), se reutiliza.
+- **La misma sonda vale para las rutinas sueltas.** Steve la corre también antes de lanzar `/optimize-app`, `/clean-folder-project`, `/architecture-audit` o `/app-store-ready` por separado.
 
 ### Qué está fresco
 
@@ -88,7 +115,12 @@ git diff --stat <commit-del-audit>..HEAD -- '*.swift' project.yml | tail -1
 
 Steve anuncia el alcance antes de empezar:
 
-> "Global audit sobre `a1b2c3d`. Corren: arquitectura (nuevo), limpieza (nuevo), performance (`quick` — sin dispositivo conectado), App Store (nuevo — el PRD apunta a App Store). `SECURITY_AUDIT.md` está en PASS. Empiezo."
+> "Global audit sobre `a1b2c3d`. Proyecto **en construcción**: 42 archivos Swift, 3 features, 61 commits, sin build Release.
+> Corren: **limpieza `quick`** (hay 3 `.DS_Store` rastreados) y **arquitectura `quick`** (2 hallazgos `🏗` abiertos en PERFORMANCE_AUDIT.md).
+> Se omiten: **performance** — sin señal de lentitud ni métrica fuera de umbral. **App Store** — postergado hasta que exista build Release candidato.
+> `SECURITY_AUDIT.md` en PASS. Si quieres que corra alguna de las omitidas, dímelo. Empiezo."
+
+En un proyecto **nuevo** el anuncio es una línea: *"Proyecto recién generado desde el TRD (9 archivos, 4 commits). No hay nada que auditar todavía; el flujo normal Scott → Avie → Jonny → Woz ya lo cubre. Vuelve a llamarme cuando haya features o build candidato."* — y `/global-audit` termina ahí, sin documento.
 
 ### Orden de diagnóstico
 
@@ -107,6 +139,22 @@ Cada rutina corre **igual que sola** — mismas fases, mismos líderes, mismos g
 
 - **No muestra su cierre.** Produce su documento y su plan y devuelve el control a Steve. El usuario ve un solo resumen al final.
 - **No se detiene a preguntar** salvo por lo que solo el usuario puede responder (perfil de App Store en Fase 0 de `/app-store-ready`, si adoptar XcodeGen en `/clean-folder-project`). Steve agrupa esas preguntas y las hace **juntas al principio**, no una por una.
+
+### Trabajo compartido — cada comando se ejecuta una vez
+
+Varias rutinas le piden lo mismo al repo. Dentro de `/global-audit`, Steve lo ejecuta **una vez** y pasa la salida; las rutinas no lo repiten, y así no salen dos inventarios distintos del mismo repo:
+
+| Salida | La produce | La reutilizan |
+|--------|------------|---------------|
+| Árbol de carpetas y archivos Swift por carpeta | `/architecture-audit` 1.1 | `/clean-folder-project` 1.1 — no vuelve a correr `find` |
+| Grafo de `import` | `/architecture-audit` 1.2 | `/clean-folder-project` 1.4 (capa equivocada) |
+| **Periphery** (declaraciones sin referencias) | una corrida | `/optimize-app` 3.5 toma símbolos *dentro* de archivos · `/clean-folder-project` 1.5 toma archivos completos |
+| **SwiftLint** | una corrida | `/optimize-app` 3.5 (complejidad) · `/clean-folder-project` 1.3 (nombres) |
+| `git ls-files` y churn (`git log --stat`) | una corrida | arquitectura 4 (churn) · limpieza 1.2 (rastreados indebidos) |
+| Archive Release + tests en verde | Bertrand, una vez | `/app-store-ready` 2.1 · gate de arquitectura y limpieza |
+| Gates de Ivan y Kate | se leen una vez | `/app-store-ready` 5 · arquitectura 5 |
+
+Sueltas, cada rutina corre lo suyo. Juntas, no se duplica trabajo.
 
 Si una rutina no puede completar una fase (sin dispositivo, sin acceso a ASC), lo deja marcado como pendiente igual que haría sola. `/global-audit` lo recoge en el tablero como *"medición pendiente — requiere X"*.
 
@@ -345,6 +393,8 @@ Es un **tablero**, no una copia. Los hallazgos viven en el documento de cada rut
 
 - No añade hallazgos ni severidades propias — consolida los de las cuatro rutinas
 - No re-audita lo que está fresco
+- No corre rutinas que el estado del proyecto no necesita — las omite o posterga con razón; `all` las fuerza
+- No corre dos veces el mismo comando de inventario — la salida se comparte
 - No aplica nada sin `go <n>`, y cada `go` lo ejecuta la rutina dueña con sus gates
 - No resuelve bloqueos externos (Ivan, Kim, decisiones del usuario) — los lista con dueño
 - No sustituye a las rutinas: cada una sigue funcionando sola

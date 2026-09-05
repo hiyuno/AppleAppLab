@@ -75,6 +75,8 @@ Lee si existen:
 
 ## Fase 0 — Contra qué se audita (Steve)
 
+> **¿Hace falta?** Antes de lanzar esta rutina — suelta o dentro de `/global-audit` — Steve hace el triage de `.claude/skills/global-audit/SKILL.md` Fase 0 (sonda de 7 comandos → etapa del proyecto). En un proyecto **nuevo o recién generado por Woz desde el TRD** esta rutina no aplica: se **posterga** (no se omite) hasta que exista un build Release candidato. Steve lo dice en una línea en vez de correrla; si el usuario insiste, se corre. En construcción, solo por señal y en modo `quick`.
+
 Los requisitos cambian según lo que la app **es**. Steve fija esto antes de que nadie revise:
 
 | Pregunta | Activa |

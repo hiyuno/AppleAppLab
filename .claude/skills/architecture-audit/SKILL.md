@@ -69,6 +69,8 @@ Lee si existen:
 
 ## Fase 0 — Contra qué se audita (Steve)
 
+> **¿Hace falta?** Antes de lanzar esta rutina — suelta o dentro de `/global-audit` — Steve hace el triage de `.claude/skills/global-audit/SKILL.md` Fase 0 (sonda de 7 comandos → etapa del proyecto). En un proyecto **nuevo o recién generado por Woz desde el TRD** esta rutina no aplica: la estructura *es* el TRD que Avie escribió hace días — no hay nada que comparar. Steve lo dice en una línea en vez de correrla; si el usuario insiste, se corre. En construcción, solo por señal y en modo `quick`.
+
 Una arquitectura no es buena o mala sola — es buena o mala **para lo que la app necesita**.
 
 1. **Target.** Del PRD y el roadmap: qué hace la app hoy y qué entra en los próximos 2 releases. Si en 3 meses entra sync o un widget, la arquitectura se juzga contra eso.

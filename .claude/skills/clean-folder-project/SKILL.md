@@ -67,6 +67,8 @@ Lee si existen:
 
 ## Fase 0 — Contra qué se ordena (Steve)
 
+> **¿Hace falta?** Antes de lanzar esta rutina — suelta o dentro de `/global-audit` — Steve hace el triage de `.claude/skills/global-audit/SKILL.md` Fase 0 (sonda de 7 comandos → etapa del proyecto). En un proyecto **nuevo o recién generado por Woz desde el TRD** esta rutina no aplica: el scaffold del equipo ya viene ordenado — a lo sumo `quick` si la sonda ve basura rastreada. Steve lo dice en una línea en vez de correrla; si el usuario insiste, se corre. En construcción, solo por señal y en modo `quick`.
+
 1. **El esqueleto lo da el TRD.** Nivel A (local simple) tolera organización por capa; nivel B en adelante (MVVM con lógica real) se organiza **por feature**; nivel D son paquetes. No se inventa una estructura más ambiciosa que la arquitectura.
 2. **Cómo está generado el proyecto:**
 
