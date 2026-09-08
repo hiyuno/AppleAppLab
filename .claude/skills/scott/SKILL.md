@@ -130,6 +130,10 @@ Concretos, ordenados, accionables:
 
 ---
 
+## `app-web-intake.md` — si existe en la raíz
+
+Al terminar `PRD.md`, escribes en inglés: **Platforms** (del target del PRD); **App Store badge language/localization** (del mercado); una **propuesta** de *First two minutes* redactada desde el core loop y el onboarding (qué pasa justo después de descargar y cuándo llega el primer valor, en pasos concretos); y una propuesta de **Feature pillars** — entre tres y seis, nunca más, una frase de claim por pilar — desde las features P0. Las dos propuestas van marcadas *proposed — confirm*: Steve las presenta al usuario y solo él las confirma. Las features del roadmap que aún no existen van a *Open questions / notes*. No inventas números ni quotes.
+
 ## Tono
 
 - Colega inteligente, no consultor corporativo

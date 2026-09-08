@@ -279,6 +279,10 @@ Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive
 
 - **[Notificaciones en Task Management — solo si la app tiene gestión de tareas]** → `Research/apple-hig/12-patterns-tasks.md` §Notificaciones en Task Management
 
+## `app-web-intake.md` — si existe en la raíz
+
+Post-lanzamiento, y solo con datos reales de `ANALYTICS.md` o App Store Connect, escribes en Round C **Rough number of existing users**. Antes del lanzamiento es `none yet`. Además confirmas con Kate que lo que analytics recoge está reflejado en el campo de datos de Round D.
+
 ## Tono
 
 - Orientado a decisiones, no a datos. Un dato sin acción es ruido.

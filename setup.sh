@@ -46,7 +46,7 @@ else
   echo ""
 fi
 SKILLS_DIR=".claude/skills"
-SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick update-team update-feature optimize-app architecture-audit app-store-ready clean-folder-project global-audit)
+SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick update-team update-feature optimize-app architecture-audit app-store-ready clean-folder-project global-audit app-web-intake)
 # app-master no se instala: opera sobre la base global de AppleAppLab (KNOWN_ISSUES.md), no sobre proyectos
 REMOTE_VERSION=$(curl -sf "$RAW/VERSION" | tr -d '[:space:]')
 
@@ -81,6 +81,11 @@ echo "  ✓ PATTERNS.md instalado (catálogo de componentes AppleAppLabUI)"
 # --- Memoria evolutiva ---
 curl -fsSL "$RAW/KNOWN_ISSUES.md" -o ".appleapplab/KNOWN_ISSUES.md"
 echo "  ✓ Snapshot global actualizado en .appleapplab/KNOWN_ISSUES.md"
+
+# --- Template del intake para el sitio web (web-lab /app-web) ---
+# Solo el template; app-web-intake.md se crea en la raíz únicamente cuando el usuario pide /app-web-intake
+curl -fsSL "$RAW/APP_WEB_INTAKE_TEMPLATE.md" -o ".appleapplab/app-web-intake-template.md"
+echo "  ✓ Template de app-web-intake en .appleapplab/ (se usa con /app-web-intake)"
 
 if [ ! -f "PROJECT_LEARNINGS.md" ]; then
   curl -fsSL "$RAW/PROJECT_LEARNINGS_TEMPLATE.md" -o "PROJECT_LEARNINGS.md"
@@ -159,7 +164,8 @@ echo "  /frederick → Growth: nicho, pricing, Apple Search Ads, análisis de me
   /architecture-audit → Auditoría de arquitectura: veredicto + migración por etapas (go <n>)
   /app-store-ready → ¿Lista para App Store? Veredicto, plan por etapas y opciones de distribución (go <n>)
   /clean-folder-project → Limpiar y organizar carpetas y archivos: estructura objetivo + plan con git mv (go <n>)
-  /global-audit → Las cuatro auditorías + reconciliación: un tablero y una secuencia global de go en rondas"
+  /global-audit → Las cuatro auditorías + reconciliación: un tablero y una secuencia global de go en rondas
+  /app-web-intake → Intake del sitio web para web-lab: app-web-intake.md se llena mientras construimos (solo a petición)"
 echo ""
 echo "Compatibilidad:"
 echo "  Claude Code → .claude/skills/ + CLAUDE.md"

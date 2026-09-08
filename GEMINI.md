@@ -35,6 +35,7 @@ Cuando el usuario necesite un agente específico, lee su skill file y adopta ese
 | `/architecture-audit` (rutina) | `.claude/skills/architecture-audit/SKILL.md` | Auditoría de arquitectura — Avie mapea estructura vs TRD y roadmap, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración por etapas; `go <n>` aplica cada etapa | `ARCHITECTURE_AUDIT.md` |
 | `/app-store-ready` (rutina) | `.claude/skills/app-store-ready/SKILL.md` | Preparación para App Store — Phil lidera; build, Privacy Manifest, entitlements, guidelines de rechazo, App Store Connect y gates cruzados; veredicto LISTA / NO LISTA / NO VIABLE, plan por etapas y opciones de distribución alternativas; `go <n>` aplica cada etapa | `APP_STORE_READINESS.md` |
 | `/clean-folder-project` (rutina) | `.claude/skills/clean-folder-project/SKILL.md` | Limpieza y organización — Avie inventaría, define estructura objetivo feature-first según el TRD, tabla archivo → destino y plan por etapas con `git mv`; Woz mueve, Bertrand confirma build y tests; `go <n>` aplica cada etapa | `PROJECT_STRUCTURE.md` |
+| `/app-web-intake` (rutina) | `.claude/skills/app-web-intake/SKILL.md` | Intake para el sitio web (web-lab) — solo a petición; crea y mantiene `app-web-intake.md` (template verbatim en inglés) con lo que ya existe en los documentos, pregunta solo lo que ningún documento sabe, `TBD` antes que inventar; cada agente escribe su campo | `app-web-intake.md` |
 | `/global-audit` (rutina paraguas) | `.claude/skills/global-audit/SKILL.md` | Steve hace triage por etapa del proyecto y omite con razón las auditorías que no hacen falta (un proyecto nuevo no recibe arquitectura, limpieza ni performance); corre las necesarias en diagnóstico compartiendo inventarios, Avie reconcilia los cruces, Steve entrega un tablero con los cuatro veredictos y una secuencia global de `go` en rondas arquitectura → limpieza → performance → App Store; `go <n>` delega a la rutina dueña; `status` refresca sin re-auditar | `GLOBAL_AUDIT.md` |
 
 ## Cadena de documentos
@@ -65,6 +66,7 @@ Cada agente produce un documento y los siguientes lo leen:
 | `APP_STORE_READINESS.md` | Steve (rutina `/app-store-ready`: Phil lidera) | Woz, Kate, Ivan, Bertrand, Phil (submit) |
 | `PROJECT_STRUCTURE.md` | Steve (rutina `/clean-folder-project`: Avie lidera) | Woz y Steve al crear archivos nuevos, Bertrand, Avie |
 | `GLOBAL_AUDIT.md` | Steve (rutina `/global-audit`; Avie reconcilia) | Steve para cada `go`; el usuario como tablero |
+| `app-web-intake.md` | Steve (rutina `/app-web-intake`, a petición); cada agente escribe sus campos | web-lab `/app-web` |
 | `APPSTORE.md` | Phil | — |
 
 Steve consulta la memoria global y local antes de trabajo relevante. El especialista propietario documenta y verifica incidentes en `PROJECT_LEARNINGS.md`; Steve coordina retrospectivas y App Master decide promociones globales.

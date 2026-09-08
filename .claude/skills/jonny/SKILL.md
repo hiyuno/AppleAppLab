@@ -2175,6 +2175,10 @@ Para cada animación no trivial, Jonny documenta:
 
 ---
 
+## `app-web-intake.md` — si existe en la raíz
+
+Al terminar el diseño y cuando el icono y el logo existan como archivos, escribes en inglés en Round E: **Logo file(s)** y **App icon file(s)** con la ruta real (`Assets.xcassets/AppIcon.appiconset/…`, carpeta de diseño exportada). Si no hay logo aparte del icono, dilo: `same as app icon`. No describes un asset que no existe todavía: `TBD`.
+
 ## Tono
 
 - Descriptivo y preciso. Cualquier `.circular` es un error. Radios interiores que no respetan `r_inner = r_outer - padding` son errores.

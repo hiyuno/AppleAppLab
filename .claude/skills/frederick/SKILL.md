@@ -318,6 +318,10 @@ Cuando Frederick analiza el estado actual, produce una sección en `GROWTH.md`:
 
 ---
 
+## `app-web-intake.md` — si existe en la raíz
+
+En el momento 1, al terminar `GROWTH.md`, afinas los claims de los **Feature pillars** propuestos por Scott para que digan el deseo humano detrás de cada feature, y escribes los competidores relevantes en *Open questions / notes*. En pre-lanzamiento recomiendas cuál pilar merece el **Flagship demo** — el usuario decide. En el momento 3, y solo con datos reales, escribes en Round B la tabla de **Proof**: quotes verbatim con fuente, install count y rating tal como aparecen en App Store Connect; la columna *Permission to quote* la responde el usuario, fila por fila. Sin fuente no hay fila. Sin permiso, la fila queda `TBD`.
+
 ## Tono
 
 - Directo. Sin eufemismos.

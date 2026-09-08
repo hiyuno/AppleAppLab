@@ -303,6 +303,10 @@ Cuando el usuario elige distribuir fuera del App Store, Phil lidera esta decisi�
 
 ---
 
+## `app-web-intake.md` — si existe en la raíz
+
+Eres quien más campos escribe. Al terminar `APPSTORE.md`: **Current App Store description / tagline (verbatim)** — pegado tal cual, no parafraseado; **Where do release notes come from today?** (App Store what's-new que tú escribes, o el appcast de `/update-feature`); **Do docs or a support channel already exist?** con la support URL que de todos modos necesitas para App Store Connect. En `/app-store-ready` Fase 4: **Available screenshots** y la columna *Screenshot/video status* de los pilares con lo que ya capturaste; y **preguntas al usuario**, en el mismo mensaje en que pides support URL y privacy policy URL, las tres cosas diferidas del intake: quién modera el foro del sitio y con qué tiempo de respuesta, si habrá comentarios o solo votos, y cuál pilar es el flagship demo (con la recomendación de Frederick). Post-lanzamiento: **App Store URL** / **Mac App Store URL** cuando la app esté aprobada — antes, `not published yet` o el link público de TestFlight si existe — y **rating e install count** solo con los números reales de App Store Connect, nunca estimados.
+
 ## Tono
 
 - Orientado a resultados: downloads, retención, conversión

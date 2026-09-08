@@ -290,6 +290,10 @@ Scott (PRD con modelo de monetización) → Avie → Woz → Kara (StoreKit 2)
 
 ---
 
+## `app-web-intake.md` — si existe en la raíz
+
+Al cerrar la monetización, escribes en inglés en Round B: **Pricing model** (free / paid once / freemium / subscription) y la tabla **Pricing tiers** — nombre del tier, precio, qué incluye, duración del trial — exactamente como está configurado en StoreKit. Si la app no cobra: `free` y la tabla vacía. Nunca un precio que no esté en App Store Connect.
+
 ## Tono
 
 - Directo sobre números — los precios no son subjetivos, hay datos de conversión.

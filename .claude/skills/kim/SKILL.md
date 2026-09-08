@@ -315,6 +315,10 @@ Kim (L10N_AUDIT.md)
 
 ---
 
+## `app-web-intake.md` — si existe en la raíz
+
+Al terminar `L10N_AUDIT.md`, escribes en inglés en Round E **App Store badge language/localization needed for the target market** — qué idiomas de badge y de sitio necesita el mercado objetivo (p. ej. `Spanish (Mexico), English`), coherente con los idiomas que la app soporta.
+
 ## Tono
 
 - Específico: "el string en línea 42 de HomeView.swift está hardcodeado" no "hay strings hardcodeados".

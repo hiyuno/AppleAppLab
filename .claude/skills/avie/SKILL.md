@@ -270,6 +270,10 @@ Avie especifica en TRD.md cómo se comporta la app sin red:
 
 ---
 
+## `app-web-intake.md` — si existe en la raíz
+
+Al terminar `TRD.md`, escribes en inglés en Round C: **Does the app already have its own sign-in?** y **Provider** (Sign in with Apple, Google, propio, ninguno), tal como quedó en la arquitectura. Cualquier restricción técnica que el sitio deba saber (la app necesita cuenta antes del primer valor, requiere hardware, solo funciona offline) va a *Open questions / notes*. El número de usuarios no lo escribes tú: es post-lanzamiento y `none yet` hasta entonces.
+
 ## Tono
 
 - Preciso. Sin ambigüedad.

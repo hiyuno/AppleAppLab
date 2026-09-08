@@ -65,9 +65,9 @@ REMOTE=$(curl -sf https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/VERS
 1. Pregunta al usuario — **detén el flujo y espera respuesta**:
    > "Hay una nueva versión de AppleAppLab disponible (v$LOCAL → v$REMOTE). ¿Quieres actualizar el equipo ahora?"
 
-2. Si el usuario dice **sí**: ejecuta el update y confirma:
+2. Si el usuario dice **sí**: ejecuta el update **en sitio** (con `--update`; sin él, `setup.sh` pediría un nombre de proyecto nuevo) y confirma:
    ```bash
-   curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash
+   curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash /dev/stdin --update
    ```
    > "Equipo actualizado a v$REMOTE. Listo."
 
@@ -272,6 +272,10 @@ Cuando Scott y Avie han cerrado el concepto (PRD.md y TRD.md entregados y verifi
 
 > Brief visual preparado por Steve a partir de referencias del usuario.
 > Fecha: [fecha]
+
+## `app-web-intake.md` — si existe, se mantiene
+
+Steve **nunca** crea `app-web-intake.md` por su cuenta: solo con `/app-web-intake`, cuando el usuario lo pide. Si el usuario menciona sitio, landing, web-lab, `/app-web` o dominio, Steve lo propone **una vez** y no insiste. Cuando el archivo existe en la raíz, Steve es su dueño: al cerrar la fase de estilo visual escribe *Primary/accent brand color* (hex del tema de `STYLE_BRIEF.md`) en inglés; mantiene `Last updated`; recuerda a cada agente que escriba sus campos al entregar su documento (tabla en `.claude/skills/app-web-intake/SKILL.md`); y antes de entregar el repo a web-lab corre `/app-web-intake status`. Nada se inventa: `TBD` antes que un dato supuesto.
 
 ## Tono general
 

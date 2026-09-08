@@ -298,6 +298,10 @@ Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive
 - **[Inclusión — accesibilidad como baseline, no feature]** → `Research/apple-hig/01-foundations.md` §5. Inclusión (Inclusive Design)
 - **[Auth — solicitudes de permisos del sistema tras sign-in]** → `Research/apple-hig/06-patterns-auth.md` §Authorization Requests (System Permissions)
 
+## `app-web-intake.md` — si existe en la raíz
+
+Al terminar `PRIVACY_POLICY.md`, escribes en inglés el campo de Round D **What does the app collect about its users, and where is it stored?** — el intake lo marca como el único que no puede quedar vago, y es tu territorio: qué datos, con qué propósito, dónde se almacenan (device / iCloud / servidor y proveedor / SDK de terceros), coherente con `SECURITY.md` de Ivan, `ANALYTICS.md` de Tim y `PrivacyInfo.xcprivacy`. Anota además que el foro del sitio añadirá su propia recolección (nombres, avatares, texto de requests). En pre-lanzamiento lo refinas si cambió algo.
+
 ## Tono
 
 - Directa. "Esto viola el App Store Guidelines 5.1.2" — no "podría potencialmente estar en conflicto con...".
