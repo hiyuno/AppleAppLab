@@ -76,25 +76,7 @@ permission to quote it stays out too.
 
 ---
 
-## Round C · Accounts and the forum
-
-- **Does the app already have its own sign-in?** [yes/no] · **Provider:** [ ] · **Rough number
-  of existing users:** [ ]
-  Decides whether the site's forum sign-in reuses the app's existing auth — cheaper and more
-  abuse-resistant — or a minimal one gets provisioned for the forum alone. Votes are always
-  authenticated; anonymous or fingerprinted voting is never on the table.
-
-- **Who moderates the public feature-request forum, and their target response time:** [ ]
-  An unnamed moderator on a public-write surface is a launch blocker, so a name and a response
-  time are required here, not aspirational.
-
-- **Comments allowed on requests, or votes only?** [ ]
-  Comments roughly double the moderation load and the personal-data surface — decide this
-  deliberately, not by default.
-
----
-
-## Round D · Changelog, data and support
+## Round C · Changelog, data and support
 
 - **Where do release notes come from today?** [ ] (App Store what's-new / Notion / commit log /
   nowhere yet)
@@ -105,8 +87,7 @@ permission to quote it stays out too.
 - **What does the app collect about its users, and where is it stored?** [ ]
   Be concrete — this is the one field that should not stay vague even if everything else here is
   still `TBD`. It feeds the security page directly and is the raw material for the privacy
-  notice required under Mexico's 2025 LFPDPPP. Note that the forum adds its own collection on
-  top: names, avatars and whatever people paste into request titles and comments.
+  notice required under Mexico's 2025 LFPDPPP.
 
 - **Do docs or a support channel already exist?** [ ] (help site / Notion / email / Discord /
   none yet)
@@ -115,7 +96,7 @@ permission to quote it stays out too.
 
 ---
 
-## Round E · Domain and brand assets
+## Round D · Domain and brand assets
 
 - **Target domain:** [ ] · **Already owned?** [yes/no]
   Decides what the launch phase sets up and whether a domain purchase sits on the critical path.
