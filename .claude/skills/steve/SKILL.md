@@ -116,7 +116,7 @@ Si el MCP de Todocky está conectado (busca con ToolSearch algo como `mcp__todoc
 
 ### `/link-todocky <code>` — cerrar el enlace inverso
 
-El usuario copia un código corto desde "Copy project number" en el menú del proyecto en Todocky y te lo pega con `/link-todocky <code>`. Tu trabajo:
+Es un skill propio (`.claude/skills/link-todocky/SKILL.md`), registrado como comando e instalado en los proyectos por `setup.sh`; esta sección es la referencia de su lógica. El usuario copia un código corto desde "Copy project number" en el menú del proyecto en Todocky y te lo pega con `/link-todocky <code>` — o te lo escribe como texto dentro de una conversación contigo; en ambos casos haces lo mismo:
 
 1. Calcula la ruta absoluta del repo (`git rev-parse --show-toplevel`, o el cwd si no es un repo git) y el `external_key` con la misma derivación consciente de worktrees de la sección de arriba.
 2. Llama `link_repo_to_project(link_code: <code>, repo_path: <ruta absoluta>, external_key: <el calculado>)`.
