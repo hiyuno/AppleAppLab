@@ -81,6 +81,50 @@ REMOTE=$(curl -sf https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/VERS
 
 ---
 
+### 0.5 Enlaza este repo con su proyecto en Todocky
+
+Si el MCP de Todocky está conectado (busca con ToolSearch algo como `mcp__todocky__*`; si no aparece nada, el usuario no lo tiene conectado en esta sesión — sigue sin tablero, sin mencionarlo cada vez), Steve mantiene una columna real del proyecto en Todocky sin que el usuario lo pida.
+
+**Idempotencia: siempre `find_or_create_project`/`upsert_task`, nunca `list_projects` + `create_project` a mano.** Esos dos tools deduplican del lado del servidor de forma atómica — el patrón de "listar y luego crear" desde el cliente es racy entre dos sesiones/herramientas concurrentes y es exactamente lo que produce proyectos duplicados por nombre. No repitas ese patrón aunque parezca más simple.
+
+**Cálculo de `external_key` — consciente de worktrees:**
+
+1. `git rev-parse --git-common-dir` — si difiere de `--git-dir`, este repo es un worktree; usa el `--git-common-dir` para todo lo siguiente, nunca la ruta del worktree. Así todos los worktrees del mismo repo (branches distintas) resuelven al mismo proyecto.
+2. Si hay remoto: `git remote get-url origin`, normalizado (sin protocolo/credenciales, sin sufijo `.git`, host en minúsculas), con prefijo `git:`.
+3. Si no hay remoto: `git rev-list --max-parents=0 HEAD | tail -1` (commit raíz), prefijo `root-commit:` — estable ante mover/renombrar la carpeta.
+4. Si ni siquiera es un repo git: genera un UUID una sola vez y cachéalo en `.claude/todocky-link.json` (`localKey`) — este caso no puede deduplicarse entre clones; es una limitación aceptada, no la resuelvas de otra forma.
+
+**Al arrancar, antes del saludo:**
+
+1. Busca `.claude/todocky-link.json` en la raíz del repo. Es solo **cache**, no fuente de verdad — si existe, úsalo para saltarte el cálculo, pero nunca confíes en él a ciegas. **Excepción conocida:** si el archivo trae `"_note"` explicando que el proyecto fue enlazado a mano porque es anterior a este feature (`externalKey` nunca se llenó en el proyecto real), no lo regeneres ni lo invalides solo porque `find_or_create_project` no lo confirma — hasta que exista un tool de backfill en Todocky para eso, ese cache manual es la única forma de no duplicar.
+2. Calcula el `external_key` (arriba). Llama `list_workspaces` (usa el que tenga `is_active: true`) y luego `find_or_create_project(workspace_id, external_key, name, description)` con el nombre del repo. Si el `projectId` cacheado no coincide con el que devuelve la llamada (o el archivo no existía), sobreescribe el cache — nunca es un error, solo cache desactualizado.
+3. Si esta es la primera vez que se linkea (la llamada creó un proyecto nuevo, no encontró uno existente) y sospechas que ya existe un proyecto real con un nombre parecido en el tablero (revisa `list_projects` una vez), **pregúntale al usuario** antes de seguir — los nombres se repiten entre proyectos y un `external_key` nuevo no evita que termines con dos proyectos que en realidad son "el mismo" para el usuario. Esto es responsabilidad tuya, no del servidor: `find_or_create_project` solo deduplica por `external_key` exacto.
+4. Escribe/actualiza `.claude/todocky-link.json`:
+   ```json
+   { "externalKey": "...", "workspaceId": "...", "workspaceName": "...", "projectId": "...", "projectName": "...", "cachedAt": "YYYY-MM-DD" }
+   ```
+5. Agrega `.claude/todocky-link.json` a `.gitignore` si no está — el ID es de esta instalación, no algo que viaje con el repo.
+
+**Durante el trabajo**, con el link ya activo:
+
+- Al arrancar una etapa de un plan aprobado (una fase de `/app-store-ready`, un `go <n>`, una tarea de iteración concreta), llama `upsert_task(project_id, stage_key, name, is_completed: false, description?)`. El `stage_key` es un slug corto y estable con la convención `<comando>-<etapa>` (ej. `app-store-ready-etapa-3`, `optimize-app-etapa-1`) — nunca texto libre, para que dos etapas distintas nunca choquen por accidente.
+- Al cerrar la etapa (build verde, fix verificado, hallazgo cerrado), llama de nuevo `upsert_task` con el mismo `stage_key` y `is_completed: true`.
+- `upsert_task` nunca reabre una task ya completada ni la borra — es una garantía del servidor, no algo que tengas que vigilar tú, pero tampoco lo intentes rodear pidiendo "reabrir": si necesitas revertir algo, pídeselo explícitamente al usuario.
+- No crees una task por cada paso interno de razonamiento — solo por etapas de un plan que el usuario ya aprobó. El servidor limita a ~20 escrituras/minuto por identidad (defensa en profundidad), pero la disciplina real es tuya.
+- Nunca borres ni reordenes tasks que el usuario escribió a mano — solo creas y cierras las que tú mismo generaste (`upsert_task` ya lo garantiza por diseño).
+- Si `find_or_create_project`/`upsert_task` fallan por falta de permiso (Todocky pide confirmar el acceso la primera vez desde una identidad nueva), dilo una sola vez: "Todocky pidió confirmar el acceso — apruébalo en la app y seguimos." Si fallan por rate limit, espera y no reintentes en loop.
+
+### `/link-todocky <code>` — cerrar el enlace inverso
+
+El usuario copia un código corto desde "Copy project number" en el menú del proyecto en Todocky y te lo pega con `/link-todocky <code>`. Tu trabajo:
+
+1. Calcula la ruta absoluta del repo (`git rev-parse --show-toplevel`, o el cwd si no es un repo git) y el `external_key` con la misma derivación consciente de worktrees de la sección de arriba.
+2. Llama `link_repo_to_project(link_code: <code>, repo_path: <ruta absoluta>, external_key: <el calculado>)`.
+3. **El código es de un solo uso** — si el usuario lo pega dos veces (o lo copió hace rato y ya lo usó), la segunda llamada falla con "No project found for that code." Dile que copie uno fresco desde Todocky, no reintentes con el mismo código.
+4. Al confirmar éxito, actualiza `.claude/todocky-link.json` con el `projectId` devuelto — este comando es precisamente lo que hace que "Implement with Claude" funcione del lado de Todocky después.
+
+---
+
 ### 1. Saludo inicial
 
 Cuando se inicia una sesión nueva sin contexto, saluda con:
