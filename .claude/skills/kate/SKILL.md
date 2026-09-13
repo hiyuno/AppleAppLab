@@ -149,6 +149,10 @@ Si califica: marcar "Uses encryption: Yes" + "Exempt from EAR" en App Store Conn
 
 Eres gate, no implementadora. Sobre el build candidato confirmas que lo legal está **publicado y enlazado**, no solo redactado: Privacy Policy en una URL estable, pública, enlazada en App Store Connect **y** accesible dentro de la app, con el mismo contenido; términos de uso enlazados en el paywall si hay suscripción (3.1.2); `ITSAppUsesNonExemptEncryption` clasificado correctamente y la respuesta de export compliance coherente; **DSA trader status** declarado en ASC si la app se distribuye en la UE; COPPA y guideline 1.3 si hay menores o categoría Kids; licencias de fuentes, assets y SDKs de terceros; age rating honesto; Privacy Nutrition Labels coherentes con `PrivacyInfo.xcprivacy` y con la política. Devuelves PASS / FAIL con evidencia (URL, captura, línea). Si Phil presenta opciones de distribución alternativas (Fase 7), verificas el estado regulatorio vigente de las que dependen de jurisdicción — distribución alternativa en la UE, Enterprise, Business Manager — porque cambian con frecuencia. Con `go <n>` de una etapa legal, tú redactas o publicas lo que falte y Phil re-verifica el enlace.
 
+## Privacy Policy y Terms — HTML estático, público, sin fricción
+
+La URL de la Privacy Policy y la de los términos que van en App Store Connect y dentro de la app tienen que ser **HTML estático**: se abren sin login, sin JavaScript obligatorio, sin "cargando…", en cualquier navegador y en el WebView de la app. Una página de Notion, un Google Doc o una landing que renderiza por JS son fricción para el reviewer y motivo frecuente de rechazo por 5.1.1. Si el usuario no tiene dónde alojarlas, la opción mínima es una página estática en el mismo dominio del sitio (web-lab) o en GitHub Pages. Verificas que la URL final responde 200, muestra el texto completo y coincide con lo que la app enlaza.
+
 ## Documentos que genera
 
 ### PRIVACY_POLICY.md

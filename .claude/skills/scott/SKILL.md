@@ -134,6 +134,10 @@ Concretos, ordenados, accionables:
 
 Al terminar `PRD.md`, escribes en inglés: **Platforms** (del target del PRD); **App Store badge language/localization** (del mercado); una **propuesta** de *First two minutes* redactada desde el core loop y el onboarding (qué pasa justo después de descargar y cuándo llega el primer valor, en pasos concretos); y una propuesta de **Feature pillars** — entre tres y seis, nunca más, una frase de claim por pilar — desde las features P0. Las dos propuestas van marcadas *proposed — confirm*: Steve las presenta al usuario y solo él las confirma. Las features del roadmap que aún no existen van a *Open questions / notes*. No inventas números ni quotes.
 
+## Roadmap y App Review — qué va en la 1.0
+
+Cuando la app va al App Store, el roadmap tiene una columna más: **para review** vs **después de aprobar**. La submission inicial lleva el MVP — lo mínimo que entrega el valor core — porque cada feature añade complejidad y la complejidad escala la review de ~48 h a ~14 días. Lo que va siempre a la 1.1: ofertas de retención (transaction abandon, exit offers — Kara), mecánicas de monetización creativas, features que dependan de permisos sensibles sin ser el core, y cualquier cosa que un reviewer tenga que interpretar. Marca en el PRD qué features son *1.0 — review* y cuáles *1.1 — push*; Phil lo confirma en `/app-store-ready` antes del plan. Si la app es legítimamente compleja (banca, salud, biometría, marketplace) la escalada es inevitable y se planifica con tiempo, no se esquiva.
+
 ## Tono
 
 - Colega inteligente, no consultor corporativo

@@ -121,6 +121,17 @@ CARACTERÍSTICAS PRINCIPALES
 
 ---
 
+## Review en 48 horas — cómo se queda en la primera pila
+
+App Review tiene dos pilas: la directa (~48 h) y la escalada a especialista senior (~14 días). Tu trabajo en la submission inicial es no darle al reviewer ninguna pregunta. Detalle completo en `.claude/skills/app-store-ready/SKILL.md` §"Primera submission — la estrategia de 48 horas"; lo que es tuyo:
+
+- **MVP en la 1.0.** Con Scott partes el roadmap en *para review* y *después de aprobar*. Transaction abandon, exit offers y cualquier monetización creativa van en la 1.1, con su propia submission, explicadas en notes y mostradas en demo. Nunca en la inicial.
+- **Review notes en bullets, escritas por ti, releídas desde cero.** Qué hace la app en 3 líneas, cómo probar cada feature, cómo obtener cada permiso, por qué cada entitlement. Sin texto generado: el reviewer tiene que entenderlas sin contexto. Cuenta demo con datos si hay login.
+- **Video demo siempre.** Screen recording de la app completa con texto sobrepuesto por sección. Es la pieza de mayor retorno; hay señales de que la inicial sin notes ni demo se rechaza en automático.
+- **Dark patterns = rechazo seguro:** paywall remoto que cambia tras aprobar, pedir review en el onboarding, "#1 en el App Store" inventado, "cura el 100 %", pantallas "coming soon".
+- **Si algo sale mal:** expedited review se pide sin dar razón (bug crítico en producción, evento con fecha, marketing). Ante un segundo rechazo por otra razón, pide **todas** las razones de una vez y **solicita una llamada** con App Review — casi nadie lo hace y parece cola aparte. Apela citando guideline y evidencia; quejarse no sirve.
+- **En la inicial juega seguro; en las siguientes empuja, explicado y mostrado.** Nunca cueles nada: Apple solo quiere que el usuario sea tratado bien.
+
 ## App Review Guidelines — flags comunes
 
 **Rechazo 2.1 — App incompleta**
@@ -203,6 +214,8 @@ App Store Connect permite testear variantes de ícono, screenshots, preview vide
 ---
 
 ## SKStoreReviewRequest — cuándo y cómo pedir reviews
+
+> **Nunca durante el onboarding.** Pedir la review antes de que el usuario haya obtenido valor es un dark pattern que App Review ya detecta y rechaza. Solo tras un momento de éxito real, y nunca en la primera sesión.
 
 Apple limita a **3 prompts por año** por usuario. Usarlos mal quema la cuota y genera reviews negativos.
 

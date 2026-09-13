@@ -32,7 +32,7 @@ Rutina del equipo, no un agente. Cuando se lanza, Steve orquesta a Phil (líder)
 |---------|----------|
 | `/app-store-ready` | Auditoría completa: cuenta, build, proyecto, guidelines, App Store Connect, revisión cruzada, veredicto, plan, opciones |
 | `/app-store-ready quick` | Solo Fase 2 — checks técnicos automatizables sobre el proyecto (Info.plist, Privacy Manifest, entitlements, iconos, archive). Sin App Store Connect ni cuenta. Útil antes de cada TestFlight |
-| `/app-store-ready rejected` | Toma el mensaje de App Review pegado por el usuario como entrada, mapea cada punto a la guideline y a un hallazgo, y arma el plan para el resubmit |
+| `/app-store-ready rejected` | Toma el mensaje de App Review pegado por el usuario como entrada, mapea cada punto a la guideline y a un hallazgo, y arma el plan para el resubmit. Si es el segundo rechazo por una razón distinta, Phil redacta la respuesta pidiendo **todas** las razones de una vez y propone **pedir una llamada** con App Review; si el fix es de un bug crítico en producción, propone **expedited review** |
 | `/app-store-ready go <n>` | Aprueba e implementa la etapa `n` del plan existente |
 
 Plataforma (iOS / macOS / ambas) se detecta del `project.yml` o del `TRD.md`. Mac App Store tiene requisitos propios (sandbox obligatorio) que se activan solos.
@@ -301,7 +301,8 @@ Lo que tiene que existir en ASC para poder enviar. Phil verifica lo que hay y pr
 - [ ] **Review notes**: qué hace la app en 3 líneas, cómo probar cada feature con permisos, justificación de entitlements/ATS/background
 - [ ] **Cuenta demo** con datos ya cargados si hay login — sin esto, rechazo garantizado por 2.1
 - [ ] Contacto de review con teléfono que suene
-- [ ] Adjuntos: video de demo si la feature necesita hardware o contexto (ej: Bluetooth, ubicación real)
+- [ ] **Video demo — siempre.** Screen recording de la app completa con texto sobrepuesto explicando cada sección. Obligatorio además si una feature necesita hardware o contexto (Bluetooth, ubicación real). Ver "Primera submission — la estrategia de 48 horas"
+- [ ] Review notes en **bullets, escritas por una persona**, releídas desde cero: sin ellas la inicial suele rechazarse en automático
 
 ### Distribución
 - [ ] Release: manual / automático / programado
@@ -342,8 +343,11 @@ Cada uno devuelve PASS / FAIL con evidencia; Phil integra.
 - Sin cuenta demo habiendo login
 - Agreements/tax/banking sin firmar habiendo IAP
 - Icono 1024 con alpha
+- Dark patterns: paywall remoto que cambia tras la aprobación, pedir review durante el onboarding, prueba social inventada ("#1 en el App Store"), claims del tipo "cura el 100 %"
 
 **🟡 RIESGO ALTO** — probablemente rechazo, o retiro posterior:
+- Submission inicial sin video demo o sin review notes en bullets
+- Transaction abandon o exit offers en la submission **inicial** (permitidos, pero van en la 1.1)
 - Screenshots que no corresponden al build
 - ATS con `AllowsArbitraryLoads` sin justificar
 - Entitlements o background modes sin uso
@@ -395,6 +399,55 @@ Solo si el veredicto es NO VIABLE, o si el usuario pide alternativas. Phil prese
 | **J · Apelar / aclarar con App Review** | El rechazo es interpretativo, no estructural | A veces se gana; puedes pedir llamada con App Review | Lento; hay que tener argumentos con guidelines en mano | Phil (redacta), Kate |
 
 Phil cierra con una **recomendación** y su razón, pero presenta todas las viables. Si el usuario elige una, esa decisión vuelve al PRD (Scott) y al TRD (Avie) como etapa 1 del plan.
+
+---
+
+## Primera submission — la estrategia de 48 horas
+
+App Review tiene **dos pilas**. La directa: sin dudas, aprobada en ~48 h. La escalada: cualquier cosa que le genere una pregunta al reviewer va a un especialista senior, y ahí viven las esperas de ~14 días. Casi todo lo que sigue existe para quedarse en la primera pila. (Fuente: Frederick James, "How to get your iOS app approved in under 48 hours", agosto 2026.)
+
+### 1. La 1.0 que se envía es la mínima
+
+Cada feature añade complejidad; la complejidad escala la review. Salvo que la app sea legítimamente compleja (banca, salud, biometría, marketplace), la submission inicial lleva el MVP y **lo demás va en la 1.1**, ya aprobada la app.
+
+Scott parte el roadmap en dos columnas — *para review* y *después de aprobar* — y Phil confirma antes de la Fase 8. Van **siempre** a la 1.1, nunca a la inicial:
+
+| Feature | Por qué después |
+|---------|-----------------|
+| **Transaction abandon** (oferta al cancelar una compra) | Está permitido, pero es subjetivo por reviewer: no arriesgues la inicial |
+| **Exit offers** (cuestionario + plan más barato en "gestionar suscripción") | Menos riesgoso que el anterior, pero sigue siendo una pregunta para el reviewer |
+| Cualquier mecánica de monetización "creativa" | Se envía sola, explicada en review notes, con demo |
+| Features que dependan de permisos sensibles y no sean el core | Menos superficie para preguntas |
+
+Kara implementa esas ofertas en una etapa post-aprobación con su propia submission. Nada de esto se cuela: en la 1.1 se explica en las review notes y se muestra en el demo.
+
+### 2. Review notes: bullets, humanas, para principiantes
+
+- Bullets concisos, no párrafos. Qué hace la app en 3 líneas, cómo probar cada feature, cómo obtener cada permiso, por qué cada entitlement / ATS / background mode.
+- **Escritas por una persona, no generadas.** El reviewer tiene que entenderlas sin contexto. Phil las relee como si no supiera nada de la app.
+- Cuenta demo con datos cargados si hay login.
+
+### 3. Video demo — siempre, no solo con hardware
+
+Es la pieza con mayor retorno de toda la submission, y hay señales de que una inicial **sin review notes ni demo se rechaza en automático**. Screen recording recorriendo la app completa, con texto sobrepuesto que explica cada sección. Se adjunta en App Store Connect. Sin video en la inicial es 🟡.
+
+### 4. Dark patterns — rechazo seguro
+
+- Paywall remoto que cambia a no-compliant después de la aprobación
+- Pedir la review de App Store **durante el onboarding**
+- Prueba social inventada ("#1 en el App Store")
+- Claims controvertidos ("cura el 100 % de…")
+- Pantallas "coming soon" o features que no funcionan
+
+### 5. Si algo sale mal — expedited review y llamada con Apple
+
+- **Expedited review** se puede pedir sin dar razón. Aplica a bug crítico en producción (solo follow-ups), eventos (un Shipaton, un lanzamiento con fecha), marketing. Un momento viral antes del lanzamiento inicial no está en la lista oficial pero es legítimo intentarlo.
+- **Pedir una llamada** con App Review: casi nadie lo hace y parece ponerte en una cola aparte. Es la salida al loop *rechazo → fix → rechazo por otra razón*: en la llamada (o en la primera respuesta) **pide todas las razones de rechazo de una vez**.
+- Apelar: constructivo, citando guideline y evidencia. Quejarse no sirve.
+
+### 6. La regla que lo resume
+
+Apple solo quiere que el usuario sea tratado bien. **En la inicial, juega seguro. En las siguientes, empuja — pero explícalo en las review notes, muéstralo en el demo, y nunca cueles nada.** Si la app confunde o engaña al usuario en algún punto, va a rechazo; si es clara y honesta, lo subjetivo juega a favor.
 
 ---
 
@@ -463,6 +516,8 @@ Phil (checklist de submit de APPSTORE.md, punto por punto, con el usuario)
 → Usuario confirma explícitamente "envíalo"
 → Phil: Submit for Review · phased release · anota fecha y build en el historial
 → Mientras está en review: Phil monitorea; si llega un rechazo → `/app-store-ready rejected` con el mensaje pegado
+→ Si hay razón legítima (bug crítico en producción, evento con fecha, campaña de marketing): Phil propone expedited review — no hace falta justificarla
+→ Segundo rechazo por razón distinta: Phil pide todas las razones de una vez y propone una llamada con App Review (cola aparte)
 ```
 
 Si algo se rompe o un gate vuelve a FAIL: revertir, marcar la etapa ⚠️ Revertida con la razón, replantear. Nunca se envía con un gate en FAIL "porque probablemente pasa".
