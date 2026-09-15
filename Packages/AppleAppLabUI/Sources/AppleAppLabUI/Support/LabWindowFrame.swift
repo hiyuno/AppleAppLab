@@ -48,9 +48,17 @@ public struct LabWindowFrame<Content: View>: View {
         .clipShape(LabShape(radius: cornerRadius, style: cornerStyle))
         .overlay(
             LabShape(radius: cornerRadius, style: cornerStyle)
-                .strokeBorder(Color(nsColor: .separatorColor), lineWidth: borderWidth)
+                .strokeBorder(Self.separatorColor, lineWidth: borderWidth)
         )
         .labShadow(elevation)
+    }
+
+    private static var separatorColor: Color {
+        #if os(macOS)
+        Color(nsColor: .separatorColor)
+        #else
+        Color(uiColor: .separator)
+        #endif
     }
 
     @ViewBuilder
@@ -137,7 +145,13 @@ public struct LabWindowFrame<Content: View>: View {
     HStack(spacing: 24) {
         ForEach(WindowMaterial.allCases) { material in
             LabWindowFrame(
-                backgroundColor: Color(nsColor: .windowBackgroundColor),
+                backgroundColor: {
+                    #if os(macOS)
+                    Color(nsColor: .windowBackgroundColor)
+                    #else
+                    Color(uiColor: .systemBackground)
+                    #endif
+                }(),
                 cornerStyle: .squircle,
                 material: material
             ) {

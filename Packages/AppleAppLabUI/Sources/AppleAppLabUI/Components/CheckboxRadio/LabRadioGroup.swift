@@ -19,7 +19,11 @@ public struct LabRadioGroup: View {
                 Text(option).tag(option)
             }
         }
+        #if os(macOS)
         .pickerStyle(.radioGroup)
+        #else
+        .pickerStyle(.inline)
+        #endif
         .tint(config.accentColor)
     }
 }

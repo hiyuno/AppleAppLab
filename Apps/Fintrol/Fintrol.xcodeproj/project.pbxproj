@@ -1,0 +1,900 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0254C54999A1B2671DA79A70 /* AppMigrationPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8519B1D9E52BDD8098759799 /* AppMigrationPlan.swift */; };
+		04E89BD195E2D5B96B9B1EBA /* JumpSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BFB8EABB58D0EA220DD5E1B /* JumpSheet.swift */; };
+		080E0B3657C80B186399DC31 /* SobranteBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D828660E91984A48A0AFD63F /* SobranteBadge.swift */; };
+		0845A3EF90E938463D2E6980 /* RecurringItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E470E33169582D672183B5 /* RecurringItem.swift */; };
+		0A79791F1C12E3459E19A4FB /* FintrolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5370CF4674A90E65EB76DAB1 /* FintrolApp.swift */; };
+		0E3F33440DFA5A4295EAF1DC /* CivilDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DDDEDDF7E3C201E0A27E4A4 /* CivilDate.swift */; };
+		11CAAE09334C0636C967AD7E /* LockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5964AF2F1983AC124D8E9127 /* LockView.swift */; };
+		1A2395EADDE6EC8639AF6452 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24B1DC55433DE08AC3220482 /* SettingsView.swift */; };
+		1A5E670DB6E434FD7493A2CF /* SubscriptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60758C3951BA86F46835DB6A /* SubscriptionsView.swift */; };
+		1F8C49F5977EAAB390BA4AA9 /* PeriodCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9AC0F29C763AEC54F48E526 /* PeriodCoordinator.swift */; };
+		210CEEFE4CD5AA7C28A85DAE /* ExchangeRateStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 31AEDBF136755EA64834286A /* ExchangeRateStore.swift */; };
+		2547499E20AFA45EB980FCF1 /* ProjectionEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AEB3FA02D477577967741806 /* ProjectionEngineTests.swift */; };
+		25DBDBEA92FAAB60B6AA4758 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 4BFB532C23EA4267021A610B /* PrivacyInfo.xcprivacy */; };
+		27C3E8A1EBBA5043AADB5D51 /* ProjectionRegressionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C13995C039B33A6DAF2F9748 /* ProjectionRegressionTests.swift */; };
+		2BB51C20DC5BA10CF796BB08 /* AppleAppLabUI in Frameworks */ = {isa = PBXBuildFile; productRef = 2C127ED513F32B0CE1840051 /* AppleAppLabUI */; };
+		32BA93D9CEB76C8673303307 /* LoanEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1052E0CFE7E98D118F219221 /* LoanEngineTests.swift */; };
+		3314CA7197B9ACF083C2076C /* PeriodView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 580436E95AF69CE70C691745 /* PeriodView.swift */; };
+		3821C728EF4AF6CB6101C4A7 /* LineItemRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F449DFDD65A97258A0E6D17 /* LineItemRow.swift */; };
+		48238688EC5228BFF14D4D04 /* ExchangeRateParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D0DEDC90BA7BFE287E95846 /* ExchangeRateParser.swift */; };
+		4FB62CA1221564B0204B20B1 /* CarryOverEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422FA577565059C3C76334B3 /* CarryOverEngineTests.swift */; };
+		5898034E90B9DEA4D287A352 /* FintrolEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DAD2937F423E2E88779C1D7 /* FintrolEnums.swift */; };
+		58FFE88721E527CFE81E4FB4 /* BiometricLockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 637B58D6B3A3F2A8DCE68B9E /* BiometricLockStore.swift */; };
+		5B6A6767102BAD8C2A6CD267 /* SchemaV1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21E8A4D5E23555DBCBD83939 /* SchemaV1.swift */; };
+		5C5EFAB2C3798E7AA7771023 /* LineItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F893ACA492FBBF60882B64 /* LineItem.swift */; };
+		5C6212205E36050B55A39B1A /* ExchangeRateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3695B6D6E219D97D703A990 /* ExchangeRateService.swift */; };
+		610C765F9884EDF41E018F6F /* RecurringHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 635F6996BBE851528B051E89 /* RecurringHubView.swift */; };
+		621B3C45B180D789A7289426 /* ExchangeRateCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F4F7434766B5EC762084C6 /* ExchangeRateCache.swift */; };
+		62DDD27F2F6B074755A76D2F /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC882F5DF8F984BA0E4D5504 /* OverviewView.swift */; };
+		6BE1FFD342B2A659C5E4ABC2 /* PeriodCoordinatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1BA3D7F2BFABFF684660DB5 /* PeriodCoordinatorTests.swift */; };
+		718DBC36253C97CC3ECF33D1 /* KeychainStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F52199E5869BBC23728CF3 /* KeychainStoreTests.swift */; };
+		781318F4510CC0862F55B427 /* ServicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20BACF1D5E77D003D0605FB7 /* ServicesView.swift */; };
+		7890CF4B8F0AC8E4E297B822 /* Subscription.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D63937C11EADCF4F6AF835A /* Subscription.swift */; };
+		79A57F5F80F59AA69EDC0021 /* EdgeCaseEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 735D769B6B54904BFBE97C2A /* EdgeCaseEngineTests.swift */; };
+		8374DF92E9D5162E90583445 /* PeriodDateEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBB24923FD71AE593BED955C /* PeriodDateEngine.swift */; };
+		843ECC89DB3A38C57DD850D2 /* ExchangeRateParserTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 953E68696F2BE19F5BB1B3A1 /* ExchangeRateParserTests.swift */; };
+		8B8223224942FECD32DCE888 /* SobranteStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF0962B22E9720DCB4EAEDDF /* SobranteStatus.swift */; };
+		9068A77D69C077ECCF4442EE /* Calendar+Fintrol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8FCDB25D1D9A74446484B90C /* Calendar+Fintrol.swift */; };
+		90BABB30B3CDEF0D3E6F5AB0 /* SchemaV2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8F471542AEAB1F58B5658BC0 /* SchemaV2.swift */; };
+		97168AA702FAE200F3A7AB89 /* CarryOverEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = D95D42AD53F5F416B2CFD60A /* CarryOverEngine.swift */; };
+		9BADBDD6F7D7537FF953027C /* LoanDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 685447DD5EA2840846D7D750 /* LoanDetailView.swift */; };
+		A123F0DB5EE279803445F221 /* ProjectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 407E30CEC4402B9644F1EEB7 /* ProjectionEngine.swift */; };
+		A14FE770B28993740AF0266A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58A4DB18C8F47B32200C86BE /* RootView.swift */; };
+		AA33E04720F15DD9E7CEC737 /* LoansView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 143019058E3A32124A690623 /* LoansView.swift */; };
+		AC0344FEF46ECB4504AD689F /* ExchangeRateServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779AF77C5F0B9A84ACF875A0 /* ExchangeRateServiceTests.swift */; };
+		AC6867235EA85294AA6E65E7 /* SchemaV1Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9ECA88964595DF093459732 /* SchemaV1Tests.swift */; };
+		AE0C4D87B2095B03DDE3440C /* PaymentDayStorageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0B01638C95569D9F3DCD4754 /* PaymentDayStorageTests.swift */; };
+		B5A2DFCA7F3630341F60C5B4 /* PeriodCoordinate+Title.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF15AFC381821B8160A698FF /* PeriodCoordinate+Title.swift */; };
+		B768ABFB69B535E03E7FB71A /* EngineTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9D87236BC3B667B8A8816A3 /* EngineTypes.swift */; };
+		BACA16B49D7649E2A11979E5 /* Decimal+Formatting.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6652F990E541D1BDC8D9C65A /* Decimal+Formatting.swift */; };
+		BDAFEC61A48E72C1D303834E /* SummaryPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E3BBE08E44596EC5C77C746 /* SummaryPanel.swift */; };
+		BE9A72BC6A5325B5035A0722 /* CurrencyConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AA5AC1BC3720BED0F1DB161 /* CurrencyConversion.swift */; };
+		C914807C575A724C2102E4F8 /* PeriodCoordinateTitleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1840D41607A8A2F3A033394E /* PeriodCoordinateTitleTests.swift */; };
+		CDE48F2F7CB2BD595E68CAE6 /* PeriodDateEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A86F66EACF89681EEC3A46 /* PeriodDateEngineTests.swift */; };
+		D1E5038035AA4733865101FE /* ExchangeRateStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8AA61D2957368739F96A86 /* ExchangeRateStoreTests.swift */; };
+		D593E02A9A32E17E8AD4FD83 /* Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 109B691C8E0D1BE788716349 /* Validation.swift */; };
+		DA895DF4DF376F7336EFECA2 /* LoanEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36C4060BA9B266F4E1B06095 /* LoanEngine.swift */; };
+		E05AECF96F4CD97019E569E5 /* RecurringListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16B86BB729B340F616B8DE0F /* RecurringListView.swift */; };
+		EBE2712427A60C5AC18B3540 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58740E5644A9FC34CC2CB438 /* KeychainStore.swift */; };
+		ED4A24355090FEE88AD9CE4C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B1EF6D2AA73802B0C544D87 /* Assets.xcassets */; };
+		F0D8C6F9ACA314F9BF5F39F1 /* CurrencyConversionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2952DC677977D07536F48676 /* CurrencyConversionTests.swift */; };
+		F74A6EB486BA59E8D0A55E65 /* Period.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDDE37C3F087B192719019B7 /* Period.swift */; };
+		FAD945E4E8AD605E08A25C07 /* Loan.swift in Sources */ = {isa = PBXBuildFile; fileRef = D55B8A2CF17EEFED276B42C8 /* Loan.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		9AD6EFDF6562B6F9F40EE070 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = CF8B664F16A6F4C548B4E14F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 43B5447DE8A801D3E1D6F72A;
+			remoteInfo = Fintrol;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0439C69C668F79634206CCBE /* Fintrol.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Fintrol.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		04F52199E5869BBC23728CF3 /* KeychainStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStoreTests.swift; sourceTree = "<group>"; };
+		04F893ACA492FBBF60882B64 /* LineItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineItem.swift; sourceTree = "<group>"; };
+		0B01638C95569D9F3DCD4754 /* PaymentDayStorageTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentDayStorageTests.swift; sourceTree = "<group>"; };
+		0DAD2937F423E2E88779C1D7 /* FintrolEnums.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FintrolEnums.swift; sourceTree = "<group>"; };
+		0DDDEDDF7E3C201E0A27E4A4 /* CivilDate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CivilDate.swift; sourceTree = "<group>"; };
+		0F8AA61D2957368739F96A86 /* ExchangeRateStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateStoreTests.swift; sourceTree = "<group>"; };
+		1052E0CFE7E98D118F219221 /* LoanEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoanEngineTests.swift; sourceTree = "<group>"; };
+		109B691C8E0D1BE788716349 /* Validation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Validation.swift; sourceTree = "<group>"; };
+		12711F622B4E93BFF0A38AB1 /* FintrolTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = FintrolTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		143019058E3A32124A690623 /* LoansView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoansView.swift; sourceTree = "<group>"; };
+		14A86F66EACF89681EEC3A46 /* PeriodDateEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodDateEngineTests.swift; sourceTree = "<group>"; };
+		16B86BB729B340F616B8DE0F /* RecurringListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringListView.swift; sourceTree = "<group>"; };
+		1840D41607A8A2F3A033394E /* PeriodCoordinateTitleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodCoordinateTitleTests.swift; sourceTree = "<group>"; };
+		1D0DEDC90BA7BFE287E95846 /* ExchangeRateParser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateParser.swift; sourceTree = "<group>"; };
+		20BACF1D5E77D003D0605FB7 /* ServicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServicesView.swift; sourceTree = "<group>"; };
+		21E8A4D5E23555DBCBD83939 /* SchemaV1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaV1.swift; sourceTree = "<group>"; };
+		24B1DC55433DE08AC3220482 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		2952DC677977D07536F48676 /* CurrencyConversionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyConversionTests.swift; sourceTree = "<group>"; };
+		31AEDBF136755EA64834286A /* ExchangeRateStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateStore.swift; sourceTree = "<group>"; };
+		36C4060BA9B266F4E1B06095 /* LoanEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoanEngine.swift; sourceTree = "<group>"; };
+		3F449DFDD65A97258A0E6D17 /* LineItemRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineItemRow.swift; sourceTree = "<group>"; };
+		407E30CEC4402B9644F1EEB7 /* ProjectionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectionEngine.swift; sourceTree = "<group>"; };
+		422FA577565059C3C76334B3 /* CarryOverEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarryOverEngineTests.swift; sourceTree = "<group>"; };
+		4AA5AC1BC3720BED0F1DB161 /* CurrencyConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyConversion.swift; sourceTree = "<group>"; };
+		4BFB532C23EA4267021A610B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		4E3BBE08E44596EC5C77C746 /* SummaryPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryPanel.swift; sourceTree = "<group>"; };
+		5370CF4674A90E65EB76DAB1 /* FintrolApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FintrolApp.swift; sourceTree = "<group>"; };
+		580436E95AF69CE70C691745 /* PeriodView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodView.swift; sourceTree = "<group>"; };
+		58740E5644A9FC34CC2CB438 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		58A4DB18C8F47B32200C86BE /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		5964AF2F1983AC124D8E9127 /* LockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockView.swift; sourceTree = "<group>"; };
+		5B1EF6D2AA73802B0C544D87 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		60758C3951BA86F46835DB6A /* SubscriptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionsView.swift; sourceTree = "<group>"; };
+		635F6996BBE851528B051E89 /* RecurringHubView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringHubView.swift; sourceTree = "<group>"; };
+		637B58D6B3A3F2A8DCE68B9E /* BiometricLockStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricLockStore.swift; sourceTree = "<group>"; };
+		6652F990E541D1BDC8D9C65A /* Decimal+Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Decimal+Formatting.swift"; sourceTree = "<group>"; };
+		685447DD5EA2840846D7D750 /* LoanDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoanDetailView.swift; sourceTree = "<group>"; };
+		735D769B6B54904BFBE97C2A /* EdgeCaseEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeCaseEngineTests.swift; sourceTree = "<group>"; };
+		779AF77C5F0B9A84ACF875A0 /* ExchangeRateServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateServiceTests.swift; sourceTree = "<group>"; };
+		7AC3270B50627B8804936A84 /* Fintrol-macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Fintrol-macOS.entitlements"; sourceTree = "<group>"; };
+		7BFB8EABB58D0EA220DD5E1B /* JumpSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpSheet.swift; sourceTree = "<group>"; };
+		8519B1D9E52BDD8098759799 /* AppMigrationPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMigrationPlan.swift; sourceTree = "<group>"; };
+		8D63937C11EADCF4F6AF835A /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
+		8F471542AEAB1F58B5658BC0 /* SchemaV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaV2.swift; sourceTree = "<group>"; };
+		8FCDB25D1D9A74446484B90C /* Calendar+Fintrol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Calendar+Fintrol.swift"; sourceTree = "<group>"; };
+		91CFC0EAD13F275520ACAD22 /* AppleAppLabUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = AppleAppLabUI; path = ../../Packages/AppleAppLabUI; sourceTree = SOURCE_ROOT; };
+		953E68696F2BE19F5BB1B3A1 /* ExchangeRateParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateParserTests.swift; sourceTree = "<group>"; };
+		A4F4F7434766B5EC762084C6 /* ExchangeRateCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateCache.swift; sourceTree = "<group>"; };
+		A9ECA88964595DF093459732 /* SchemaV1Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaV1Tests.swift; sourceTree = "<group>"; };
+		AEB3FA02D477577967741806 /* ProjectionEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectionEngineTests.swift; sourceTree = "<group>"; };
+		BF0962B22E9720DCB4EAEDDF /* SobranteStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SobranteStatus.swift; sourceTree = "<group>"; };
+		BF15AFC381821B8160A698FF /* PeriodCoordinate+Title.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PeriodCoordinate+Title.swift"; sourceTree = "<group>"; };
+		C13995C039B33A6DAF2F9748 /* ProjectionRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectionRegressionTests.swift; sourceTree = "<group>"; };
+		C1BA3D7F2BFABFF684660DB5 /* PeriodCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodCoordinatorTests.swift; sourceTree = "<group>"; };
+		C8E470E33169582D672183B5 /* RecurringItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringItem.swift; sourceTree = "<group>"; };
+		C9AC0F29C763AEC54F48E526 /* PeriodCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodCoordinator.swift; sourceTree = "<group>"; };
+		D55B8A2CF17EEFED276B42C8 /* Loan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Loan.swift; sourceTree = "<group>"; };
+		D828660E91984A48A0AFD63F /* SobranteBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SobranteBadge.swift; sourceTree = "<group>"; };
+		D95D42AD53F5F416B2CFD60A /* CarryOverEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarryOverEngine.swift; sourceTree = "<group>"; };
+		D9D87236BC3B667B8A8816A3 /* EngineTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineTypes.swift; sourceTree = "<group>"; };
+		DE8F546B2B544310D95425C3 /* Fintrol-iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Fintrol-iOS.entitlements"; sourceTree = "<group>"; };
+		EC882F5DF8F984BA0E4D5504 /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
+		F3695B6D6E219D97D703A990 /* ExchangeRateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateService.swift; sourceTree = "<group>"; };
+		FBB24923FD71AE593BED955C /* PeriodDateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodDateEngine.swift; sourceTree = "<group>"; };
+		FDDE37C3F087B192719019B7 /* Period.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Period.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		98EA8F055F65CBF3F67A7D83 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2BB51C20DC5BA10CF796BB08 /* AppleAppLabUI in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		01010B4621CCB95FB8A44429 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				91CFC0EAD13F275520ACAD22 /* AppleAppLabUI */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		05E6CDCCE9601C76903C0C7C /* App */ = {
+			isa = PBXGroup;
+			children = (
+				5370CF4674A90E65EB76DAB1 /* FintrolApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		0984B9ABFA5BA94D0A147D6A /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				7BFB8EABB58D0EA220DD5E1B /* JumpSheet.swift */,
+				3F449DFDD65A97258A0E6D17 /* LineItemRow.swift */,
+				D828660E91984A48A0AFD63F /* SobranteBadge.swift */,
+				4E3BBE08E44596EC5C77C746 /* SummaryPanel.swift */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		0F21583F816922B5366AA718 /* Loans */ = {
+			isa = PBXGroup;
+			children = (
+				685447DD5EA2840846D7D750 /* LoanDetailView.swift */,
+				143019058E3A32124A690623 /* LoansView.swift */,
+			);
+			path = Loans;
+			sourceTree = "<group>";
+		};
+		18C1148AAE05BC50AFC9C15D /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				8FCDB25D1D9A74446484B90C /* Calendar+Fintrol.swift */,
+				6652F990E541D1BDC8D9C65A /* Decimal+Formatting.swift */,
+				BF15AFC381821B8160A698FF /* PeriodCoordinate+Title.swift */,
+				109B691C8E0D1BE788716349 /* Validation.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
+		203FAC051E6DDA5CB0A8013B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0439C69C668F79634206CCBE /* Fintrol.app */,
+				12711F622B4E93BFF0A38AB1 /* FintrolTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		2A484E7F19C6A3174BA46B7B /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				1D0DEDC90BA7BFE287E95846 /* ExchangeRateParser.swift */,
+				F3695B6D6E219D97D703A990 /* ExchangeRateService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		2F8BE111DEB9F4A77278E18D /* FintrolTests */ = {
+			isa = PBXGroup;
+			children = (
+				422FA577565059C3C76334B3 /* CarryOverEngineTests.swift */,
+				2952DC677977D07536F48676 /* CurrencyConversionTests.swift */,
+				735D769B6B54904BFBE97C2A /* EdgeCaseEngineTests.swift */,
+				953E68696F2BE19F5BB1B3A1 /* ExchangeRateParserTests.swift */,
+				779AF77C5F0B9A84ACF875A0 /* ExchangeRateServiceTests.swift */,
+				0F8AA61D2957368739F96A86 /* ExchangeRateStoreTests.swift */,
+				04F52199E5869BBC23728CF3 /* KeychainStoreTests.swift */,
+				1052E0CFE7E98D118F219221 /* LoanEngineTests.swift */,
+				0B01638C95569D9F3DCD4754 /* PaymentDayStorageTests.swift */,
+				1840D41607A8A2F3A033394E /* PeriodCoordinateTitleTests.swift */,
+				C1BA3D7F2BFABFF684660DB5 /* PeriodCoordinatorTests.swift */,
+				14A86F66EACF89681EEC3A46 /* PeriodDateEngineTests.swift */,
+				AEB3FA02D477577967741806 /* ProjectionEngineTests.swift */,
+				C13995C039B33A6DAF2F9748 /* ProjectionRegressionTests.swift */,
+				A9ECA88964595DF093459732 /* SchemaV1Tests.swift */,
+			);
+			path = FintrolTests;
+			sourceTree = "<group>";
+		};
+		4F9E2B59BFB0A61869A673CC /* Lock */ = {
+			isa = PBXGroup;
+			children = (
+				637B58D6B3A3F2A8DCE68B9E /* BiometricLockStore.swift */,
+				5964AF2F1983AC124D8E9127 /* LockView.swift */,
+			);
+			path = Lock;
+			sourceTree = "<group>";
+		};
+		56DEE15072DA8D5B6A1F1114 /* Recurring */ = {
+			isa = PBXGroup;
+			children = (
+				16B86BB729B340F616B8DE0F /* RecurringListView.swift */,
+			);
+			path = Recurring;
+			sourceTree = "<group>";
+		};
+		57A04E4FEE436A4ACCE4D680 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				CCCF8D3155EEBF76564E984E /* Hub */,
+				0F21583F816922B5366AA718 /* Loans */,
+				4F9E2B59BFB0A61869A673CC /* Lock */,
+				7D9F7F475E3AD747CE5C9FF2 /* Overview */,
+				5AF90030F79CC1D0C2E9B38F /* Period */,
+				56DEE15072DA8D5B6A1F1114 /* Recurring */,
+				E1AF28649650C97A6CC6814B /* Root */,
+				936A5CBB518C5CA7338F5D7C /* Services */,
+				B928506A4B887591719DDE1B /* Settings */,
+				592831C5CE74CA2D315E8056 /* Subscriptions */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		592831C5CE74CA2D315E8056 /* Subscriptions */ = {
+			isa = PBXGroup;
+			children = (
+				60758C3951BA86F46835DB6A /* SubscriptionsView.swift */,
+			);
+			path = Subscriptions;
+			sourceTree = "<group>";
+		};
+		5AF90030F79CC1D0C2E9B38F /* Period */ = {
+			isa = PBXGroup;
+			children = (
+				580436E95AF69CE70C691745 /* PeriodView.swift */,
+			);
+			path = Period;
+			sourceTree = "<group>";
+		};
+		6B25C6D677AC43A93B96A4C4 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				A7894F7038A16CF4FA67C8FD /* Engine */,
+				18C1148AAE05BC50AFC9C15D /* Extensions */,
+				A51A0C682E6E9E3D9DA86490 /* Migration */,
+				7B35EE4C9144381D548B83E9 /* Models */,
+				31AEDBF136755EA64834286A /* ExchangeRateStore.swift */,
+				58740E5644A9FC34CC2CB438 /* KeychainStore.swift */,
+				C9AC0F29C763AEC54F48E526 /* PeriodCoordinator.swift */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		7899D6C7BCAAA2EFE458560B /* Fintrol */ = {
+			isa = PBXGroup;
+			children = (
+				05E6CDCCE9601C76903C0C7C /* App */,
+				6B25C6D677AC43A93B96A4C4 /* Core */,
+				57A04E4FEE436A4ACCE4D680 /* Features */,
+				2A484E7F19C6A3174BA46B7B /* Services */,
+				0984B9ABFA5BA94D0A147D6A /* UI */,
+				5B1EF6D2AA73802B0C544D87 /* Assets.xcassets */,
+				DE8F546B2B544310D95425C3 /* Fintrol-iOS.entitlements */,
+				7AC3270B50627B8804936A84 /* Fintrol-macOS.entitlements */,
+				4BFB532C23EA4267021A610B /* PrivacyInfo.xcprivacy */,
+			);
+			path = Fintrol;
+			sourceTree = "<group>";
+		};
+		7B35EE4C9144381D548B83E9 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A4F4F7434766B5EC762084C6 /* ExchangeRateCache.swift */,
+				0DAD2937F423E2E88779C1D7 /* FintrolEnums.swift */,
+				04F893ACA492FBBF60882B64 /* LineItem.swift */,
+				D55B8A2CF17EEFED276B42C8 /* Loan.swift */,
+				FDDE37C3F087B192719019B7 /* Period.swift */,
+				C8E470E33169582D672183B5 /* RecurringItem.swift */,
+				8D63937C11EADCF4F6AF835A /* Subscription.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		7D9F7F475E3AD747CE5C9FF2 /* Overview */ = {
+			isa = PBXGroup;
+			children = (
+				EC882F5DF8F984BA0E4D5504 /* OverviewView.swift */,
+			);
+			path = Overview;
+			sourceTree = "<group>";
+		};
+		8F7FE66F3C728C49D390264D = {
+			isa = PBXGroup;
+			children = (
+				7899D6C7BCAAA2EFE458560B /* Fintrol */,
+				2F8BE111DEB9F4A77278E18D /* FintrolTests */,
+				01010B4621CCB95FB8A44429 /* Packages */,
+				203FAC051E6DDA5CB0A8013B /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		936A5CBB518C5CA7338F5D7C /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				20BACF1D5E77D003D0605FB7 /* ServicesView.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A51A0C682E6E9E3D9DA86490 /* Migration */ = {
+			isa = PBXGroup;
+			children = (
+				8519B1D9E52BDD8098759799 /* AppMigrationPlan.swift */,
+				21E8A4D5E23555DBCBD83939 /* SchemaV1.swift */,
+				8F471542AEAB1F58B5658BC0 /* SchemaV2.swift */,
+			);
+			path = Migration;
+			sourceTree = "<group>";
+		};
+		A7894F7038A16CF4FA67C8FD /* Engine */ = {
+			isa = PBXGroup;
+			children = (
+				D95D42AD53F5F416B2CFD60A /* CarryOverEngine.swift */,
+				0DDDEDDF7E3C201E0A27E4A4 /* CivilDate.swift */,
+				4AA5AC1BC3720BED0F1DB161 /* CurrencyConversion.swift */,
+				D9D87236BC3B667B8A8816A3 /* EngineTypes.swift */,
+				36C4060BA9B266F4E1B06095 /* LoanEngine.swift */,
+				FBB24923FD71AE593BED955C /* PeriodDateEngine.swift */,
+				407E30CEC4402B9644F1EEB7 /* ProjectionEngine.swift */,
+				BF0962B22E9720DCB4EAEDDF /* SobranteStatus.swift */,
+			);
+			path = Engine;
+			sourceTree = "<group>";
+		};
+		B928506A4B887591719DDE1B /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				24B1DC55433DE08AC3220482 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		CCCF8D3155EEBF76564E984E /* Hub */ = {
+			isa = PBXGroup;
+			children = (
+				635F6996BBE851528B051E89 /* RecurringHubView.swift */,
+			);
+			path = Hub;
+			sourceTree = "<group>";
+		};
+		E1AF28649650C97A6CC6814B /* Root */ = {
+			isa = PBXGroup;
+			children = (
+				58A4DB18C8F47B32200C86BE /* RootView.swift */,
+			);
+			path = Root;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		43B5447DE8A801D3E1D6F72A /* Fintrol */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 3962C7F03F26C7AC47939A89 /* Build configuration list for PBXNativeTarget "Fintrol" */;
+			buildPhases = (
+				68C960C3E6BEE3F633139BD7 /* Sources */,
+				10091D6A756E7F446A5F25EE /* Resources */,
+				98EA8F055F65CBF3F67A7D83 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Fintrol;
+			packageProductDependencies = (
+				2C127ED513F32B0CE1840051 /* AppleAppLabUI */,
+			);
+			productName = Fintrol;
+			productReference = 0439C69C668F79634206CCBE /* Fintrol.app */;
+			productType = "com.apple.product-type.application";
+		};
+		598C5742852B1FD7B824B22C /* FintrolTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FA92B5EFDA0A145FAEA78F2E /* Build configuration list for PBXNativeTarget "FintrolTests" */;
+			buildPhases = (
+				6105CC98C54D05F794A4EE93 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				2EEBFBC5682D1FAFCF8DD8EA /* PBXTargetDependency */,
+			);
+			name = FintrolTests;
+			packageProductDependencies = (
+			);
+			productName = FintrolTests;
+			productReference = 12711F622B4E93BFF0A38AB1 /* FintrolTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CF8B664F16A6F4C548B4E14F /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					43B5447DE8A801D3E1D6F72A = {
+						DevelopmentTeam = 449S639443;
+						ProvisioningStyle = Automatic;
+					};
+					598C5742852B1FD7B824B22C = {
+						DevelopmentTeam = 449S639443;
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 23A205E5BE0C33374FBDB2CD /* Build configuration list for PBXProject "Fintrol" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 8F7FE66F3C728C49D390264D;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7A01CFDB48B466EA80F6ED5E /* XCLocalSwiftPackageReference "../../Packages/AppleAppLabUI" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 203FAC051E6DDA5CB0A8013B /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				43B5447DE8A801D3E1D6F72A /* Fintrol */,
+				598C5742852B1FD7B824B22C /* FintrolTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		10091D6A756E7F446A5F25EE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				ED4A24355090FEE88AD9CE4C /* Assets.xcassets in Resources */,
+				25DBDBEA92FAAB60B6AA4758 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6105CC98C54D05F794A4EE93 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4FB62CA1221564B0204B20B1 /* CarryOverEngineTests.swift in Sources */,
+				F0D8C6F9ACA314F9BF5F39F1 /* CurrencyConversionTests.swift in Sources */,
+				79A57F5F80F59AA69EDC0021 /* EdgeCaseEngineTests.swift in Sources */,
+				843ECC89DB3A38C57DD850D2 /* ExchangeRateParserTests.swift in Sources */,
+				AC0344FEF46ECB4504AD689F /* ExchangeRateServiceTests.swift in Sources */,
+				D1E5038035AA4733865101FE /* ExchangeRateStoreTests.swift in Sources */,
+				718DBC36253C97CC3ECF33D1 /* KeychainStoreTests.swift in Sources */,
+				32BA93D9CEB76C8673303307 /* LoanEngineTests.swift in Sources */,
+				AE0C4D87B2095B03DDE3440C /* PaymentDayStorageTests.swift in Sources */,
+				C914807C575A724C2102E4F8 /* PeriodCoordinateTitleTests.swift in Sources */,
+				6BE1FFD342B2A659C5E4ABC2 /* PeriodCoordinatorTests.swift in Sources */,
+				CDE48F2F7CB2BD595E68CAE6 /* PeriodDateEngineTests.swift in Sources */,
+				2547499E20AFA45EB980FCF1 /* ProjectionEngineTests.swift in Sources */,
+				27C3E8A1EBBA5043AADB5D51 /* ProjectionRegressionTests.swift in Sources */,
+				AC6867235EA85294AA6E65E7 /* SchemaV1Tests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		68C960C3E6BEE3F633139BD7 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0254C54999A1B2671DA79A70 /* AppMigrationPlan.swift in Sources */,
+				58FFE88721E527CFE81E4FB4 /* BiometricLockStore.swift in Sources */,
+				9068A77D69C077ECCF4442EE /* Calendar+Fintrol.swift in Sources */,
+				97168AA702FAE200F3A7AB89 /* CarryOverEngine.swift in Sources */,
+				0E3F33440DFA5A4295EAF1DC /* CivilDate.swift in Sources */,
+				BE9A72BC6A5325B5035A0722 /* CurrencyConversion.swift in Sources */,
+				BACA16B49D7649E2A11979E5 /* Decimal+Formatting.swift in Sources */,
+				B768ABFB69B535E03E7FB71A /* EngineTypes.swift in Sources */,
+				621B3C45B180D789A7289426 /* ExchangeRateCache.swift in Sources */,
+				48238688EC5228BFF14D4D04 /* ExchangeRateParser.swift in Sources */,
+				5C6212205E36050B55A39B1A /* ExchangeRateService.swift in Sources */,
+				210CEEFE4CD5AA7C28A85DAE /* ExchangeRateStore.swift in Sources */,
+				0A79791F1C12E3459E19A4FB /* FintrolApp.swift in Sources */,
+				5898034E90B9DEA4D287A352 /* FintrolEnums.swift in Sources */,
+				04E89BD195E2D5B96B9B1EBA /* JumpSheet.swift in Sources */,
+				EBE2712427A60C5AC18B3540 /* KeychainStore.swift in Sources */,
+				5C5EFAB2C3798E7AA7771023 /* LineItem.swift in Sources */,
+				3821C728EF4AF6CB6101C4A7 /* LineItemRow.swift in Sources */,
+				FAD945E4E8AD605E08A25C07 /* Loan.swift in Sources */,
+				9BADBDD6F7D7537FF953027C /* LoanDetailView.swift in Sources */,
+				DA895DF4DF376F7336EFECA2 /* LoanEngine.swift in Sources */,
+				AA33E04720F15DD9E7CEC737 /* LoansView.swift in Sources */,
+				11CAAE09334C0636C967AD7E /* LockView.swift in Sources */,
+				62DDD27F2F6B074755A76D2F /* OverviewView.swift in Sources */,
+				F74A6EB486BA59E8D0A55E65 /* Period.swift in Sources */,
+				B5A2DFCA7F3630341F60C5B4 /* PeriodCoordinate+Title.swift in Sources */,
+				1F8C49F5977EAAB390BA4AA9 /* PeriodCoordinator.swift in Sources */,
+				8374DF92E9D5162E90583445 /* PeriodDateEngine.swift in Sources */,
+				3314CA7197B9ACF083C2076C /* PeriodView.swift in Sources */,
+				A123F0DB5EE279803445F221 /* ProjectionEngine.swift in Sources */,
+				610C765F9884EDF41E018F6F /* RecurringHubView.swift in Sources */,
+				0845A3EF90E938463D2E6980 /* RecurringItem.swift in Sources */,
+				E05AECF96F4CD97019E569E5 /* RecurringListView.swift in Sources */,
+				A14FE770B28993740AF0266A /* RootView.swift in Sources */,
+				5B6A6767102BAD8C2A6CD267 /* SchemaV1.swift in Sources */,
+				90BABB30B3CDEF0D3E6F5AB0 /* SchemaV2.swift in Sources */,
+				781318F4510CC0862F55B427 /* ServicesView.swift in Sources */,
+				1A2395EADDE6EC8639AF6452 /* SettingsView.swift in Sources */,
+				080E0B3657C80B186399DC31 /* SobranteBadge.swift in Sources */,
+				8B8223224942FECD32DCE888 /* SobranteStatus.swift in Sources */,
+				7890CF4B8F0AC8E4E297B822 /* Subscription.swift in Sources */,
+				1A5E670DB6E434FD7493A2CF /* SubscriptionsView.swift in Sources */,
+				BDAFEC61A48E72C1D303834E /* SummaryPanel.swift in Sources */,
+				D593E02A9A32E17E8AD4FD83 /* Validation.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		2EEBFBC5682D1FAFCF8DD8EA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 43B5447DE8A801D3E1D6F72A /* Fintrol */;
+			targetProxy = 9AD6EFDF6562B6F9F40EE070 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		3467EC5E5CC14F88CD8330E2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Fintrol/Fintrol-iOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Fintrol/Fintrol-macOS.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_ASSET_PATHS = "";
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Fintrol;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Fintrol usa Face ID para proteger el acceso a tu presupuesto.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				ITSAppUsesNonExemptEncryption = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = mx.9866.fintrol;
+				PRODUCT_NAME = Fintrol;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		9513E17FDAC5801063B28716 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = mx.9866.fintrol.tests;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fintrol.app/Fintrol";
+				"TEST_HOST[sdk=macosx*]" = "$(BUILT_PRODUCTS_DIR)/Fintrol.app/Contents/MacOS/Fintrol";
+			};
+			name = Release;
+		};
+		B4D9331A112730A0F4CB6DD5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 449S639443;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		CD4BBAD92B9368D6CF78220D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEAD_CODE_STRIPPING = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 449S639443;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_COMPILATION_MODE = singlefile;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_VERSION = 6.0;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Debug;
+		};
+		F578FDF3E9EF26442CFAC8EA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = mx.9866.fintrol.tests;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Fintrol.app/Fintrol";
+				"TEST_HOST[sdk=macosx*]" = "$(BUILT_PRODUCTS_DIR)/Fintrol.app/Contents/MacOS/Fintrol";
+			};
+			name = Debug;
+		};
+		FEEBD7FFD8617562435E7224 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "Fintrol/Fintrol-iOS.entitlements";
+				"CODE_SIGN_ENTITLEMENTS[sdk=macosx*]" = "Fintrol/Fintrol-macOS.entitlements";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_ASSET_PATHS = "";
+				"ENABLE_APP_SANDBOX[sdk=macosx*]" = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Fintrol;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Fintrol usa Face ID para proteger el acceso a tu presupuesto.";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				ITSAppUsesNonExemptEncryption = NO;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = mx.9866.fintrol;
+				PRODUCT_NAME = Fintrol;
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		23A205E5BE0C33374FBDB2CD /* Build configuration list for PBXProject "Fintrol" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CD4BBAD92B9368D6CF78220D /* Debug */,
+				B4D9331A112730A0F4CB6DD5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		3962C7F03F26C7AC47939A89 /* Build configuration list for PBXNativeTarget "Fintrol" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				FEEBD7FFD8617562435E7224 /* Debug */,
+				3467EC5E5CC14F88CD8330E2 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		FA92B5EFDA0A145FAEA78F2E /* Build configuration list for PBXNativeTarget "FintrolTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F578FDF3E9EF26442CFAC8EA /* Debug */,
+				9513E17FDAC5801063B28716 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		7A01CFDB48B466EA80F6ED5E /* XCLocalSwiftPackageReference "../../Packages/AppleAppLabUI" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../Packages/AppleAppLabUI;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		2C127ED513F32B0CE1840051 /* AppleAppLabUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = AppleAppLabUI;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = CF8B664F16A6F4C548B4E14F /* Project object */;
+}

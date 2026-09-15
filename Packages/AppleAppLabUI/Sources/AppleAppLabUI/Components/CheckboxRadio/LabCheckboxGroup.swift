@@ -24,7 +24,11 @@ public struct LabCheckboxGroup: View {
         VStack(alignment: .leading, spacing: config.spacing) {
             ForEach($options) { $option in
                 Toggle(option.title, isOn: $option.isOn)
+                    #if os(macOS)
                     .toggleStyle(.checkbox)
+                    #else
+                    .toggleStyle(.switch)
+                    #endif
             }
         }
         .tint(config.accentColor)

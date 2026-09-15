@@ -1,4 +1,9 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 public enum ColorTokens {
     public static let accent = Color(red: 0x5E / 255, green: 0x5C / 255, blue: 0xE6 / 255)
@@ -21,9 +26,17 @@ public enum ColorTokens {
 
 extension Color {
     init(light: Color, dark: Color) {
-        self = Color(nsColor: NSColor(name: nil) { appearance in
+        #if canImport(UIKit)
+        self = Color(UIColor { traits in
+            traits.userInterfaceStyle == .dark ? UIColor(dark) : UIColor(light)
+        })
+        #elseif canImport(AppKit)
+        self = Color(NSColor(name: nil) { appearance in
             let isDark = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua
             return NSColor(isDark ? dark : light)
         })
+        #else
+        self = light
+        #endif
     }
 }

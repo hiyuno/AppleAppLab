@@ -1,4 +1,9 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 public struct AccentSwatch: Identifiable {
     public let id = UUID()
@@ -97,9 +102,13 @@ extension Color {
     }
 
     var rgbComponents: (r: Double, g: Double, b: Double) {
-        let nsColor = (NSColor(self).usingColorSpace(.deviceRGB)) ?? NSColor(self)
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        #if canImport(UIKit)
+        UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a)
+        #elseif canImport(AppKit)
+        let nsColor = (NSColor(self).usingColorSpace(.deviceRGB)) ?? NSColor(self)
         nsColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        #endif
         return (Double(r), Double(g), Double(b))
     }
 
