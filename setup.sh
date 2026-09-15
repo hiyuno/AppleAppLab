@@ -87,6 +87,41 @@ else
   echo "  ⚠ No se pudo sincronizar Research/ — revisa conexión y reintenta con /update-team"
 fi
 
+# --- Skills oficiales de Apple (Xcode ≥ 27) — export local con sello de build; nunca entran al repo ---
+XCODE_MAJOR=$(xcodebuild -version 2>/dev/null | awk 'NR==1{print int($2)}')
+if [ -n "$XCODE_MAJOR" ] && [ "$XCODE_MAJOR" -ge 27 ]; then
+  XCODE_BUILD=$(xcodebuild -version | awk 'NR==2{print $3}')
+  XSKILLS="$HOME/.claude/xcode-skills"
+  STAMP="$XSKILLS/.xcode-build"
+  if [ ! -f "$STAMP" ] || [ "$(cat "$STAMP")" != "$XCODE_BUILD" ]; then
+    mkdir -p "$XSKILLS"
+    if xcrun mcpbridge run-agent skills export --output-dir "$XSKILLS" --replace-existing >/dev/null 2>&1; then
+      echo "$XCODE_BUILD" > "$STAMP"
+      echo "  ✓ Skills de Apple exportadas a ~/.claude/xcode-skills (Xcode $XCODE_BUILD)"
+    else
+      echo "  ⚠ No se pudieron exportar las skills de Apple — corre a mano: xcrun mcpbridge run-agent skills export --output-dir ~/.claude/xcode-skills --replace-existing"
+    fi
+  else
+    echo "  ↩ Skills de Apple al día (Xcode $XCODE_BUILD)"
+  fi
+  mkdir -p "$HOME/.claude/skills"
+  for link in "$HOME/.claude/skills"/*; do
+    [ -L "$link" ] || continue
+    case "$(readlink "$link")" in "$XSKILLS"/*) [ -e "$link" ] || rm -f "$link" ;; esac
+  done
+  for dir in "$XSKILLS"/*/; do
+    [ -f "$dir/SKILL.md" ] || continue
+    ln -sfn "${dir%/}" "$HOME/.claude/skills/$(basename "$dir")"
+  done
+  echo "  ✓ Skills de Apple enlazadas en ~/.claude/skills (swiftui-specialist, device-interaction, modernize-tests…)"
+  if ! claude mcp list 2>/dev/null | grep -q '^xcode:'; then
+    echo "  → MCP de Xcode sin registrar: claude mcp add --scope user --transport stdio xcode -- xcrun mcpbridge"
+    echo "    y activa Xcode → Settings → Intelligence → Model Context Protocol → \"Allow external agents to use Xcode tools\""
+  fi
+else
+  echo "  ↩ Xcode < 27 o no instalado — skills de Apple y MCP de Xcode omitidos"
+fi
+
 # --- Memoria evolutiva ---
 curl -fsSL "$RAW/KNOWN_ISSUES.md" -o ".appleapplab/KNOWN_ISSUES.md"
 echo "  ✓ Snapshot global actualizado en .appleapplab/KNOWN_ISSUES.md"
@@ -182,5 +217,6 @@ echo "  Claude Code → .claude/skills/ + CLAUDE.md"
 echo "  Cursor      → .cursor/rules/apple-team.mdc"
 echo "  Codex       → AGENTS.md"
 echo "  Gemini CLI  → GEMINI.md"
+echo "  Xcode 27    → MCP 'xcode' (claude mcp) + skills de Apple en ~/.claude/skills/"
 echo ""
 echo "→ Abre $(pwd) en Claude Code — Steve arranca solo."

@@ -17,7 +17,9 @@ Ejecuta en bash:
 curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash /dev/stdin --update
 ```
 
-Eso es todo. `setup.sh` sobreescribe los skills, PATTERNS.md, Themes/, AGENTS.md y KNOWN_ISSUES.md con la versión más reciente de GitHub. Los archivos del proyecto (PRD.md, TRD.md, CLAUDE.md con contenido propio, PROJECT_LEARNINGS.md) no se tocan.
+Eso es todo. `setup.sh` sobreescribe los skills, PATTERNS.md, Themes/, Research/, AGENTS.md y KNOWN_ISSUES.md con la versión más reciente de GitHub. Los archivos del proyecto (PRD.md, TRD.md, CLAUDE.md con contenido propio, PROJECT_LEARNINGS.md) no se tocan.
+
+Si hay Xcode ≥ 27, también refresca las skills oficiales de Apple en `~/.claude/xcode-skills/` — solo cuando el build de Xcode cambió respecto al sello `.xcode-build` — y las enlaza en `~/.claude/skills/`. Si el MCP `xcode` no está registrado en Claude Code, imprime el comando; no lo registra por ti.
 
 **IMPORTANTE:** Este skill solo descarga archivos. No hace commit, no hace push, no sube nada a ningún repositorio. Cuando termine, confirma al usuario qué versión se instaló y detente. No preguntes sobre git.
 
@@ -39,11 +41,14 @@ Eso es todo. `setup.sh` sobreescribe los skills, PATTERNS.md, Themes/, AGENTS.md
 | Catálogo de componentes | `PATTERNS.md` |
 | Temas predefinidos | `Themes/*.json` + `Themes/THEMES.md` |
 | Snapshot de issues globales | `.appleapplab/KNOWN_ISSUES.md` |
+| Documentación de referencia (HIG, Xcode 27 MCP) | `Research/` |
+| Skills oficiales de Apple (Xcode ≥ 27) | `~/.claude/skills/<name>` → `~/.claude/xcode-skills/` — re-export solo si cambió el build de Xcode |
 | AGENTS.md (Codex) | `AGENTS.md` |
 | Versión instalada | `.appleapplab/VERSION` |
 
 ## Qué NO se toca
 
 - `PROJECT_LEARNINGS.md` — preservado siempre
+- `~/.claude/xcode-skills/` si Xcode < 27 o el build no cambió — no re-exporta ni borra
 - `CLAUDE.md` — si ya tiene el bloque de Steve, no se modifica
 - Cualquier archivo del proyecto (`PRD.md`, `TRD.md`, código Swift, etc.)

@@ -107,7 +107,7 @@ Flujo de sesión explícito (no es un solo tool):
 
 ### Localización — gateado por skill propio de Xcode
 - **`LocalizationPlanner`**, **`StringCatalogRead`**, **`StringCatalogContext`**, **`StringCatalogEdit`** — los cuatro tienen la misma instrucción en su descripción: *"Before calling this tool, you MUST activate the `xcode-integration:translation` [o `translation-coordinator`] skill. Do not call this tool without first loading that skill's instructions."*
-- **Hallazgo no documentado en los blogs consultados:** Xcode 27 tiene su **propio sistema de skills** que algunos de sus MCP tools exigen como precondición. No se investigó más a fondo qué otras skills existen ni dónde se declaran — pendiente si el equipo decide automatizar localización vía MCP.
+- Esas dos skills viven en texto plano dentro de Xcode.app: `/Applications/Xcode.app/Contents/PlugIns/IDEXCStringsSupport.framework/Versions/A/Resources/Skills/{translation,translation-coordinator}/SKILL.md.packaged` (más `translation/references/styleguide_<locale>.md.packaged`). Kim las lee de ahí antes de usar los tools — siempre la versión del Xcode instalado, sin mantenimiento. No se exportan con `skills export`; las otras 10 sí (§5).
 
 ---
 
@@ -134,15 +134,42 @@ Todo esto sin que el desarrollador toque Xcode manualmente — pero cualquier ac
 
 ---
 
-## Recomendaciones de implementación para AppleAppLab — ya aplicadas
+## 5. Skills oficiales de Apple para agentes — y quién las usa en el equipo
 
-1. **Avie** — cuándo esta capacidad es transversal-tooling vs. cuándo se vuelve superficie de producto que necesita threat model. Ver `.claude/skills/avie/SKILL.md`.
-2. **Woz** — usarlo en el loop de desarrollo interactivo (`BuildProject`, `RunAllTests`, `RenderPreview`, `DeviceInteraction*`) en vez de `xcodebuild` a ciegas; mantener `xcodebuild`/Makefile para CI y export. Ver `.claude/skills/woz/SKILL.md`.
-3. **Bertrand** — `GetTestList`/`RunAllTests`/`RunSomeTests` para testing en vivo con resultados estructurados; `RenderPreview` como evidencia de un fix visual. Ver `.claude/skills/bertrand/SKILL.md`.
-4. **Ivan** — gate nuevo en `Gates obligatorios` + checklist "Agentes externos con acceso a Xcode (MCP)", incluyendo el hallazgo concreto de que `GetTopCrashIssues`/`GetFieldPerformanceIssueLogs` exponen telemetría real de producción vía la sesión de Xcode. Ver `.claude/skills/ivan/SKILL.md`.
+Además de los tools, Xcode 27 ship **12 skills** escritas por Apple para agentes, marcadas como *"supersede prior training"*. Diez se exportan con:
 
-No se creó un agente/skill nuevo — es tooling transversal que cada agente existente adopta en su propio rol.
+```bash
+xcrun mcpbridge run-agent skills export --output-dir ~/.claude/xcode-skills --replace-existing
+```
+
+`setup.sh` y `/update-team` lo hacen solos cuando el build de Xcode cambia (sello en `~/.claude/xcode-skills/.xcode-build`) y enlazan cada carpeta en `~/.claude/skills/<name>`, así aparecen como `/swiftui-specialist`, `/device-interaction`, etc. en todos los proyectos. **Nunca se vendorizan en el repo**: están atadas al build de Xcode y se actualizan con él. Las dos de traducción no se exportan; viven en el framework (§2 Localización).
+
+| Skill de Apple | Dueño en el equipo | Cuándo | Regla de conflicto |
+|---|---|---|---|
+| `swiftui-specialist` | Woz | al escribir o revisar SwiftUI | Apple manda en API, observación, `ForEach`, animación; **AppleAppLabUI / `PATTERNS.md` / `DESIGN_*.md` mandan en qué componente**. Conflicto → `PROJECT_LEARNINGS.md` + Avie |
+| `swiftui-whats-new-27` | Woz (Avie decide) | solo si el target es ≥ iOS/macOS 26 | nunca sube el deployment target por adoptar una API |
+| `app-intents-specialist` / `app-intents-whats-new-27` | Eve | intents, entities, `AppShortcutsProvider`; whats-new solo target ≥ 26 | idem |
+| `modernize-tests` | Bertrand recomienda, Woz ejecuta bajo `go <n>` | migración XCTest → Swift Testing | UI tests (XCUIAutomation) y `measure { }` se quedan en XCTest |
+| `device-interaction` (**subagente**: Agent tool, `general-purpose`) | quien verifica, invoca: Woz post-feature · Bertrand `TEST_PLAN` y re-medición · Chris matriz de dispositivos · Sarah lee la hierarchy | verificación en simulador/dispositivo | **una sesión por simulador** — dentro de rutinas la abre Bertrand y los demás leen su salida |
+| `audit-xcode-security-settings` | Ivan lee (briefing, discovery, tabla), Woz aplica bajo `go <n>` | Pase 2 de Ivan | Ivan no ejecuta "Plan & Approve" ni crea su decision document; omite TLS/firma/privacidad — siguen en el checklist de Ivan |
+| `translation` / `translation-coordinator` (en Xcode.app) | Kim | precondición obligatoria de `StringCatalog*` y `LocalizationPlanner` | nunca escribir `.xcstrings` a mano con el MCP conectado |
+| `adopt-c-bounds-safety`, `uikit-app-modernization`, `building-document-based-swiftui-applications` | Avie caso a caso | código C, UIKit heredado, apps de documentos (target ≥ 27) | fuera del flujo estándar |
+
+## 6. Reglas de equipo
+
+- **Fallback, declarado una sola vez.** Steve sonda `mcp__xcode__*` al arrancar y marca cada encargo con `MCP xcode: sí/no`. Con `no`, cada skill sigue con su paso manual o de `xcodebuild` sin mencionarlo — los skills no repiten la cláusula. (`.claude/skills/steve/SKILL.md` §1 Reúne evidencia.)
+- **Telemetría de producción** (`GetTopCrashIssues`, `GetCrashIssueLogs`, `GetTopFieldPerformanceIssues`, `GetFieldPerformanceIssueLogs`): uso rutinario por Phil, Bertrand, `/optimize-app` Fase 1 y `/app-store-ready` Fase 5 — se anuncia en una línea qué bundle y canal se consulta, y se **redacta PII** de los logs antes de escribirlos en cualquier `*.md`. Un log sin redactar es hallazgo Medium de Ivan.
+- **Nunca en CI.** `mcpbridge` necesita Xcode con GUI; no hay tools de archive, export, `codesign` ni `notarytool`. Release = `xcodebuild` reproducible (Craig).
+- **RenderPreview:** Woz renderiza al entregar y adjunta; Jonny compara contra `DESIGN_*.md`; Larry contra la HIG (con overrides de variante); Kim con `locale`; Eve con `timelineIndex`/`toggleState`.
+- **Un solo plan activo por zona** cubre también los planes que nacen de skills de Apple: sus cambios entran como etapas de la rutina dueña, sin documento propio.
+- **Incidentes del toolchain** → `PROJECT_LEARNINGS.md` con fingerprint `tooling/xcode-mcp/<Tool>` y build de Xcode.
+
+## Dónde vive cada integración
+
+Steve (sonda, fallback, memoria, modelo) · Avie (frontera arquitectura vs. API, skills de C/UIKit/documentos) · Woz (loop de desarrollo, `swiftui-*`, verificación post-feature) · Bertrand (tests en vivo, `device-interaction`, `modernize-tests`, telemetría) · Ivan (gate, `audit-xcode-security-settings`, regla de PII) · Kim (String Catalogs) · Chris (matriz de dispositivos) · Sarah (UI hierarchy como evidencia) · Larry (renders con overrides) · Eve (widgets por `timelineIndex`, `app-intents-*`) · Craig (nunca en CI) · Phil (crash rate medido) · Jonny (renders vs. spec) · Tim y John (handoff) · rutinas `/optimize-app`, `/architecture-audit`, `/app-store-ready`, `/clean-folder-project`, `/global-audit` · `setup.sh` y `/update-team` (export con sello).
+
+No se creó un agente nuevo — es tooling transversal que cada agente existente adopta en su propio rol.
 
 ---
 
-**Recolectado**: 2026-09-14. Sección 1–4 verificadas por probing directo contra `xcrun mcpbridge` (Xcode 27.0, build 27A266a) en esta máquina — no son un resumen de terceros.
+**Recolectado**: 2026-09-14; integración en el equipo 2026-09-15 (v1.11.0). Secciones 1–4 verificadas por probing directo contra `xcrun mcpbridge` (Xcode 27.0, build 27A266a) en esta máquina; §5 verificada exportando las skills con el comando indicado.
