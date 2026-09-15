@@ -79,6 +79,7 @@ struct InvestmentsView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { isPresentingNew = true } label: { Image(systemName: "plus") }
+                    .accessibilityLabel("Agregar cuenta de inversiones")
             }
         }
         .sheet(isPresented: $isPresentingNew) {
@@ -94,6 +95,9 @@ struct InvestmentsView: View {
             Image(systemName: "chart.line.uptrend.xyaxis")
                 .foregroundStyle(Color.accentColor)
                 .frame(width: 28)
+                // A11Y #26 (Sarah): purely decorative here — the account name right next to it
+                // already says what the row is, the icon adds nothing VoiceOver needs to speak.
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 Text(item.accountName?.isEmpty == false ? item.accountName! : item.title)
                     .foregroundStyle(.primary)
@@ -184,6 +188,11 @@ private struct InvestmentDetailView: View {
                         }
                         .padding(.vertical, 8)
                         .accessibilityElement(children: .combine)
+                        // A11Y #27 (Sarah): `.combine` alone only concatenates the child texts
+                        // in visual order — an explicit `.accessibilityValue` makes the state
+                        // ("desactivada"/"editada"/"proyectada") unambiguous regardless of
+                        // layout order.
+                        .accessibilityValue(entry.line.isActive ? (entry.line.isManuallyEdited ? "editada" : "proyectada") : "desactivada")
                         if entry.line.id != lines.last?.line.id { Divider() }
                     }
                 }

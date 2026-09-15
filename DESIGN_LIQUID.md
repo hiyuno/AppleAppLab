@@ -95,18 +95,17 @@ H=16.5°, S=100% constantes, L variable. Los valores están calculados directame
 
 Estos tres son colores de sistema, no derivan del accent — el naranja de marca nunca se confunde con el semáforo financiero. El color del sobrante nunca es la única señal: el signo (`+`/`−`) y el símbolo de moneda siempre acompañan la cifra (regla de accesibilidad — nunca comunicar solo por color).
 
-### Iconografía de origen de línea (no es color de estado, es metadata)
+### Origen de línea (`LineOrigin`) — sin icono en la fila, decisión del usuario
 
-| Origen (`LineOrigin`) | Color de icono | Razón |
-|---|---|---|
-| `.manual` | Sin icono | Es el caso base, no necesita marca |
-| `.recurring` (Ingresos/Gastos recurrentes) | `.secondary`, icono `arrow.triangle.2.circlepath` | Informativo, no compite con el semáforo del sobrante |
-| `.subscription` — Suscripciones | `.secondary`, icono `repeat` | Distinto del anterior a propósito — Suscripciones y Recurrentes son fuentes de datos distintas para el usuario, aunque ambas auto-generan la línea |
-| `.subscription` — Servicios (renta, luz, internet, agua, gas, seguro) | `.secondary`, icono `house.fill` | Un tercer icono para un tercer origen visual — el usuario distingue "esto es un servicio del hogar" de "esto es Netflix" sin abrir la línea. Modelo de datos: mismo mecanismo que Suscripciones (día de pago 1–31, ver TRD `Subscription`); es decisión de Avie si vive como el mismo `@Model` con categorías de hogar o una entidad hermana — el diseño solo exige que la línea resultante sea identificable como `origin == .subscription` con esta variante de icono |
-| `.loan` — Préstamos (pago periódico generado por un `Loan`) | `.secondary`, icono `banknote` | Mismo símbolo que la fila del hub, por consistencia — un cuarto origen visual, distinto de recurrente/suscripción/servicio; ver "Préstamos (Loans)" |
-| `.investment` — Inversiones (aportación periódica generada por una cuenta de inversión) | `.secondary`, icono `chart.line.uptrend.xyaxis` | Mismo símbolo que la fila del hub, por consistencia — quinto origen visual, distinto de los otros cuatro; ver "Inversiones (Investments)" |
-| `.carryOver` | `.secondary`, icono `arrow.turn.down.right` | Igual — es texto de sistema, no accent |
-| Cualquier línea generada (`.recurring`/`.subscription`/`.loan`) con `isManuallyEdited == true` | `.secondary` con icono `pencil` en vez del icono base de su origen | Señala override, sigue siendo neutro — regla única para las tres, no solo para recurrentes |
+La fila de Quincena no muestra ningún icono de origen — ni `arrow.triangle.2.circlepath`, ni `repeat`, ni `house.fill`, ni `banknote`, ni `chart.line.uptrend.xyaxis`, ni `pencil` para las editadas a mano. La fila es solo **descripción + monto** (+ palomita de pagado si aplica, ver "Fila de línea"). El origen (`.manual`/`.recurring`/`.subscription`/`.loan`/`.investment`/`.carryOver`) y si fue editado manualmente (`isManuallyEdited`) siguen siendo datos reales del modelo — solo dejan de tener representación visual permanente en reposo:
+
+| Dónde vive el origen ahora | Cómo se expone |
+|---|---|
+| Accesibilidad | `accessibilityLabel`/`accessibilityValue` de la fila lo incluye en texto — ver "Accesibilidad obligatoria" más abajo, se actualiza para anunciar el origen igual que ya anuncia "inactiva"/"pagada" |
+| Edición (inline o formulario de detalle) | Al entrar en modo edición, la fila puede mostrar de dónde vino el valor (ej. "Generado por: Upstart #1" como texto `.caption` `.secondary` sobre los campos editables) — es información de contexto en el momento de editar, no una marca permanente en reposo |
+| Detalle de Préstamos/Inversiones | Las tablas de amortización/historial de esas pantallas conservan su propia distinción visual "Proyectado" vs. real — eso no cambia, es una pantalla distinta de la fila de Quincena |
+
+Razón del cambio: cinco (ahora seis, contando `pencil`) símbolos posibles por fila competían visualmente con la lectura rápida de descripción+monto que es el modelo mental central de la app (hoja de cálculo). El origen sigue siendo real y consultable, solo deja de imprimirse en cada fila.
 
 ---
 
@@ -353,20 +352,16 @@ Documentar `LineItemRow` y el bloque contenedor en `PROJECT_LEARNINGS.md` como c
 
 | Estado | Apariencia |
 |---|---|
-| Reposo, manual, activa | Descripción `.leading` + monto `.trailing`, sin controles visibles en la fila |
-| Reposo, origen `.recurring` (Ingresos/Gastos recurrentes), sin editar | Igual + icono `arrow.triangle.2.circlepath` tamaño 12pt `.secondary` antes de la descripción |
-| Reposo, origen `.subscription` — Suscripciones, sin editar | Igual + icono `repeat` tamaño 12pt `.secondary` — icono distinto al de Recurrentes a propósito, ver "Iconografía de origen de línea" |
-| Reposo, origen `.subscription` — Servicios, sin editar | Igual + icono `house.fill` tamaño 12pt `.secondary` — tercer icono, distingue de un vistazo un pago del hogar de una suscripción de entretenimiento |
-| Reposo, origen `.loan` — Préstamos, sin editar | Igual + icono `banknote` tamaño 12pt `.secondary` — cuarto icono, distingue el pago de un préstamo de los otros tres orígenes generados |
-| Reposo, origen `.investment` — Inversiones, sin editar | Igual + icono `chart.line.uptrend.xyaxis` tamaño 12pt `.secondary` — quinto icono, distingue una aportación de inversión del resto |
-| Reposo, origen recurrente/suscripción/servicio/préstamo pero editado manualmente (`isManuallyEdited == true`) | Icono cambia a `pencil` 12pt `.secondary` — comunica "esto vino de un origen automático pero tiene un valor propio en esta quincena" |
-| Reposo, origen carry-over ("Latest Month") | Icono `arrow.turn.down.right` `.secondary`, no editable el título (solo el monto es de solo lectura — es el resultado calculado de la quincena anterior, no se edita a mano; si el usuario necesita cambiarlo debe editar la línea origen en la quincena previa) |
+| Reposo, cualquier origen (`.manual`/`.recurring`/`.subscription`/`.loan`/`.investment`/`.carryOver`), activa | Descripción `.leading` + monto `.trailing`, sin icono de origen ni controles visibles en la fila — todas las filas se ven igual en reposo independientemente de su origen o de si fueron editadas a mano; ver "Origen de línea" arriba |
+| Reposo, origen carry-over ("Latest Month") | Sin marca visual distinta al resto; título no editable, solo el monto es de solo lectura (es el resultado calculado de la quincena anterior — si el usuario necesita cambiarlo debe editar la línea origen en la quincena previa) |
 | **Pagada** | Palomita discreta (`checkmark.circle.fill`, 14pt, tinte `.blue`) a la derecha del monto (o del nombre si la fila es muy angosta en iPhone) — no afecta números, no cambia opacidad de nada más en la fila |
 | **Inactiva** (excluida de la suma) | Opacidad de toda la fila reducida a `0.4`; monto con `.strikethrough()`; el motor de totales la omite del cálculo del bloque |
 | **Inactiva y pagada** | Se combinan: fila a opacidad `0.4`, monto tachado, palomita azul presente pero a la misma opacidad reducida (no se dibuja aparte a opacidad completa) — lee como "esto pasó, pero ahora mismo no cuenta" |
 | Línea en MXN | Bajo el monto principal (que siempre se muestra en su moneda de captura), una segunda línea `.caption` `.secondary` `.monospacedDigit()`: "≈ $842.30 USD · TC 18.42" |
 | Línea en MXN con override manual del tipo de cambio para esa quincena | Igual + badge `.caption2` pill pequeño "manual" en `accentSubtle`/`accentForeground`, junto al TC — señala que ese número no vino de la API |
-| Editando (inline, se abre con tap en la fila) | La fila entera gana fondo `AppBackground.secondary`, radio 12pt (aplica aquí el nested radius de la nota en "Forma"), campos de descripción y monto se vuelven `LabTextField` editables, toggle de moneda USD/MXN aparece a la derecha del monto |
+| Editando (inline, se abre con tap en la fila) | La fila entera gana fondo `AppBackground.secondary`, radio 12pt (aplica aquí el nested radius de la nota en "Forma"), campos de descripción y monto se vuelven `LabTextField` editables, toggle de moneda USD/MXN aparece a la derecha del monto. Aquí, y solo aquí, puede aparecer el texto de contexto "Generado por: [nombre]" si el origen no es manual — ver "Origen de línea" |
+
+**Fondo en reposo — dark mode:** la fila en reposo (y en cualquiera de los estados de arriba salvo "Editando") **no tiene fondo propio** — es transparente, hereda directamente el material Frost de la card contenedora (bloque INCOME/EXPENSES). Solo el separador `Color(.separator)` entre filas y el fondo `AppBackground.secondary` del estado "Editando" rompen esa transparencia. Esto aplica igual en light y dark: en ningún momento una fila en reposo pinta un rectángulo propio encima del Frost de la card.
 
 ### Swipe actions — iPhone
 
@@ -407,6 +402,7 @@ Ni el swipe leading ni el swipe trailing son detectables por VoiceOver o Switch 
 ```
 
 - `accessibilityValue` de la fila concatena los dos estados cuando aplican, siempre en el mismo orden, nunca solo por color/icono: `"inactiva"` / `"pagada"` / `"inactiva, pagada"` / nada si la línea está activa y no pagada. Ejemplo completo de `accessibilityLabel` + `accessibilityValue`: "Renta, 1,900 dólares" + "inactiva, pagada".
+- Con los iconos de origen fuera de la fila (ver "Origen de línea"), el origen se anuncia también por voz: el `accessibilityLabel` antepone el origen cuando no es `.manual` — ej. "Recurrente, Gimnasio, 45 dólares" / "Suscripción, Netflix, 15 dólares" / "Servicio, Luz, 82 dólares" / "Préstamo, pago Upstart uno, 629 dólares" / "Inversión, aportación GBM, 200 dólares" / "Traído de la quincena anterior, Latest Month, 1,240 dólares". Es el único lugar donde el origen sigue siendo perceptible sin entrar a editar la línea.
 - Esto aplica igual en Mac (VoiceOver de macOS) y es lo que hace que Switch Control pueda operar la fila sin depender del gesto de swipe en absoluto — el menú contextual también sirve a este propósito para usuarios de mouse, pero las `accessibilityActions` son la vía que no depende de ningún gesto ni de un dispositivo señalador funcional.
 
 ### Captura rápida de un gasto/ingreso
@@ -448,7 +444,7 @@ Las cuatro comparten el mismo patrón — `LabList` con `LabListRow` — pero ca
 
 ### Iconografía
 
-- Sistema: SF Symbols, rendering mode **Hierarchical** (default) salvo los iconos de origen de línea (`arrow.triangle.2.circlepath`, `pencil`, `arrow.turn.down.right`) que van en **Monochrome** `.secondary` — no deben competir visualmente con el semáforo del sobrante.
+- Sistema: SF Symbols, rendering mode **Hierarchical** (default) salvo los iconos de las filas de los hubs/listas (`arrow.down.circle`, `arrow.up.circle`, `house.fill`, `repeat`, `banknote`, `chart.line.uptrend.xyaxis`) que van en **Monochrome** `.secondary` — no deben competir visualmente con el semáforo del sobrante. Ninguno de estos aparece en la fila de Quincena (`LineItemRow`) — esa fila no lleva icono de origen, ver "Origen de línea".
 - Peso: match con el texto adyacente (`.headline` → símbolo hereda semibold vía `Label`).
 - Outline = inactivo, Fill = activo/seleccionado (tabs, categorías seleccionadas en filtro de Suscripciones).
 
@@ -654,7 +650,7 @@ Fin estimado: mar 2029                ← .subheadline, .secondary — "estimado
 
 ### Origen de línea en Quincena — regla de edición manual
 
-Igual que Recurrentes/Suscripciones/Servicios: la línea que un préstamo genera en una quincena nace con `origin: .loan`, `isManuallyEdited: false`; si el usuario la edita a mano, el icono cambia de `banknote` a `pencil` (ver tabla de iconografía de origen) y esa quincena específica queda protegida de la regeneración automática si el préstamo se edita después — misma regla "la edición manual gana" del TRD, sin caso especial para préstamos. Esto aplica idéntico en ambos modos: la línea generada por un préstamo "Hasta liquidar" se ve exactamente igual que la de un préstamo a plazo fijo (mismo icono `banknote`, mismo comportamiento de edición) — el modo es una diferencia de cómo se calcula la proyección, no de cómo se presenta la línea ya materializada en Quincena. Es precisamente porque el usuario puede sobreescribir el pago real de cualquier quincena (nota del Formulario: "Puedes cambiar el pago real en cada quincena") que el modo Hasta liquidar no necesita tratamiento especial aquí — cada pago real es, de nuevo, solo una línea editada a mano como cualquier otra.
+Igual que Recurrentes/Suscripciones/Servicios: la línea que un préstamo genera en una quincena nace con `origin: .loan`, `isManuallyEdited: false`; si el usuario la edita a mano, el modelo marca `isManuallyEdited = true` y esa quincena específica queda protegida de la regeneración automática si el préstamo se edita después — misma regla "la edición manual gana" del TRD, sin caso especial para préstamos. Sin icono de origen en la fila (decisión del usuario, ver "Origen de línea"), el origen `.loan` se lee igual que cualquier otro en reposo — solo se distingue en accesibilidad y en el contexto de edición ("Generado por: Upstart #1"). Esto aplica idéntico en ambos modos: la línea generada por un préstamo "Hasta liquidar" se ve exactamente igual que la de un préstamo a plazo fijo — el modo es una diferencia de cómo se calcula la proyección, no de cómo se presenta la línea ya materializada en Quincena. Es precisamente porque el usuario puede sobreescribir el pago real de cualquier quincena (nota del Formulario: "Puedes cambiar el pago real en cada quincena") que el modo Hasta liquidar no necesita tratamiento especial aquí — cada pago real es, de nuevo, solo una línea editada a mano como cualquier otra.
 
 ### Motion — colapso de campos en el Formulario
 
@@ -734,7 +730,7 @@ Próxima aportación: $200.00 · 4 oct
 
 ### Origen de línea en Quincena — regla de edición manual
 
-Igual que el resto del hub: la línea que una cuenta de inversión genera nace con `origin: .investment`, `isManuallyEdited: false`; editarla a mano cambia el icono de `chart.line.uptrend.xyaxis` a `pencil` y protege esa quincena de la regeneración — misma regla "la edición manual gana" del TRD, sin caso especial.
+Igual que el resto del hub: la línea que una cuenta de inversión genera nace con `origin: .investment`, `isManuallyEdited: false`; editarla a mano marca `isManuallyEdited = true` y protege esa quincena de la regeneración — misma regla "la edición manual gana" del TRD, sin caso especial. Sin icono de origen en la fila (ver "Origen de línea") — se distingue solo en accesibilidad y en el contexto de edición.
 
 ---
 
@@ -814,7 +810,7 @@ Fintrol no tiene una feature de búsqueda en v1 — el volumen de datos de un pr
 | 2026-09-15 | Sobrante usa `.green`/`.yellow`/`.red` de sistema, no el accent naranja | Semántica fija del PRD — el naranja de marca nunca se confunde con el semáforo financiero |
 | 2026-09-15 | Navegación entre quincenas: chevrons (adyacente) + jump sheet por título (año/quincena arbitraria) + botón "Hoy" | Resuelve explícitamente el riesgo de "perderse" en una proyección a 10 años |
 | 2026-09-15 | Captura rápida es una fila inline al final de cada bloque, no un botón que abre sheet aparte | Replica el flujo de "llenar una hoja de cálculo" que es el modelo mental del usuario |
-| 2026-09-15 | Línea de origen recurrente/suscripción/servicio editada manualmente cambia su icono base (`arrow.triangle.2.circlepath` / `repeat` / `house.fill`) a `pencil` | Comunica visualmente la regla "la edición manual gana" del TRD sin texto adicional |
+| 2026-09-15 | **Superseded (ver entrada del mismo día más abajo, "sin icono de origen en la fila"):** línea de origen recurrente/suscripción/servicio editada manualmente cambiaba su icono base a `pencil` | Comunicaba visualmente la regla "la edición manual gana" del TRD sin texto adicional — reemplazado cuando se quitaron todos los iconos de origen de `LineItemRow` |
 | 2026-09-15 | "Recurrentes" se divide en "Ingresos recurrentes" y "Gastos recurrentes"; cada lista solo su tipo, alta directa sin picker | Decisión del usuario — evita preguntar ingreso/egreso cuando el contexto ya lo dice |
 | 2026-09-15 | Se agrega "Servicios" (pagos del hogar: renta, luz, internet, agua, gas, seguro), mecánica idéntica a Suscripciones pero pantalla, icono y categorías propias | Decisión del usuario — separa gasto operativo del hogar de suscripciones de entretenimiento/trabajo, aunque el motor de cálculo por día de pago sea el mismo |
 | 2026-09-15 | Suscripciones se mueve del tab propio al hub "Recurrentes y pagos", junto con Ingresos/Gastos recurrentes y Servicios | Con tres listas ya viviendo en un hub, dejar Suscripciones como único tab de nivel top por una sola fuente de datos rompía la consistencia; las cuatro responden a la misma pregunta del usuario ("qué se repite solo") |
@@ -823,7 +819,7 @@ Fintrol no tiene una feature de búsqueda en v1 — el volumen de datos de un pr
 | 2026-09-15 | Dirección del préstamo ("Debo"/"Me deben") en chip icono+texto con tinte `.orange`/`.blue`, no `.green`/`.red` | Evita colisión con la semántica fija del semáforo del sobrante (verde/amarillo/rojo), que es exclusiva de ese cálculo |
 | 2026-09-15 | Override del pago de un préstamo recalcula el plazo (nunca al revés) | El usuario fija lo que puede pagar; el plazo es la consecuencia, coincide con cómo se razona un préstamo real |
 | 2026-09-15 | Tabla de amortización: `List` de filas custom en iPhone, `Table` nativo en Mac | `Table` no es viable en ancho compacto; ambas muestran las mismas 5 columnas con distinto layout |
-| 2026-09-15 | Origen `.subscription` usa icono distinto según sea Suscripciones (`repeat`) o Servicios (`house.fill`); `.recurring` conserva `arrow.triangle.2.circlepath` | Responde a la pregunta explícita del usuario de si la fila de quincena debe distinguir el origen — tres iconos para tres fuentes, sin texto adicional |
+| 2026-09-15 | **Superseded:** origen `.subscription` usaba icono distinto según Suscripciones (`repeat`) o Servicios (`house.fill`) en la fila de Quincena; `.recurring` conservaba `arrow.triangle.2.circlepath` ahí | Respondía a si la fila de quincena debía distinguir el origen — reemplazado cuando se quitaron todos los iconos de origen de `LineItemRow` (siguiente entrada) |
 | 2026-09-15 | Pantalla de bloqueo Face ID no monta ningún dato real detrás, no es blur sobre contenido | Cierra el riesgo del PRD de montos visibles en app switcher/background |
 | 2026-09-15 | Sin `.searchable()` en v1 | Volumen de datos de un presupuesto personal no lo justifica |
 | 2026-09-15 | Mac: panel de resumen fijo a la derecha del detail, no columna adicional de `NavigationSplitView` | El PRD pide sidebar + contenido; una tercera columna de sistema competiría con la sidebar de secciones |
@@ -831,7 +827,9 @@ Fintrol no tiene una feature de búsqueda en v1 — el volumen de datos de un pr
 | 2026-09-15 | Swipe/acciones de línea usan `.blue` (pagado, reactivar) y `.gray` (desactivar, editar en líneas generadas), nunca `.green`/`.red` | Verde/amarillo/rojo quedan exclusivos del semáforo del sobrante; `trash` de Eliminar es la única excepción, por ser convención universal de sistema, no señal financiera |
 | 2026-09-15 | Préstamos gana un segundo modo "Hasta liquidar" (switch en el Formulario, sin plazo, solo "Pago esperado") junto al modo Plazo fijo existente | Decisión del usuario — caso real "Ada": $824 al 26.2%, pagos variables ~$200/quincena, sin fecha de fin conocida de antemano |
 | 2026-09-15 | Tabla de amortización distingue filas de pago real de filas proyectadas con etiqueta explícita "Proyectado", no solo opacidad | En modo Hasta liquidar casi toda la tabla es proyección que se recalcula con cada pago real; la opacidad reducida sola (ya usada para "pagada") no basta para comunicar esa diferencia sin ambigüedad |
-| 2026-09-15 | La línea generada por un préstamo "Hasta liquidar" en Quincena es visualmente idéntica a la de un préstamo a plazo fijo (icono `banknote`) | El modo cambia cómo se proyecta, no cómo se presenta ni se edita la línea ya materializada — misma regla de edición manual sin caso especial |
+| 2026-09-15 | La línea generada por un préstamo "Hasta liquidar" en Quincena es visualmente idéntica a la de un préstamo a plazo fijo | El modo cambia cómo se proyecta, no cómo se presenta ni se edita la línea ya materializada — misma regla de edición manual sin caso especial |
+| 2026-09-15 | Se quitan todos los iconos de origen de `LineItemRow` en Quincena (ni `arrow.triangle.2.circlepath`, `repeat`, `house.fill`, `banknote`, `chart.line.uptrend.xyaxis`, ni `pencil`); la fila queda solo descripción + monto + palomita de pagado | Decisión del usuario — seis símbolos posibles por fila competían con la lectura rápida de descripción+monto, el modelo mental central de la app. Origen y `isManuallyEdited` se conservan en el modelo, expuestos solo en accesibilidad y en el contexto de edición |
+| 2026-09-15 | La fila en reposo no tiene fondo propio en ningún estado (salvo "Editando") — es transparente, hereda el Frost de la card contenedora, en light y dark | Evita un rectángulo visual redundante encima del material de la card; consistente con la regla de capas ya fijada (Frost solo en la card, no en cada fila) |
 | 2026-09-15 | Nueva feature v1 "Inversiones": sexta fila del hub "Recurrentes y pagos", icono `chart.line.uptrend.xyaxis` | Decisión del usuario — registro de aportaciones periódicas a cuentas de inversión, deliberadamente más chico que "control de inversiones" (Fase 3 del PRD): sin rendimientos ni valor de portafolio |
 | 2026-09-15 | Inversiones no tiene campo de rendimiento ni valor actual en el Formulario ni en el Detalle | Ausencia deliberada — marca el límite de alcance de v1; ver "Sin definir aún" para el hueco de etapa 2 |
 

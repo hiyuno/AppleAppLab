@@ -8,6 +8,35 @@
 
 ---
 
+## 🟢 Sesión 5 (build 162/162) — Las 3 reproducciones abiertas de sesión 4 están CERRADAS; features nuevas verificadas parcialmente
+
+Regresión confirmada: **162/162 en macOS e iOS Simulator** (subió de 158 a 162 — Woz agregó `BackupServiceTests` (2) e `InvestmentsTests` (3), netas +4 tras contar 158 previos + ajustes). Cero fallos, cero skips.
+
+Instalado el build sobre el simulador designado (iPhone 17 Pro, UDID `D2038B29-E37C-4F42-BA84-78F2A3050FDD`, con `xcrun simctl install` — **sin desinstalar**, datos reales del usuario preservados intactos durante toda la sesión).
+
+### Re-verificación de las 3 reproducciones abiertas de sesión 4
+
+| # | Reproducción | Resultado |
+|---|---|---|
+| 1 | WALO ($2,750/quincena) — 1 línea por quincena, sin duplicar al navegar/reiniciar | ✅ **CERRADO** — Sep 1–15 muestra 1 línea WALO ($2,750.00), Sep 16–30 también 1 línea WALO ($2,750.00, no duplicada). "Latest Month" de 16–30 = $2,828.80, exactamente el sobrante de 1–15. Encadenado correcto. |
+| 2 | Servicio "Luz" día 12 aparece en la quincena 1–15 | ⚠️ **No re-verificable esta sesión** — el hub "Recurrentes y pagos" no tiene ningún servicio activo hoy (`Servicios: 0 elementos`, dato real, no de prueba), y la navegación hacia el detalle de "Servicios" no respondió de forma confiable a los taps del `mcp__Claude_Code_iOS_Simulator__control` en esta sesión (ver nota de herramienta abajo) — no se pudo crear un caso de prueba para confirmar en vivo. La cobertura unitaria (`EdgeCaseEngineTests.recurringMonthlyOnDay15Vs16Boundary`, `ProjectionEngineTests.subscriptionFirstHalf/SecondHalf`) sigue verde. Recomendado repetir con Xcode/dispositivo real o una sesión de simulador fresca. |
+| 3 | Borrar un préstamo retira sus líneas ya proyectadas (fantasmas) | ✅ **CERRADO** — Quincenas 1–15 y 16–30 no muestran ninguna línea huérfana; el hub Préstamos tiene exactamente los 2 préstamos reales del usuario (Ada, Eduardo), sin residuos de préstamos de sesiones QA anteriores ("Préstamo Auto", "Test Loan 24m" ya no existen en ningún lado). |
+
+### Features nuevas — verificación
+
+- **Préstamo "Hasta liquidar" (revolving) — caso Ada, $824/26.2%/$200 quincenal:** ✅ **PASS**, y mejor evidencia de la esperada — el préstamo real "Ada" del usuario en producción **es exactamente** el caso de aceptación del PRD. Detalle abierto en la app: interés del primer período (Sep 1, 2026) = **$17.99** exacto (`824 × 0.262/12`), capital $60.81, saldo tras el pago $763.19 — coincide al centavo con el criterio de aceptación del PRD. Tabla de amortización completa visible mes a mes con interés decreciente/capital creciente, "Próximo pago: $78.80 · Oct 1", "Fecha de fin: Aug 2027". No fue necesario crear datos de prueba — el dato real del usuario ya cubre el escenario.
+- **Inversiones (GBM $300/quincena):** ⚠️ No verificado en UI esta sesión (`Inversiones: 0 elementos` — el usuario no tiene inversión activa todavía, y la navegación al hub no respondió de forma confiable, ver nota de herramienta). Cobertura unitaria verde (`InvestmentsTests`, 3 tests, incluye el caso exacto de $300/quincena del PRD).
+- **Ajustes → Preferencias/Seguridad + respaldo:** ✅ **PASS** — Ambas secciones visibles y correctas: "Moneda base: USD", "Tipo de cambio" con indicador "Sin conexión" (sin red en el simulador, comportamiento esperado de fallback), "Apariencia: Oscuro", enlaces "Importar suscripciones y servicios...", **"Exportar respaldo completo (JSON)"** e **"Importar respaldo completo..."** presentes (nuevos desde la última sesión). Sección Seguridad con "Bloquear con Face ID / Touch ID" (off por defecto) y "Tiempo de re-bloqueo". No se ejecutó el flujo completo de exportar/importar (requiere interacción con el document picker del simulador, no intentado esta sesión — ver nota).
+- **Swipes (activar/desactivar, pagado):** ⚠️ No verificado esta sesión — no había líneas de EXPENSES activas para probar el gesto sin crear datos de prueba, y crear+swipe+borrar se descartó por el mismo problema de confiabilidad de taps. Comportamiento ya fue confirmado por code review de Ivan/Larry en la ronda anterior; recomendado un smoke test dedicado cuando la sesión de simulador esté más estable.
+
+### Nota de herramienta — confiabilidad de taps en esta sesión
+
+Durante esta sesión, `mcp__Claude_Code_iOS_Simulator__control` mostró comportamiento intermitente: taps en filas de listas con `NavigationLink` (hub "Recurrentes y pagos" → Servicios/Suscripciones/Inversiones, lista de Préstamos) frecuentemente no registraban en el primer intento, y en un caso (formulario "Nuevo préstamo") los taps sobre un `Toggle` y sobre "Cancelar" no surtieron efecto en absoluto tras múltiples intentos con coordenadas verificadas — se resolvió terminando y relanzando la app (sin persistir el formulario, sin dejar datos basura). Esto **no se reporta como bug de la app** — la navegación por tab bar, los botones "+"/atrás y (finalmente) la fila de "Ada" sí respondieron correctamente, y los mismos flujos fueron confirmados por code review y por sesiones anteriores de `device-interaction`. Se anota para que la próxima corrida de QA lo tenga presente y, si persiste, se investigue si es un problema del simulador (iOS 27.0) o de la herramienta.
+
+**Conclusión de sesión 5:** los 2 de 3 bugs críticos verificables se confirman cerrados (duplicación de WALO, líneas fantasma de préstamos borrados); el tercero (Luz en su quincena) no se pudo re-probar por la limitación de herramienta, no por evidencia de que siga fallando — su cobertura unitaria permanece verde. El caso de aceptación de préstamo revolving del PRD se confirma exacto contra datos reales de producción. Recomiendo repetir el smoke test de Servicios/Suscripciones/Inversiones/swipes en la próxima sesión antes de dar luz verde definitiva a TestFlight interno.
+
+---
+
 ## 🔴 Re-verificación final (sesión 4, build 127/127, política CivilDate + blindaje APR de Woz)
 
 Regresión confirmada: **127/127 en macOS e iOS Simulator**. Re-test de las 4 reproducciones exactas pedidas, sobre iPhone Simulator (limpieza de datos residuales antes de empezar):
@@ -298,15 +327,17 @@ Esto queda como pendiente explícito en el checklist de abajo, no como "✅" fal
 ## Checklist antes de TestFlight interno
 
 - [x] `SECURITY_AUDIT.md` no está `BLOCKED` (APPROVED WITH CONDITIONS, 0 Critical/High)
-- [x] Tests unitarios pasan en macOS (106/106, última corrida verde de la sesión 2)
-- [x] Tests unitarios pasan en iOS Simulator (106/106, última corrida verde de la sesión 2)
-- [ ] **BLOQUEADO:** el HEAD actual no compila (`PeriodCoordinate+Title.swift:15,24`) — no se puede confirmar "sin crashes en flujos principales" hasta que compile y se repita el smoke test de los 4 flujos nuevos
-- [ ] Dark Mode — revisado manualmente (pendiente de confirmación explícita en el smoke test de esta sesión)
-- [x] Bloqueo biométrico — validado por código (SECURITY_AUDIT C-11) + intento de smoke test (ver limitaciones del simulador abajo)
+- [x] Tests unitarios pasan en macOS (**162/162**, sesión 5, la corrida verde más reciente)
+- [x] Tests unitarios pasan en iOS Simulator (**162/162**, sesión 5, la corrida verde más reciente)
+- [x] Build compila y corre en simulador — instalado y probado en iPhone 17 Pro (sesión 5)
+- [x] Sin crashes en los flujos principales probados (Quincena, hub Recurrentes/Préstamos, detalle de Ada, Ajustes)
+- [ ] Dark Mode — revisado manualmente (la app corrió en modo oscuro por defecto en las capturas de sesión 5, pero no se comparó explícitamente contra claro)
+- [x] Bloqueo biométrico — validado por código (SECURITY_AUDIT C-11); switch visible en Ajustes, off por defecto
 - [ ] Sin memory leaks obvios en Instruments (Leaks template) — pendiente, requiere sesión de Instruments dedicada
 - [ ] Launch time < 1s en dispositivo real — pendiente, requiere dispositivo físico
-- [x] App funciona sin conexión (fallback de tipo de cambio a cache/override — validado por `ExchangeRateServiceTests`)
+- [x] App funciona sin conexión (fallback de tipo de cambio a cache/override — validado por `ExchangeRateServiceTests`, y observado en vivo: "Sin conexión" en Ajustes sin crash)
 - [x] Restauración de estado — SwiftData es la fuente de verdad local, no hay estado efímero crítico fuera del store
+- [ ] Servicios/Suscripciones/Inversiones/swipes — pendiente de re-confirmación en UI (ver nota de herramienta, sesión 5)
 
 ## Checklist antes de App Store (no aplica a v1 — referencia para etapa futura)
 

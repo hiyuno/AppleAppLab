@@ -52,6 +52,12 @@ struct FintrolApp: App {
         }
     }
 
+    // Ivan (SECURITY_AUDIT.md, Low): these two functions are only ever CALLED from inside
+    // `#if DEBUG` above, so they already never run in Release — but wrapping the call site
+    // alone still leaves the function bodies themselves compiled into a Release build,
+    // relying on the linker's dead-code stripping to drop them. Wrapping the full
+    // definitions in `#if DEBUG` makes the compiler itself the guarantee instead.
+    #if DEBUG
     /// Coordinator rule: simulator/dev data captured while testing must survive. Before ever
     /// deleting a corrupt on-disk store, copy it (main file + `-wal`/`-shm`) to
     /// `Documents/Backups/store-<fecha>.sqlite` so it can be inspected/recovered later, and
@@ -86,6 +92,7 @@ struct FintrolApp: App {
             print("[FintrolApp] Backed up unreadable store to Documents/Backups/store-\(stamp).sqlite before recovery delete.")
         }
     }
+    #endif
 
     private static func emergencyInMemoryContainer(schema: Schema) -> ModelContainer {
         let memoryConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)

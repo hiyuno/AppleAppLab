@@ -22,6 +22,11 @@ struct PeriodView: View {
     @State private var isLoading = true
     @State private var rateEditorErrorMessage: String?
 
+    // HIG_REVIEW #5 (Larry): the leading/trailing swipe gestures on a line have no visual
+    // hint before the first drag — shown exactly once, ever, then persisted dismissed so it
+    // never nags a returning user.
+    @AppStorage("fintrol.hasSeenSwipeHint") private var hasSeenSwipeHint = false
+
     // A11Y #11: at accessibility Dynamic Type sizes, the badge/panel need to stack instead
     // of sitting side by side (macOS) so nothing gets clipped or squeezed unreadably.
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -141,9 +146,34 @@ struct PeriodView: View {
 
     private var blocks: some View {
         VStack(spacing: 24) {
+            if !hasSeenSwipeHint {
+                swipeDiscoverabilityHint
+            }
             lineBlock(title: "INCOME", kind: .income)
             lineBlock(title: "EXPENSES", kind: .expense)
         }
+    }
+
+    private var swipeDiscoverabilityHint: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "hand.draw")
+                .foregroundStyle(Color.accentColor)
+            Text("Desliza una línea: hacia la derecha para activar/desactivar, hacia la izquierda para marcarla pagada (y de nuevo para eliminar/editar).")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer(minLength: 0)
+            Button {
+                hasSeenSwipeHint = true
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Cerrar aviso")
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.accentColor.opacity(0.1)))
+        .accessibilityElement(children: .combine)
     }
 
     private var header: some View {

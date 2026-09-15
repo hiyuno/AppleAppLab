@@ -117,6 +117,9 @@ struct SettingsView: View {
                 .pickerStyle(.menu)
                 .disabled(!lockStore.isLockEnabled)
                 .opacity(lockStore.isLockEnabled ? 1 : 0.4)
+                // A11Y #31 (Sarah, medio): `.disabled` already stops interaction, but the
+                // dimmed opacity alone doesn't explain WHY to someone who can't see it dimmed.
+                .accessibilityHint(lockStore.isLockEnabled ? "" : "Disponible cuando Face ID/Touch ID esté habilitado")
 
                 Text("Ocultar montos en el app switcher siempre está activo, independiente de Face ID / Touch ID.")
                     .font(.caption)
@@ -358,9 +361,12 @@ private struct ExchangeRateSettingsView: View {
                     }
                 }
                 if let tokenTestMessage {
+                    // A11Y #30 (Sarah): the red/green color alone doesn't tell VoiceOver
+                    // whether this is success or failure — say it explicitly.
                     Text(tokenTestMessage)
                         .font(.caption)
                         .foregroundStyle(tokenTestIsError ? .red : .green)
+                        .accessibilityLabel((tokenTestIsError ? "Error: " : "Éxito: ") + tokenTestMessage)
                 }
 
                 Button("Guardar token") {

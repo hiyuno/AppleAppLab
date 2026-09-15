@@ -74,6 +74,7 @@ struct LoansView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { isPresentingNew = true } label: { Image(systemName: "plus") }
+                    .accessibilityLabel("Agregar préstamo")
             }
         }
         .sheet(isPresented: $isPresentingNew) {
@@ -411,9 +412,13 @@ private struct LoanEditSheet: View {
                             .keyboardType(.decimalPad)
                             #endif
                         if expectedPaymentTooLow {
-                            Text("Este pago no cubre el interés mensual estimado — el saldo nunca bajará con este monto.")
+                            // A11Y #24 (Sarah): color-only warnings are invisible to VoiceOver
+                            // and to anyone who can't distinguish orange — icon + explicit
+                            // "Advertencia" text so the label itself carries the meaning.
+                            Label("Este pago no cubre el interés mensual estimado — el saldo nunca bajará con este monto.", systemImage: "exclamationmark.triangle.fill")
                                 .font(.caption)
                                 .foregroundStyle(.orange)
+                                .accessibilityLabel("Advertencia: pago insuficiente para cubrir interés mensual")
                         }
                     } footer: {
                         Text("Puedes cambiar el pago real en cada quincena.")
