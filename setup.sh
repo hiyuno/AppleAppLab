@@ -78,6 +78,15 @@ echo "  ✓ Temas instalados en Themes/ (Fintrol, Todocky, ToDo Project, Test)"
 curl -sf "$RAW/PATTERNS.md" -o "PATTERNS.md"
 echo "  ✓ PATTERNS.md instalado (catálogo de componentes AppleAppLabUI)"
 
+# --- Research/ (HIG, Xcode 27 MCP y demás documentación de referencia que los skills citan) ---
+mkdir -p "Research"
+if curl -sfL "https://github.com/hiyuno/AppleAppLab/archive/refs/heads/main.tar.gz" \
+    | tar -xz --strip-components=2 -C "Research" "AppleAppLab-main/Research" 2>/dev/null; then
+  echo "  ✓ Research/ sincronizado (HIG, Xcode 27 MCP, etc.)"
+else
+  echo "  ⚠ No se pudo sincronizar Research/ — revisa conexión y reintenta con /update-team"
+fi
+
 # --- Memoria evolutiva ---
 curl -fsSL "$RAW/KNOWN_ISSUES.md" -o ".appleapplab/KNOWN_ISSUES.md"
 echo "  ✓ Snapshot global actualizado en .appleapplab/KNOWN_ISSUES.md"
