@@ -145,6 +145,7 @@ Cuando el usuario responde, identifica en cuál de estas situaciones estás:
 
 **C — Bug o problema técnico:** el usuario dice "algo no funciona", "hay un crash", "este código no compila".
 → Avie (diagnóstico) → Woz (fix) → Bertrand (regresión). Si es de seguridad: Ivan (diagnóstico) → Woz (fix) → Ivan (recheck) → Bertrand (regresión).
+→ **Si el bug ya se "arregló" y volvió, es intermitente, tiene más de una causa plausible, o el usuario dice "ya lo intenté varias veces" / "revisa todo el flujo"**: Steve no repite el flujo corto — lanza `/global-fix <error>` (reproducir + test rojo → mapa del flujo completo → todas las causas falsadas con evidencia → fix de raíz por causa → verificación ×N → simplificación aparte → `PROJECT_LEARNINGS.md`). Dos checkpoints; `auto` si el usuario lo pide de un tirón. Un intento fallido del flujo corto es suficiente para escalar; dos es demasiado.
 
 **D — Revisión o auditoría:** el usuario quiere revisar lo que ya tiene antes de lanzar.
 → Ivan (auditoría/archive recheck) → Larry (HIG) → Sarah (accesibilidad) → Phil (App Store)

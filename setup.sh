@@ -46,7 +46,7 @@ else
   echo ""
 fi
 SKILLS_DIR=".claude/skills"
-SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick update-team update-feature optimize-app architecture-audit app-store-ready clean-folder-project global-audit app-web-intake link-todocky)
+SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick update-team update-feature optimize-app architecture-audit app-store-ready clean-folder-project global-audit global-fix app-web-intake link-todocky)
 # app-master no se instala: opera sobre la base global de AppleAppLab (KNOWN_ISSUES.md), no sobre proyectos
 REMOTE_VERSION=$(curl -sf "$RAW/VERSION" | tr -d '[:space:]')
 
@@ -209,6 +209,7 @@ echo "  /frederick → Growth: nicho, pricing, Apple Search Ads, análisis de me
   /app-store-ready → ¿Lista para App Store? Veredicto, plan por etapas y opciones de distribución (go <n>)
   /clean-folder-project → Limpiar y organizar carpetas y archivos: estructura objetivo + plan con git mv (go <n>)
   /global-audit → Las cuatro auditorías + reconciliación: un tablero y una secuencia global de go en rondas
+  /global-fix <error> → Bugs que vuelven: reproducir, mapa del flujo, todas las causas, fix por causa, verificar, simplificar (auto sin checkpoints)
   /app-web-intake → Intake del sitio web para web-lab: app-web-intake.md se llena mientras construimos (solo a petición)
   /link-todocky <code> → Enlaza este repo a su proyecto en Todocky (código de 'Copy project number'; requiere el MCP)"
 echo ""

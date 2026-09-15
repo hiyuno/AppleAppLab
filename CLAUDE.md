@@ -31,6 +31,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/global-audit` | — | Rutina paraguas — Steve hace triage por etapa del proyecto (nuevo, en construcción, pre-lanzamiento, publicada, heredada) y omite con razón las auditorías que no hacen falta; corre las necesarias en diagnóstico compartiendo inventarios, Avie reconcilia los cruces, y entrega un tablero con los veredictos y una sola secuencia de `go` en rondas (arquitectura → limpieza → performance → App Store); `go <n>` delega a la rutina dueña; `all` fuerza las cuatro |
 | `/app-web-intake` | — | Rutina de intake para el sitio web — solo cuando el usuario la pide; crea `app-web-intake.md` (template verbatim en inglés) y lo va llenando con lo que ya existe en PRD, TRD, STYLE_BRIEF, GROWTH, PRIVACY_POLICY y APPSTORE; pregunta solo lo que ningún documento sabe; `TBD` antes que inventar; web-lab `/app-web` lo lee |
 | `/link-todocky <code>` | — | Cierra el enlace inverso repo ↔ proyecto de Todocky con el código de "Copy project number" (un solo uso); guarda el `projectId` en `.claude/todocky-link.json`; con eso "Implement with Claude" funciona desde Todocky. Requiere el MCP de Todocky. El enlace directo (repo → tablero, tasks por etapa) lo hace Steve solo, §0.5 |
+| `/global-fix` | — | Rutina para bugs que no caen con una revisión pequeña — reproduce y test rojo primero; Avie mapea el flujo completo y falsa todas las causas con evidencia; Woz corrige la raíz, un commit por causa; Bertrand verifica con la reproducción y regresión; pasada aparte de simplificación que deja solo lo necesario; documenta en `PROJECT_LEARNINGS.md`. `auto` corre todo sin checkpoints |
 | `/update-feature` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 
 ## Cómo trabajar
@@ -58,6 +59,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **"¿Cómo está el proyecto?", "audítalo todo", "¿qué le falta?", heredé esta app, quiero dejarla bien antes de lanzar** → `/global-audit` (las cuatro auditorías + reconciliación + un tablero y una secuencia global de `go` en rondas; `/global-audit status` para saber qué `go` sigue)
 - **La app va a tener sitio web (web-lab)** → `/app-web-intake` (crea y mantiene `app-web-intake.md` en la raíz mientras se construye la app; `status` dice qué falta y quién lo llena; `prelaunch` hace las preguntas del foro)
 - **Pegas un código de Todocky, "enlaza este repo a Todocky", "Implement with Claude no funciona"** → `/link-todocky <code>` (requiere el MCP de Todocky conectado; el código se copia desde "Copy project number" y es de un solo uso)
+- **"Ya lo arreglé tres veces y vuelve", bug intermitente, varias causas, "nadie sabe cómo debería funcionar esto"** → `/global-fix <error>` (reproducir + test rojo → mapa del flujo → todas las causas falsadas → fix por causa → verificación → simplificación → `PROJECT_LEARNINGS.md`; `auto` sin checkpoints). Un bug simple sigue en el flujo normal Avie → Woz → Bertrand
 
 ## Flujo estándar
 
