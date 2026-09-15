@@ -33,6 +33,12 @@ Verifica transporte (no confirma que el toggle esté activo, solo que el proceso
 claude mcp list
 ```
 
+**Gate adicional — aprobación por agente (verificado 2026-09-15).** El toggle de Settings no es suficiente. La primera llamada a cualquier tool desde un agente falla con:
+
+> *"This agent isn't approved to use Xcode's tools yet. Call `XcodeOpenWorkspace` or `XcodeNewProject` first: opening or creating a project is what asks the user to approve this agent, together with access to that project's folder."*
+
+Es decir: `XcodeOpenWorkspace`/`XcodeNewProject` dispara un **diálogo de aprobación en la UI de Xcode**, una vez por identidad de agente (no una vez por máquina). El usuario tiene que aceptarlo ahí. Hasta que eso pase, cualquier otro tool (`XcodeListWorkspaces` incluido) devuelve ese error. Esto explica por qué una sesión nueva de Claude Code con el MCP registrado y el toggle activo puede seguir fallando en el primer intento: falta ese clic.
+
 **Verificación real de capacidades** (lo que se usó para construir este documento — útil para Craig/Avie si algún día se necesita automatizar esto fuera de una sesión interactiva de Claude Code):
 
 ```bash

@@ -751,7 +751,7 @@ Xcode 27 expone un MCP server nativo (`xcrun mcpbridge`, 53 tools verificados) s
 
 **Cuándo sigues usando `xcodebuild`/Makefile en su lugar:** CI (Craig), archivado y export para distribución (no hay tool de archive/export en este MCP), y cualquier flujo donde Xcode no esté corriendo o el MCP no esté conectado. El MCP es para el loop de desarrollo interactivo; el pipeline de release sigue siendo `xcodebuild` reproducible por línea de comandos.
 
-**No asumas que está disponible.** Si las tools del MCP `xcode` no aparecen o fallan, cae de vuelta a `xcodebuild`/`xcrun simctl` sin bloquear el trabajo — el usuario puede no haber activado el toggle, o esta sesión arrancó antes de que el server se registrara (los tools de un MCP nuevo solo cargan en sesiones que empiezan después del registro).
+**No asumas que está disponible.** Si las tools del MCP `xcode` no aparecen o fallan, cae de vuelta a `xcodebuild`/`xcrun simctl` sin bloquear el trabajo — el usuario puede no haber activado el toggle, esta sesión arrancó antes de que el server se registrara (los tools de un MCP nuevo solo cargan en sesiones que empiezan después del registro), o falta la aprobación por agente: la primera llamada a `XcodeOpenWorkspace`/`XcodeNewProject` dispara un diálogo en Xcode que el usuario tiene que aceptar una vez — si cualquier tool falla con "This agent isn't approved to use Xcode's tools yet", dile al usuario que revise Xcode y acepte el diálogo, no lo reintentes en loop.
 
 Detalle completo de los 53 tools (build, test, debug, localización, diagnósticos de producción): `Research/xcode-external-agents/00-index.md`.
 
