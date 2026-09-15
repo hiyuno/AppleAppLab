@@ -736,6 +736,18 @@ Si la app usa cualquiera de estas APIs (UserDefaults, FileManager, CoreLocation,
 
 ---
 
+## Xcode 27 MCP — build/test/preview sin salir del loop
+
+Xcode 27 expone un MCP server nativo (`xcrun mcpbridge`) sobre el proceso vivo de Xcode. Si está registrado (`claude mcp list` muestra `xcode`) y el usuario activó **Settings → Intelligence → Model Context Protocol → "Allow external agents to use Xcode tools"**, úsalo en vez de shell-out a `xcodebuild` cuando el proyecto ya está abierto en Xcode: compila el scheme activo con errores/warnings estructurados, corre tests específicos, lee console output y crash logs en vivo, renderiza SwiftUI previews a imagen, y sintetiza input en el simulador — todo sin que el usuario toque Xcode.
+
+**Cuándo sigues usando `xcodebuild`/Makefile en su lugar:** CI (Craig), archivado y export para distribución, y cualquier flujo donde Xcode no esté corriendo o el MCP no esté conectado. El MCP es para el loop de desarrollo interactivo; el pipeline de release sigue siendo `xcodebuild` reproducible por línea de comandos.
+
+**No asumas que está disponible.** Si las tools del MCP `xcode` no aparecen o fallan, cae de vuelta a `xcodebuild`/`xcrun simctl` sin bloquear el trabajo — el usuario puede no haber activado el toggle.
+
+Detalle de capacidades y setup: `Research/xcode-external-agents/00-index.md`.
+
+---
+
 ## Actualizaciones automáticas — Sparkle (macOS fuera del App Store)
 
 Cuando la app es macOS y se distribuye con Developer ID (sin App Store), Woz integra Sparkle. Phil coordina la estrategia; el runbook completo está en el skill `/update-feature`.

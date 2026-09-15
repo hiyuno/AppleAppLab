@@ -64,6 +64,12 @@ Si el gate de Ivan es `BLOCKED`, no inicies QA de release ni TestFlight. Puedes 
 
 ---
 
+## Xcode 27 MCP — ejecutar tests en vivo
+
+Si el proyecto está abierto en Xcode 27 y el MCP está conectado (`claude mcp list` muestra `xcode`, y el usuario activó el toggle en Settings → Intelligence → MCP), úsalo para correr test targets/clases/métodos específicos y leer resultados y console output en tiempo real, en vez de solo `xcodebuild test` a ciegas. También sirve para renderizar SwiftUI previews a imagen como evidencia de un fix visual. Si no está disponible, cae de vuelta a `xcodebuild`/`xcrun simctl` sin bloquear — es una aceleración del loop, no un requisito. Detalle: `Research/xcode-external-agents/00-index.md`.
+
+---
+
 ## Qué produces
 
 ### Para lógica de negocio (ViewModels, Services)

@@ -23,6 +23,7 @@ Aplica una auditoría mínima proporcional a toda app. Haz ambos pases completos
 - deep links, universal links, pasteboard o exposición entre procesos
 - webhooks, backend propio o recepción de contenido no confiable
 - distribución directa de macOS, actualizaciones fuera del App Store o Developer ID
+- el proyecto o su tooling dependen en producción de un agente externo con acceso al proceso vivo de Xcode (MCP `mcpbridge`) — no el uso incidental de Woz/Bertrand en desarrollo, sino cualquier flujo del producto o del pipeline que asuma esa conexión
 
 ### Pase 1 — plan y threat model
 
@@ -104,6 +105,20 @@ Adapta la profundidad al riesgo, pero no omitas silenciosamente controles. Marca
 - Exige actualizaciones firmadas y verificadas; valida feed, firma, downgrade y canal.
 - Usa Sign in with Apple, App Attest o DeviceCheck solo cuando el threat model lo justifique.
 - Declara expresamente que App Attest no soporta macOS, Mac Catalyst ni apps iOS ejecutándose en Mac; verifica soporte actual antes de recomendarlo.
+
+### Agentes externos con acceso a Xcode (MCP)
+
+Xcode 27 expone `mcpbridge`, un MCP server sobre XPC que da a un agente externo build/run con debugger, ejecución de tests y comandos LLDB, lectura de console output y crash diagnostics, síntesis de input en simulador/dispositivo, y read/write de archivos del proyecto — todo sobre el proceso vivo de Xcode, no solo el repo en disco. Aplica esta revisión solo cuando el gate anterior dispara (dependencia de producto o pipeline, no uso incidental de Woz/Bertrand en desarrollo).
+
+- Verifica que el acceso requiera el toggle explícito en Xcode Settings y registro manual por CLI (`claude mcp add ...`) — nunca auto-discovery ni habilitación silenciosa.
+- Trata la sesión de LLDB y la síntesis de input en simulador/dispositivo como control de ejecución remoto: exige que solo corra en máquinas de desarrollo, nunca en CI/runners no aislados ni en máquinas con acceso a secretos de producción.
+- Confirma que los secretos de Keychain, API keys y tokens de la app no queden expuestos vía console output, crash logs o snippets del REPL que el agente pueda leer a través del MCP.
+- Si el agente externo puede automatizar Sign in with Apple, OAuth u otro flujo de auth en el simulador, verifica que eso no se convierta en un bypass de rate limiting o de controles anti-automatización pensados para usuarios reales.
+- No apruebes este flujo como parte de CI/CD: `mcpbridge` requiere una sesión de Xcode con GUI activa, no builds headless — cualquier intento de usarlo así es una señal de arquitectura de pipeline mal entendida, no un hallazgo de seguridad que aceptar.
+
+Fuente: `Research/xcode-external-agents/00-index.md` (recolectado de fuentes secundarias — no hay documentación oficial de Apple accesible al momento de esta entrada; revalida contra `developer.apple.com/documentation/xcode/giving-external-agents-access-to-xcode` antes de auditar un caso real).
+
+---
 
 ### Red, TLS y criptografía
 
