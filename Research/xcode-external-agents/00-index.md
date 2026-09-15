@@ -92,6 +92,8 @@ Flujo de sesión explícito (no es un solo tool):
 3. **`DeviceInteractionSynthesize`** — ejecuta un comando de interacción (`interactionCommand`, ej. `"t 100 200"` para tap) y devuelve screenshot + **UI hierarchy** (accesibilidad) + logs de consola. El tool advierte explícitamente: *"Always use positions based on the most recent hierarchy dump. Never try to guess positions from a screenshot only."*
 4. **`DeviceInteractionEndSession`** — cierra la sesión. El tool insiste en que dejarla abierta es costoso y afecta la UI visible al usuario.
 
+**Verificado (2026-09-15) — no cubre macOS nativo.** `DeviceInteractionStartWorkspaceSession` contra un target macOS (`My Mac`, `isSimulator: false`) devuelve `"The device you are targeting is not supported for Device Interaction. Supported: iOS [Simulator] 27.0+; watchOS [Simulator] 27.0+; tvOS [Simulator] 27.0+."` Woz, Bertrand, Chris y Sarah solo pueden usar este grupo de tools en apps con destino Simulator; para macOS, la verificación de UI sigue siendo manual o vía Accessibility Inspector.
+
 ### Diagnóstico de producción — App Store Connect en vivo
 - **`GetTopCrashIssues`** / **`GetCrashIssueLogs`** — top crash signatures de los últimos 14 días y logs detallados por signature, con "expert triage knowledge". Viene de **"Apple's crash reporting service"** — datos reales de producción/TestFlight, no simulados.
 - **`GetTopFieldPerformanceIssues`** / **`GetFieldPerformanceIssueLogs`** — lanzamientos lentos, hangs, disk writes, energía — mismos datos que Xcode Organizer, vía field report API.
