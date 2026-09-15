@@ -85,7 +85,10 @@ struct LoansView: View {
     }
 
     private func endDate(of loan: Loan) -> CivilDate {
-        LoanEngine.endDate(startDate: loan.civilStartDate, termMonths: loan.termMonths, frequency: loan.frequency)
+        // Revolving loans have no fixed end — sort them after every fixed-term loan by using
+        // a far-future date, rather than the meaningless `termMonths` they don't use.
+        guard loan.mode == .fixedTerm else { return CivilDate(year: 9999, month: 12, day: 31) }
+        return LoanEngine.endDate(startDate: loan.civilStartDate, termMonths: loan.termMonths, frequency: loan.frequency)
     }
 }
 
@@ -94,18 +97,36 @@ struct LoansView: View {
 private struct LoanRow: View {
     let loan: Loan
 
+    private var isRevolving: Bool { loan.mode == .revolving }
+
     private var snapshot: LoanSnapshot {
-        LoanSnapshot(id: loan.id, name: loan.name, direction: loan.direction, principal: loan.principal, currency: loan.currency, apr: loan.apr, startDate: loan.civilStartDate, termMonths: loan.termMonths, frequency: loan.frequency, paymentOverride: loan.paymentOverride, isActive: loan.isActive)
+        LoanSnapshot(id: loan.id, name: loan.name, direction: loan.direction, principal: loan.principal, currency: loan.currency, apr: loan.apr, startDate: loan.civilStartDate, termMonths: loan.termMonths, frequency: loan.frequency, paymentOverride: loan.paymentOverride, isActive: loan.isActive, mode: loan.mode, expectedPayment: loan.expectedPayment)
     }
 
     private var schedule: [LoanInstallment] { LoanEngine.schedule(for: snapshot) }
     private var today: CivilDate { CivilDate.today() }
     private var lastPast: LoanInstallment? { schedule.last { $0.date <= today } }
     private var nextInstallment: LoanInstallment? { schedule.first { $0.date > today } }
-    private var currentBalance: Decimal { lastPast?.remainingBalance ?? loan.principal }
+
+    // Revolving: no persisted actual-payment ledger available from this list row (that lives
+    // in `PeriodCoordinator`, keyed off real materialized `LineItem`s), so the row shows the
+    // pure-projection schedule (assumes `expectedPayment` every period, no real overrides) —
+    // close enough for a list badge; `LoanDetailView` shows the precise, ledger-aware figures.
+    private var revolvingResult: LoanEngine.RevolvingResult? {
+        guard isRevolving, let expected = loan.expectedPayment else { return nil }
+        return LoanEngine.revolvingSchedule(principal: loan.principal, apr: loan.apr, expectedPayment: expected, frequency: loan.frequency, start: loan.civilStartDate, actualPayments: [:])
+    }
+
+    private var revolvingLastPast: LoanEngine.RevolvingRow? { revolvingResult?.rows.last { $0.date <= today } }
+    private var revolvingNext: LoanEngine.RevolvingRow? { revolvingResult?.rows.first { $0.date > today } }
+
+    private var currentBalance: Decimal {
+        if isRevolving { return revolvingLastPast?.remainingBalance ?? loan.principal }
+        return lastPast?.remainingBalance ?? loan.principal
+    }
 
     private var paidFraction: Double {
-        guard loan.principal > 0 else { return 0 }
+        guard loan.principal > 0, !isRevolving else { return 0 }
         let fraction = (loan.principal - currentBalance) / loan.principal
         return max(0, min(1, Double(truncating: fraction as NSDecimalNumber)))
     }
@@ -119,6 +140,17 @@ private struct LoanRow: View {
         LoanEngine.endDate(startDate: loan.civilStartDate, termMonths: loan.termMonths, frequency: loan.frequency)
             .date(calendar: .current)
             .formatted(.dateTime.month(.abbreviated).year())
+    }
+
+    /// "Sin plazo · termina aprox. [fecha]" or "· según pago esperado" when `neverEnds`.
+    private var revolvingBadgeText: String {
+        guard let revolvingResult else { return "Sin plazo" }
+        if revolvingResult.neverEnds { return "Sin plazo · no liquida con el pago esperado" }
+        if let lastRow = revolvingResult.rows.last {
+            let dateText = lastRow.date.date(calendar: .current).formatted(.dateTime.month(.abbreviated).year())
+            return "Sin plazo · termina aprox. \(dateText)"
+        }
+        return "Sin plazo · según pago esperado"
     }
 
     var body: some View {
@@ -145,23 +177,34 @@ private struct LoanRow: View {
                 .font(.body.weight(.semibold))
                 .monospacedDigit()
 
-            if let nextInstallment {
-                Text("Próximo pago: \(nextInstallment.payment.currencyString(currency: loan.currency)) · \(nextInstallment.date.date(calendar: .current).formatted(.dateTime.day().month(.abbreviated)))")
-                    .font(.subheadline)
+            if isRevolving {
+                if let revolvingNext {
+                    Text("Próximo pago esperado: \(revolvingNext.payment.currencyString(currency: loan.currency)) · \(revolvingNext.date.date(calendar: .current).formatted(.dateTime.day().month(.abbreviated)))")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                Text(revolvingBadgeText)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
+            } else {
+                if let nextInstallment {
+                    Text("Próximo pago: \(nextInstallment.payment.currencyString(currency: loan.currency)) · \(nextInstallment.date.date(calendar: .current).formatted(.dateTime.day().month(.abbreviated)))")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Text("Fecha fin: \(endDateText)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                ProgressView(value: paidFraction)
+                    .tint(tintColor)
+                    .accessibilityValue("\(Int((paidFraction * 100).rounded())) por ciento pagado")
             }
-
-            Text("Fecha fin: \(endDateText)")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            ProgressView(value: paidFraction)
-                .tint(tintColor)
-                .accessibilityValue("\(Int((paidFraction * 100).rounded())) por ciento pagado")
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(directionText), \(loan.name), saldo restante \(currentBalance.currencyString(currency: loan.currency))")
+        .accessibilityLabel("\(directionText), \(loan.name), saldo restante \(currentBalance.currencyString(currency: loan.currency))\(isRevolving ? ", " + revolvingBadgeText : "")")
     }
 }
 
@@ -200,6 +243,8 @@ private struct LoanEditSheet: View {
     @State private var overrideText: String
     @State private var isActive: Bool
     @State private var showDirectionChangeConfirm = false
+    @State private var mode: LoanMode
+    @State private var expectedPaymentText: String
 
     init(loan: Loan?) {
         self.loan = loan
@@ -224,6 +269,23 @@ private struct LoanEditSheet: View {
         _hasOverride = State(initialValue: loan?.paymentOverride != nil)
         _overrideText = State(initialValue: loan?.paymentOverride?.twoDecimalString ?? "")
         _isActive = State(initialValue: loan?.isActive ?? true)
+        _mode = State(initialValue: loan?.mode ?? .fixedTerm)
+        _expectedPaymentText = State(initialValue: loan?.expectedPayment?.twoDecimalString ?? "")
+    }
+
+    private var expectedPayment: Decimal? {
+        Decimal(string: expectedPaymentText, locale: Locale(identifier: "en_US_POSIX"))
+    }
+
+    /// The interest a `.revolving` loan's CURRENT balance would accrue in one month — used to
+    /// warn when `expectedPayment` doesn't even cover it (DESIGN_LIQUID: aviso naranja).
+    private var currentMonthInterestEstimate: Decimal {
+        (loan?.principal ?? principal) * (apr / 12)
+    }
+
+    private var expectedPaymentTooLow: Bool {
+        guard mode == .revolving, let expectedPayment, expectedPayment > 0 else { return false }
+        return expectedPayment <= currentMonthInterestEstimate
     }
 
     private var frequency: LoanFrequency {
@@ -257,8 +319,12 @@ private struct LoanEditSheet: View {
         guard !name.isEmpty else { return false }
         guard ValidationRange.amount.contains(principal) else { return false }
         guard aprPercent >= 0, aprPercent <= 100 else { return false }
-        guard ValidationRange.termMonths.contains(termMonths) else { return false }
         guard ValidationRange.dayOfMonth.contains(monthlyDay) else { return false }
+        if mode == .fixedTerm {
+            guard ValidationRange.termMonths.contains(termMonths) else { return false }
+        } else {
+            guard let expectedPayment, expectedPayment > 0 else { return false }
+        }
         return true
     }
 
@@ -315,46 +381,71 @@ private struct LoanEditSheet: View {
                 Section {
                     DatePicker("Fecha de inicio", selection: $startDate, displayedComponents: .date)
 
-                    Stepper("Plazo (meses): \(termMonths)", value: $termMonths, in: 1...600)
-
-                    DatePicker("Fecha fin", selection: endDateBinding, displayedComponents: .date)
-
                     Picker("Frecuencia", selection: $frequencyOption) {
                         ForEach(LoanFrequencyOption.allCases) { Text($0.rawValue).tag($0) }
                     }
                     if frequencyOption == .monthly {
                         Stepper("Día del mes: \(monthlyDay)", value: $monthlyDay, in: 1...31)
                     }
+
+                    LabToggleRow(title: "Hasta liquidar (revolving)", isOn: Binding(
+                        get: { mode == .revolving },
+                        set: { mode = $0 ? .revolving : .fixedTerm }
+                    ), config: PatternConfig(accentColor: .accentColor))
+
+                    if mode == .fixedTerm {
+                        Stepper("Plazo (meses): \(termMonths)", value: $termMonths, in: 1...600)
+                        DatePicker("Fecha fin", selection: endDateBinding, displayedComponents: .date)
+                    }
                 } footer: {
-                    Text("Editar el plazo o la fecha fin recalcula el otro en vivo.")
+                    Text(mode == .fixedTerm
+                        ? "Editar el plazo o la fecha fin recalcula el otro en vivo."
+                        : "Sin plazo fijo: interés mensual sobre el saldo, como una tarjeta de crédito. Puedes cambiar el pago real en cada quincena."
+                    )
                 }
 
-                Section {
-                    if !hasOverride {
-                        HStack {
-                            Text("Pago calculado")
-                            Spacer()
-                            Text("\(calculatedPayment.currencyString(currency: currency))/\(frequencyOption == .biweekly ? "quincena" : "mes")")
-                                .monospacedDigit()
-                                .foregroundStyle(.secondary)
-                        }
-                        Button("Sobreescribir monto de pago") {
-                            overrideText = calculatedPayment.twoDecimalString
-                            hasOverride = true
-                        }
-                    } else {
-                        TextField("Monto de pago", text: $overrideText)
+                if mode == .revolving {
+                    Section {
+                        TextField("Pago esperado", text: $expectedPaymentText)
                             #if os(iOS)
                             .keyboardType(.decimalPad)
                             #endif
-                        if let overrideRecalculatedTermText {
-                            Text(overrideRecalculatedTermText)
+                        if expectedPaymentTooLow {
+                            Text("Este pago no cubre el interés mensual estimado — el saldo nunca bajará con este monto.")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.orange)
                         }
-                        Button("Volver al cálculo automático") {
-                            hasOverride = false
-                            overrideText = ""
+                    } footer: {
+                        Text("Puedes cambiar el pago real en cada quincena.")
+                    }
+                } else {
+                    Section {
+                        if !hasOverride {
+                            HStack {
+                                Text("Pago calculado")
+                                Spacer()
+                                Text("\(calculatedPayment.currencyString(currency: currency))/\(frequencyOption == .biweekly ? "quincena" : "mes")")
+                                    .monospacedDigit()
+                                    .foregroundStyle(.secondary)
+                            }
+                            Button("Sobreescribir monto de pago") {
+                                overrideText = calculatedPayment.twoDecimalString
+                                hasOverride = true
+                            }
+                        } else {
+                            TextField("Monto de pago", text: $overrideText)
+                                #if os(iOS)
+                                .keyboardType(.decimalPad)
+                                #endif
+                            if let overrideRecalculatedTermText {
+                                Text(overrideRecalculatedTermText)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Button("Volver al cálculo automático") {
+                                hasOverride = false
+                                overrideText = ""
+                            }
                         }
                     }
                 }
@@ -416,13 +507,15 @@ private struct LoanEditSheet: View {
             loan.currency = currency
             loan.apr = apr
             loan.civilStartDate = CivilDate(from: startDate, calendar: .current)
-            loan.termMonths = resolvedTermMonths
+            loan.termMonths = mode == .revolving ? loan.termMonths : resolvedTermMonths
             loan.frequency = frequency
-            loan.paymentOverride = resolvedOverride
+            loan.paymentOverride = mode == .revolving ? nil : resolvedOverride
             loan.isActive = isActive
+            loan.mode = mode
+            loan.expectedPayment = mode == .revolving ? expectedPayment : nil
             target = loan
         } else {
-            let newLoan = Loan(name: name, direction: direction, principal: principal, currency: currency, apr: apr, startDate: startDate, termMonths: resolvedTermMonths, frequency: frequency, paymentOverride: resolvedOverride, isActive: isActive)
+            let newLoan = Loan(name: name, direction: direction, principal: principal, currency: currency, apr: apr, startDate: startDate, termMonths: mode == .revolving ? 1 : resolvedTermMonths, frequency: frequency, paymentOverride: mode == .revolving ? nil : resolvedOverride, isActive: isActive, mode: mode, expectedPayment: mode == .revolving ? expectedPayment : nil)
             context.insert(newLoan)
             target = newLoan
         }

@@ -52,12 +52,38 @@ struct FintrolApp: App {
         }
     }
 
+    /// Coordinator rule: simulator/dev data captured while testing must survive. Before ever
+    /// deleting a corrupt on-disk store, copy it (main file + `-wal`/`-shm`) to
+    /// `Documents/Backups/store-<fecha>.sqlite` so it can be inspected/recovered later, and
+    /// log that a backup happened (no sensitive content, just the destination filename).
     private static func deleteStoreFiles(for configuration: ModelConfiguration) {
         let storeURL = configuration.url
         let fileManager = FileManager.default
+        backupStoreFiles(storeURL: storeURL, fileManager: fileManager)
         for suffix in ["", "-wal", "-shm"] {
             let fileURL = URL(fileURLWithPath: storeURL.path + suffix)
             try? fileManager.removeItem(at: fileURL)
+        }
+    }
+
+    private static func backupStoreFiles(storeURL: URL, fileManager: FileManager) {
+        guard let documents = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+        let backupsDir = documents.appendingPathComponent("Backups", isDirectory: true)
+        try? fileManager.createDirectory(at: backupsDir, withIntermediateDirectories: true)
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd-HHmmss"
+        let stamp = formatter.string(from: Date())
+
+        var copiedAny = false
+        for suffix in ["", "-wal", "-shm"] {
+            let sourceURL = URL(fileURLWithPath: storeURL.path + suffix)
+            guard fileManager.fileExists(atPath: sourceURL.path) else { continue }
+            let destURL = backupsDir.appendingPathComponent("store-\(stamp)\(suffix).sqlite")
+            if (try? fileManager.copyItem(at: sourceURL, to: destURL)) != nil { copiedAny = true }
+        }
+        if copiedAny {
+            print("[FintrolApp] Backed up unreadable store to Documents/Backups/store-\(stamp).sqlite before recovery delete.")
         }
     }
 

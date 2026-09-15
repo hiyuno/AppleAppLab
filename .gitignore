@@ -7,3 +7,4 @@ xcuserdata/
 *.xcuserstate
 DerivedData/
 .claude/todocky-link.json
+Apps/*/build/

@@ -14,7 +14,9 @@ struct RecurringListView: View {
     @State private var editingItem: RecurringItem?
     @State private var isPresentingNew = false
 
-    private var items: [RecurringItem] { allItems.filter { $0.kind == kind } }
+    // "Inversiones" (feature #12) reuses `RecurringItem` but has its own screen (`InvestmentsView`)
+    // — excluded here per TRD.
+    private var items: [RecurringItem] { allItems.filter { $0.kind == kind && $0.category != .investment } }
 
     private var title: String { kind == .income ? "Ingresos recurrentes" : "Gastos recurrentes" }
     private var emptyIcon: String { kind == .income ? "arrow.down.circle" : "arrow.up.circle" }

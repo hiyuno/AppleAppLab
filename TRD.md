@@ -92,7 +92,7 @@ Fintrol/
 - `currency: Currency` (`.usd` / `.mxn`)
 - `isPaid: Bool` — switch visual, **no participa en ningún cálculo**
 - `sortOrder: Int`
-- `origin: LineOrigin` (`.manual`, `.carryOver`, `.recurring`, `.subscription`, `.loan`)
+- `origin: LineOrigin` (`.manual`, `.carryOver`, `.recurring`, `.subscription`, `.loan`, `.investment`)
 - `sourceRecurringID: UUID?` — enlace lógico al `RecurringItem`/`Subscription` que la generó (no relación SwiftData para no forzar acoplamiento; se resuelve por `id` al regenerar)
 - `sourceLoanID: UUID?` — mismo mecanismo que `sourceRecurringID` pero para `Loan`; una línea `.loan` nunca tiene ambos campos poblados
 - `isManuallyEdited: Bool` — **bandera central de la regla "la edición manual gana"**: se pone en `true` en cualquier edición del usuario sobre una línea con `origin != .manual`; el motor de regeneración nunca toca una línea con esta bandera en `true`
@@ -105,6 +105,13 @@ Fintrol/
 - `frequency: RecurringFrequency` (`.biweekly`, `.monthlyOnDay(Int)`, `.once(Date)`)
 - `startDate: Date`, `endDate: Date?`
 - `isActive: Bool`
+- `category: RecurringCategory` (`.general` default | `.investment`) — **feature "Inversiones", decisión del usuario: se modela reutilizando `RecurringItem`, no una entidad aparte.** Una aportación recurrente es, estructuralmente, idéntica a cualquier otro recurrente (monto, moneda, frecuencia `.biweekly`/`.monthlyOnDay(día)` ya cubre "cada quincena / mensual día X", inicio, fin opcional, activo) — crear un `Investment` aparte solo duplicaría `reprojectRecurring`, materialización y el motor de vigencia sin ganar nada. `kind` en una aportación es siempre `.expense`.
+- `accountName: String?` — solo poblado cuando `category == .investment`; nombre de la cuenta destino que muestra la pantalla "Inversiones"
+
+**Origen de línea:** `ProjectionEngine.generateRecurringLines` decide `LineItem.origin` a partir de `category`: `.investment` si `category == .investment`, `.recurring` en cualquier otro caso — sigue poblando `sourceRecurringID` (no se agrega un `sourceInvestmentID` nuevo; es el mismo campo, ya genérico). `PeriodCoordinator.reprojectRecurring` y la baja de un `RecurringItem` (`deleteRecurring`) no cambian: operan igual sobre cualquier `category`.
+
+**Pantalla "Inversiones":** lista cada `RecurringItem` con `category == .investment` mostrando `accountName` y "aportado a la fecha" = suma de `amount` de sus `LineItem` materializadas (`origin == .investment && sourceRecurringID == item.id`) — no filtra por `isPaid` (esa marca nunca afecta cálculos, regla general del PRD). Desactivar el `RecurringItem` (`isActive = false`) dispara `reprojectRecurring`, que retira sus líneas futuras no editadas manualmente — el acumulado baja porque las líneas materializadas correspondientes desaparecen, no porque haya un flag adicional que filtrar.
+**Fuera de v1** (ya decidido en el PRD, sin cambios): rendimientos, valor actual de la cuenta, portafolios — "Inversiones" en v1 es solo registro de aportaciones, el hueco de etapa 2 (control de inversiones real) queda intacto.
 
 **`Subscription`** — **actualizado a como lo implementó Woz, distinto de lo documentado originalmente aquí:**
 - `id: UUID`, `name: String`, `price: Decimal`, `currency: Currency`
@@ -117,12 +124,14 @@ Fintrol/
 **`Loan`**
 - `id: UUID`, `name: String`
 - `direction: LoanDirection` (`.borrowed` → sus pagos generan `LineItem.expense`; `.lent` → sus pagos generan `LineItem.income`)
+- `mode: LoanMode` (`.fixedTerm` | `.revolving`) — decisión del usuario: **`.revolving`** ("Hasta liquidar") modela deuda tipo tarjeta sin plazo fijo, donde el interés se acumula sobre saldo y el usuario paga un monto esperado por período hasta liquidar
 - `principal: Decimal`, `currency: Currency` (USD/MXN)
 - `apr: Decimal` — tasa anual
 - `startDate: Date`
-- `termMonths: Int?`, `endDate: Date?` — uno se deriva del otro vía `LoanEngine` según `frequency` (ver LoanEngine); se persiste el que el usuario capturó, el otro se recalcula, nunca ambos como fuente independiente
+- `termMonths: Int?`, `endDate: Date?` — **obligatorios (uno deriva del otro) en `.fixedTerm`; ambos opcionales en `.revolving`**, donde el fin lo determina el saldo, no un plazo capturado
+- `expectedPayment: Decimal?` — **solo relevante en `.revolving`**: el pago que el usuario planea hacer cada período mientras no haya un pago real registrado; en `.fixedTerm` el pago fijo lo calcula `LoanEngine.schedule` como hasta ahora, este campo no aplica
 - `frequency: LoanFrequency` (`.monthly(day: Int)` default, `.biweekly`)
-- `paymentOverride: Decimal?` — si el usuario fija un pago distinto al calculado, `LoanEngine` recalcula `n` (número de pagos) a partir de este monto en vez de derivar el pago desde `termMonths`
+- `paymentOverride: Decimal?` — **solo `.fixedTerm`**: si el usuario fija un pago distinto al calculado, `LoanEngine` recalcula `n` (número de pagos) a partir de este monto en vez de derivar el pago desde `termMonths`
 - `isActive: Bool`
 - `lineItems: [LineItem]?` (inverso vía `sourceLoanID`, opcional — no es relación `@Relationship` directa, se resuelve igual que recurrentes/suscripciones)
 
@@ -208,6 +217,21 @@ Fix real de un bug de producción, no estaba en la versión anterior de este TRD
   4. El último pago del schedule deja saldo `0` exacto (verifica el ajuste de redondeo, no solo que sea "cercano a 0").
   5. `paymentOverride` fijado → `LoanEngine` recalcula `n` consistente con ese pago (round-trip: recalcular el pago desde el `n` derivado debe reproducir el override, dentro de la tolerancia del redondeo a 2 decimales).
 
+### Modo `.revolving` ("Hasta liquidar") — `LoanEngine.revolvingSchedule`
+
+- **Firma:** `LoanEngine.revolvingSchedule(principal:apr:expectedPayment:frequency:start:actualPayments:[CivilDate: Decimal]) -> [RevolvingRow]`, tan pura y determinista como `schedule` (fecha en `CivilDate`, ver política de fechas de "Decisiones de Swift").
+- **Interés:** mensual, sobre saldo, acumulado al cierre de cada **mes civil** (mecánica de tarjeta de crédito) — `interés = saldo × apr/12`, independiente de si la frecuencia de pago es mensual o quincenal.
+- **Pago por período:** usa el pago **real** ya registrado (líneas `origin == .loan` con `sourceLoanID`, materializadas, `isActive`, editadas o no) cuando existe para ese período; si el período es futuro y no tiene línea real, usa `expectedPayment` como proyección. Un período mezclado (parte de la tabla con pagos reales, parte proyectada) es el caso normal, no una excepción.
+- **Saldo:** `saldo_nuevo = saldo_anterior + interés_del_mes − pago_del_período`. Fin = **primer período con saldo ≤ 0**; ese último pago se ajusta hacia abajo para no dejar saldo negativo (mismo principio de ajuste que en `.fixedTerm`).
+- **`neverEnds`:** si `expectedPayment ≤` el interés mensual del saldo inicial (el pago ni siquiera cubre el interés, el saldo nunca baja) → la función marca `neverEnds = true` y acota la proyección a **10 años** en vez de iterar indefinidamente (mismo principio de materialización acotada del resto del TRD — nunca proyección infinita).
+- **`PeriodCoordinator.reprojectLoan` en modo revolving:** genera/actualiza la línea `.loan` de cada período con `expectedPayment` (no con la tabla `.fixedTerm`), respetando `isManuallyEdited`/`isActive` igual que siempre; a diferencia de `.fixedTerm`, **cualquier pago real registrado en cualquier quincena** (edición manual de esa línea) dispara un recálculo completo de `revolvingSchedule` hacia adelante — el saldo de todos los períodos posteriores depende del pago real más reciente, no solo de la línea que cambió.
+- **Pantalla de detalle (`LoanDetailView`):** para `.revolving` muestra saldo actual, interés acumulado a la fecha, fecha de fin estimada (o "No liquida con este pago" si `neverEnds`), y tabla real vs. proyectado (qué períodos ya tienen pago real vs. cuáles siguen usando `expectedPayment`).
+- **Tests obligatorios (Bertrand), sobre `LoanEngine.revolvingSchedule` puro:**
+  1. Caso Ada: `principal = 824`, `apr = 0.262`, `expectedPayment = 200` quincenal → interés mes 1 ≈ `17.99`; verificar saldo tras 2 pagos y la fecha de fin proyectada.
+  2. Registrar un pago real de `150` (en vez del esperado `200`) en una quincena ya materializada → `revolvingSchedule` recalcula el saldo de esa quincena en adelante con el pago real, no con `expectedPayment`.
+  3. `expectedPayment` ≤ interés mensual del saldo inicial → `neverEnds == true`, proyección acotada a 10 años, no iteración infinita.
+  4. Liquidación anticipada: un pago real mayor al saldo restante de ese período → el pago se ajusta al saldo exacto (nunca queda saldo negativo ni un pago "de más" sin explicar).
+
 ---
 
 ## Decisiones de Swift
@@ -266,6 +290,8 @@ Entitlements:
 
 - Versión actual: `SchemaV1`
 - Cambios en esta versión: se agrega `Loan` (y `sourceLoanID`/`.loan` en `LineItem`) directo a `SchemaV1` — el proyecto es **pre-release** (sin datos de usuario en producción), así que no se abre `SchemaV2` ni se escribe migración para este cambio; se edita `SchemaV1` en sitio.
+- **Modo `.revolving` de `Loan` (`mode`, `expectedPayment`, `termMonths`/`endDate` ahora opcionales) → `SchemaV2` en sitio:** sigue siendo pre-release, así que no hace falta `MigrationStage` real, pero el cambio se declara como `SchemaV2` (no otro edit silencioso de V1) para dejar el checkpoint correcto antes de que el proyecto salga de pre-release — desde ese punto sí aplicará la regla estándar de migración explícita.
+- **Feature "Inversiones" (`RecurringItem.category`, `accountName`) → Lightweight, dentro de `SchemaV2` vigente:** son propiedades nuevas con default (`category = .general`, `accountName = nil`) sobre una entidad existente — cae directo en la fila "Agregar propiedad con default → Lightweight, automática" de la tabla de migración de este documento. No amerita `SchemaV3` ni plan de migración custom.
 - Estrategia: se adopta el patrón `VersionedSchema` + `SchemaMigrationPlan` **desde el día 1**, aunque V1 no tenga nada que migrar todavía. Es más barato empezar con el patrón correcto que retrofit-earlo cuando ya haya datos de usuario en producción. Esta regla de "editar V1 en sitio mientras sea pre-release" deja de aplicar en cuanto haya un build de producción con datos reales — desde ese punto, cualquier cambio de schema (incluido uno igual de simple) exige `SchemaV2` + migración real.
 - Plan: `Fintrol/Core/Migration/SchemaV1.swift` + `AppMigrationPlan.swift` (stage list vacía por ahora, lista para `MigrationStage.lightweight`/`.custom` en V2).
 - Prueba requerida: no aplica todavía (no hay V0). Bertrand deja un test placeholder que verifica que `ModelContainer` abre limpio con `SchemaV1`.
@@ -372,6 +398,10 @@ Entitlements:
 | 2026-09-15 | Sincronización TRD↔código: `Subscription.kind` (`.subscription`/`.service`) modela también "Servicios del hogar" reutilizando la misma entidad — no estaba documentado y no está en el PRD | Decisión de implementación de Woz (`DESIGN_LIQUID.md`), no de producto; queda señalada como pendiente de confirmar con Scott, no acomodada silenciosamente |
 | 2026-09-15 | `reprojectRecurring/Subscription/Loan` reemplaza la descripción previa de `ProjectionEngine.regenerate` — ahora también **crea** líneas faltantes en períodos ya materializados, no solo actualiza las existentes | Corrige un bug real encontrado en diagnóstico: crear un recurrente nuevo no aparecía en quincenas ya visitadas |
 | 2026-09-15 | `coordinate(containing:)` usa `Calendar.current` (local) para "hoy"; `dateRange`/`date(forDayOfMonth:)` siguen en `Calendar.gregorianUTC`; los formatters de título fijan `Date.FormatStyle(timeZone: UTC)` | Corrige el bug de producción donde la app abría en el mes anterior en zonas horarias UTC−N |
+| 2026-09-15 | `Loan.mode`: se agrega `.revolving` ("Hasta liquidar") junto a `.fixedTerm`, con `expectedPayment` y `termMonths`/`endDate` opcionales; `LoanEngine.revolvingSchedule` calcula interés mensual sobre saldo tipo tarjeta, mezcla pagos reales con `expectedPayment` proyectado, y detecta `neverEnds` acotando a 10 años | Decisión explícita del usuario — cubre deuda sin plazo fijo (ej. "Ada") que `.fixedTerm` no modelaba |
+| 2026-09-15 | El cambio de `.revolving` se versiona como `SchemaV2` (en sitio, sin migración real por ser pre-release) en vez de seguir editando `SchemaV1` | Deja un checkpoint de versión correcto antes de que el proyecto salga de pre-release |
+| 2026-09-15 | Feature "Inversiones" (aportaciones recurrentes): se reutiliza `RecurringItem` con `category = .investment` + `accountName`, origen de línea `.investment`, sin entidad ni motor de reproyección nuevos | Decisión explícita del usuario — estructuralmente idéntico a un recurrente; una entidad `Investment` aparte solo duplicaría `reprojectRecurring` sin beneficio |
+| 2026-09-15 | Campos de "Inversiones" entran como Lightweight dentro de `SchemaV2`, sin `SchemaV3` | Son propiedades nuevas con default sobre una entidad existente — caso trivial de la tabla de migración |
 | 2026-09-15 | Materialización perezosa de quincenas — nunca se generan 240 registros de golpe | Requisito explícito del PRD (riesgo de "proyección infinita"); Overview calcula en memoria |
 | 2026-09-15 | Recálculo de encadenado incremental con fixed-point, no recálculo completo | Acota el costo a quincenas materializadas realmente afectadas |
 | 2026-09-15 | Regla "edición manual gana" implementada con bandera explícita `isManuallyEdited` por línea | Evita heurísticas de diff frágiles; mapea 1:1 al criterio de aceptación del PRD |

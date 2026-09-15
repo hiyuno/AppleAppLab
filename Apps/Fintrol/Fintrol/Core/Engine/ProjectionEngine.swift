@@ -64,6 +64,7 @@ public enum ProjectionEngine {
         let isFirstHalf = coordinate.half == .first
 
         let active = subscriptions.filter { subscription in
+            guard subscription.isActive else { return false }
             guard subscription.kind == kind else { return false }
             guard (subscription.paymentDay <= 15) == isFirstHalf else { return false }
             let occurrence = PeriodDateEngine.date(forDayOfMonth: subscription.paymentDay, in: coordinate)
@@ -101,7 +102,10 @@ public enum ProjectionEngine {
         let range = PeriodDateEngine.dateRange(for: coordinate)
         var lines: [GeneratedLine] = []
 
-        for loan in loans where loan.isActive {
+        // `.revolving` loans need `actualPayments` (real edited lines, live SwiftData state)
+        // to compute anything meaningful — `generateRevolvingLoanLine` below handles those;
+        // this function only ever produces `.fixedTerm` lines.
+        for loan in loans where loan.isActive && loan.mode == .fixedTerm {
             let installments = LoanEngine.schedule(for: loan)
             for installment in installments where installment.date >= range.start && installment.date <= range.end {
                 lines.append(GeneratedLine(
@@ -112,6 +116,28 @@ public enum ProjectionEngine {
         }
 
         return lines
+    }
+
+    /// `.revolving` counterpart of `generateLoanLines` — one `GeneratedLine` (at most) for
+    /// `coordinate`, using `LoanEngine.revolvingSchedule`. `actualPayments` is supplied by the
+    /// caller (`PeriodCoordinator`, which alone has access to real, already-materialized
+    /// `LineItem`s) — this stays pure otherwise.
+    public static func generateRevolvingLoanLine(
+        for coordinate: PeriodCoordinate,
+        loan: LoanSnapshot,
+        actualPayments: [CivilDate: Decimal]
+    ) -> GeneratedLine? {
+        guard loan.isActive, loan.mode == .revolving, let expectedPayment = loan.expectedPayment else { return nil }
+        let range = PeriodDateEngine.dateRange(for: coordinate)
+        let result = LoanEngine.revolvingSchedule(
+            principal: loan.principal, apr: loan.apr, expectedPayment: expectedPayment,
+            frequency: loan.frequency, start: loan.startDate, actualPayments: actualPayments
+        )
+        guard let row = result.rows.first(where: { $0.date >= range.start && $0.date <= range.end }) else { return nil }
+        return GeneratedLine(
+            kind: loan.kind, title: loan.name, amount: row.payment, currency: loan.currency,
+            origin: .loan, sourceRecurringID: nil, sourceLoanID: loan.id
+        )
     }
 
     /// The "manual edit wins" rule (TRD): when a `RecurringItem` changes, only the
@@ -127,7 +153,7 @@ public enum ProjectionEngine {
     }
 
     private static func makeLine(from item: RecurringItemSnapshot) -> GeneratedLine {
-        GeneratedLine(kind: item.kind, title: item.title, amount: item.amount, currency: item.currency, origin: .recurring, sourceRecurringID: item.id)
+        GeneratedLine(kind: item.kind, title: item.title, amount: item.amount, currency: item.currency, origin: item.category == .investment ? .investment : .recurring, sourceRecurringID: item.id)
     }
 
     private static func isVigente(startDate: CivilDate, endDate: CivilDate?, in range: (start: CivilDate, end: CivilDate)) -> Bool {

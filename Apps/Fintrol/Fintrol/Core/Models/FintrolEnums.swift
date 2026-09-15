@@ -16,6 +16,20 @@ public enum LineOrigin: String, Codable, Sendable, CaseIterable {
     case recurring
     case subscription
     case loan
+    /// "Inversiones" (PRD #12) — a `RecurringItem` with `category == .investment`. Same
+    /// materialization/reproject path as `.recurring` (same `sourceRecurringID`), just a
+    /// different origin so `LineItemRow` can show its own icon and the totals/lists that
+    /// exclude investments from "Ingresos/Gastos recurrentes" can tell them apart.
+    case investment
+}
+
+/// `RecurringItem.category` — distinguishes an "Inversiones" contribution (feature #12) from
+/// an ordinary recurring income/expense. Added post-v1 (pre-release, `SchemaV2` in place —
+/// no migration): default `.general` keeps every existing `RecurringItem` behaving exactly as
+/// before.
+public enum RecurringItemCategory: String, Codable, Sendable, CaseIterable {
+    case general
+    case investment
 }
 
 public enum PeriodHalf: String, Codable, Sendable, CaseIterable {
@@ -71,4 +85,14 @@ public enum LoanDirection: String, Codable, Sendable, CaseIterable {
 public enum LoanFrequency: Codable, Sendable, Hashable {
     case monthly(day: Int)
     case biweekly
+}
+
+/// `.fixedTerm` — the original mode: known term/end date, fixed calculated (or overridden)
+/// payment, `LoanEngine.schedule`. `.revolving` ("Hasta liquidar") — credit-card-style debt
+/// with no fixed term: monthly interest on balance, an `expectedPayment` per period that the
+/// user's real payment can differ from each time, `LoanEngine.revolvingSchedule`. Added
+/// post-v1 (pre-release, `SchemaV2` in place — no migration).
+public enum LoanMode: String, Codable, Sendable, CaseIterable {
+    case fixedTerm
+    case revolving
 }

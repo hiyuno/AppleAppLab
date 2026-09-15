@@ -3,9 +3,12 @@ import Foundation
 /// Sobrante ("what's left"), totals, "Mandar" and forward carry-over propagation.
 /// Pure, `Sendable`, no SwiftData — operates entirely on `LineSnapshot` arrays.
 public enum CarryOverEngine {
+    /// Only `isActive` lines count — swipe-leading on `LineItemRow` toggles a line inactive
+    /// (user's change, replacing the old per-row toggles) to exclude it from every total,
+    /// sobrante, "Mandar" and the carry-over chain, without deleting it.
     public static func total(for lines: [LineSnapshot], kind: LineKind, exchangeRate: Decimal) -> Decimal {
         lines
-            .filter { $0.kind == kind }
+            .filter { $0.kind == kind && $0.isActive }
             .reduce(Decimal(0)) { $0 + CurrencyConversion.toUSD(amount: $1.amount, currency: $1.currency, rate: exchangeRate) }
     }
 
@@ -19,7 +22,7 @@ public enum CarryOverEngine {
     public static func mandar(for lines: [LineSnapshot], exchangeRate: Decimal) -> Decimal {
         guard exchangeRate > 0 else { return 0 }
         let mxnExpenses = lines
-            .filter { $0.kind == .expense && $0.currency == .mxn }
+            .filter { $0.kind == .expense && $0.currency == .mxn && $0.isActive }
             .reduce(Decimal(0)) { $0 + $1.amount }
         return mxnExpenses / exchangeRate
     }

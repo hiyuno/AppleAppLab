@@ -188,6 +188,48 @@ Releí SECURITY.md §9 ítem 8 en esta sesión: ya dice correctamente que `ENABL
 
 ---
 
+## RECHECK 3 — 2026-09-15 (mismo día, cuarto pase: `BackupService`, revolving, Inversiones, swipes)
+
+> Recheck incremental, sin cambios de código de mi parte, sin commit. Evidencia: lectura completa de `Fintrol/Core/Engine/BackupService.swift`, `Fintrol/App/FintrolApp.swift`, `Fintrol/Features/Settings/SettingsView.swift` (bloque de export/import), `Fintrol/Core/Models/Loan.swift`, `Fintrol/Core/Models/FintrolEnums.swift`, `Fintrol/Core/Engine/LoanEngine.swift`, `Fintrol/Features/Investments/InvestmentsView.swift`, `Fintrol/Core/Migration/SchemaV2.swift` y `AppMigrationPlan.swift`, `Fintrol/UI/LineItemRow.swift`, más `grep` dirigidos y `xcodebuild test -scheme Fintrol -destination 'platform=macOS'` ejecutado en esta sesión.
+
+### `BackupService` (export/import completo) — Pass, con una recomendación Low no bloqueante
+
+- **El token nunca se exporta.** `BackupService.Backup`/`exportBackup` (líneas 11-19, 106-165) no tiene ningún campo ni lectura relacionada a Keychain/token — confirmado por lectura completa de la struct y la función. El propio comentario del archivo (líneas 8-9) lo declara explícito: *"Every persisted field round-trips except the Banxico token, which lives only in the Keychain and is never written to disk in plaintext."* `grep -rn "Keychain\|Bmx-Token\|token" Fintrol/Core/Engine/BackupService.swift` → 0 matches de código real (solo el comentario que lo excluye).
+- **Sin copias temporales propias sin Data Protection.** El export usa `FileDocument`/`fileWrapper(configuration:)` (`SettingsView.swift:469-474`) que construye los bytes en memoria (`BackupService.encode`) y los entrega a SwiftUI/`fileExporter`, que escribe directo al destino elegido por el usuario — la app no escribe manualmente a `Caches/`/`tmp/` en ningún punto de este flujo (`grep -rn "NSTemporaryDirectory\|/tmp/\|FileManager.default.url.*caches" Fintrol/Core/Engine/BackupService.swift Fintrol/Features/Settings/SettingsView.swift` → 0 matches). El propio mecanismo de `fileExporter` de SwiftUI puede usar un `tmp/` interno del sistema antes de mover el archivo al destino final elegido por el usuario — eso es responsabilidad de SwiftUI/UIDocumentPickerViewController, no de la app, y está fuera de lo que Ivan puede auditar en código de producto.
+- **Importación fail-closed + confirmación.** `BackupService.decode` (líneas 185-189) usa `JSONDecoder` tipado con `try?` — cualquier JSON malformado devuelve `nil`, y `importFullBackup` (`SettingsView.swift:195-207`) lo trata como error explícito (`"El archivo no es un respaldo válido de Fintrol."`) sin tocar `context` en absoluto — no hay importación parcial en el camino de fallo. El `confirmationDialog` destructivo (`SettingsView.swift:175-184`, texto *"Esto reemplaza TODOS los datos actuales..."*) se dispara **antes** de que `importFullBackup` pueda ejecutarse — el botón "Reemplazar todo" es la única vía al import real, con "Cancelar" como alternativa explícita. Confirmado también por `security-scoped resource` correcto (`url.startAccessingSecurityScopedResource()`/`stopAccessingSecurityScopedResource()` con `defer`, líneas 196-197).
+- **El backup automático de `Documents/Backups/` no corre en Release, y no filtra montos.** `FintrolApp.swift:38-51` — la llamada a `Self.deleteStoreFiles` (que internamente invoca `backupStoreFiles`) está dentro de un `#if DEBUG ... #else ... #endif`: en Release, la rama que se compila es la del `#else` (línea 48-50), que va directo a `emergencyInMemoryContainer` sin pasar nunca por `deleteStoreFiles`/`backupStoreFiles`. Confirmado por lectura línea por línea, no solo por el nombre de la función. El único `print(...)` de todo este mecanismo (línea 86) no interpola ningún monto/título — solo el nombre de archivo con timestamp (`"Backed up unreadable store to Documents/Backups/store-<fecha>.sqlite..."`), consistente con C-05.
+  - **Recomendación Low, no bloqueante:** `deleteStoreFiles`/`backupStoreFiles` están definidas fuera del `#if DEBUG` (solo su *llamada* está adentro) — funcionalmente nunca se ejecutan en Release porque el call site no existe en esa rama del preprocesador, y `DEAD_CODE_STRIPPING: YES` (ya confirmado en `project.yml`) debería eliminarlas del binario enlazado al no tener ningún referenciador vivo. Aun así, para que quede blindado por el propio compilador y no dependa de que el linker las stripee correctamente, sugiero a Woz envolver las dos funciones (no solo la llamada) en `#if DEBUG ... #endif` — higiene de código, no una vulnerabilidad activa hoy.
+
+**Veredicto `BackupService`: Pass.**
+
+### Modo `.revolving` de préstamos — Pass
+
+- `Loan.modeRaw: String` (default `LoanMode.fixedTerm.rawValue`) y `Loan.expectedPayment: Decimal?` (default `nil`) — ambos campos nuevos con default, sin ningún `Double` (`Core/Models/Loan.swift:27,30`). `LoanEngine.revolvingSchedule` opera enteramente sobre `Decimal` (`Core/Engine/LoanEngine.swift:192-261`, confirmado por lectura — `principal`, `expectedPayment`, intereses, todos `Decimal`).
+- `grep -rn "print(\|os_log(\|Logger("` sobre `LoanEngine.swift` y `Features/Loans/*.swift` → 0 matches — sin logging de montos/APR/`expectedPayment`.
+- **Migración "ligera con defaults, sin pérdida de datos":** estos campos se agregaron directamente a `SchemaV2` (no una `SchemaV3` nueva), documentado explícitamente en `AppMigrationPlan.swift` con una justificación que revisé y encuentro razonable: el proyecto sigue sin ningún store real de usuario en producción (`Apps/Fintrol/` sigue sin commitear, sin archive, sin TestFlight — ver Info abierto de recheck anterior), así que no hay dato de usuario real que una migración pudiera perder; el propio archivo documenta el incidente previo (`"Duplicate version checksums detected"`) que ocurrió la última vez que se editó un schema ya "enviado" bajo el mismo identificador, y por eso ahora exige explícitamente que la **próxima** vez que cambie la forma del modelo — si ya hay un store real en el campo — se cree una `SchemaV3` distinta con su propio stage de migración real, no otra edición in-place. Estoy de acuerdo con este razonamiento mientras seamos pre-release; lo marco como **nota operativa, no hallazgo**, y pido que quede como recordatorio explícito para Woz/Avie: la primera vez que exista un archive/TestFlight real con datos de un usuario, cualquier cambio de forma de modelo debe volver a Ivan antes de aplicarse igual que ahora — es exactamente el tipo de decisión que este documento existe para gatekeepear.
+
+**Veredicto `.revolving`: Pass. Nota operativa (no bloqueante) sobre el próximo cambio de schema post-release.**
+
+### Inversiones — Pass, sin superficie nueva
+
+- **No hay ningún `@Model` nuevo.** `SchemaV2.models` (`Core/Migration/SchemaV2.swift`) sigue siendo exactamente `[Period, LineItem, RecurringItem, Subscription, Loan, ExchangeRateCache]` — Inversiones (`InvestmentsView.swift:5-6`) reutiliza `RecurringItem` filtrado por `category == .investment` (un caso más de `SubscriptionCategory`, no un tipo nuevo). No hay campos `Decimal` nuevos que auditar — usa `RecurringItem.amount` (ya cubierto por C-07) y `LineItem.amount`/`.isActive` ya existentes.
+- Sin logging: `grep -rn "print(\|os_log(\|Logger("` sobre `Features/Investments/*.swift` → 0 matches.
+- Sin cambio de schema, por tanto sin pregunta de migración que resolver aquí — el punto (3) del pedido del coordinador queda satisfecho por diseño (reutilización), no por una migración nueva.
+
+**Veredicto Inversiones: Pass.**
+
+### Swipes `isActive`/`isPaid` — Pass, no abren superficie nueva
+
+- `Fintrol/UI/LineItemRow.swift` — el swipe-leading llama `onToggleActive` (togglea `line.isActive`, dispara `recomputeForward` porque afecta totales) y el swipe-trailing llama `onTogglePaid` (togglea `line.isPaid`, "purely visual flag — no recompute", según el propio comentario del archivo, línea 27). Ambos son mutaciones locales de dos `Bool` ya existentes en `LineItem` (ya cubiertos por C-07/modelo financiero) vía un `DragGesture` custom — no navegan a ninguna vista nueva, no disparan red, no tocan Keychain ni Backup. Acciones equivalentes también expuestas vía `.contextMenu` (líneas 168-169) y `accessibilityActions` (líneas 175-176) — mismo control, accesible sin el gesto. El resto de las listas (`SubscriptionsView`, `LoansView`, `InvestmentsView`, `ServicesView`, `RecurringListView`) usan `.swipeActions` nativo estándar de SwiftUI solo para Eliminar/Editar (ya cubierto por el patrón general de la app, sin superficie nueva).
+
+**Veredicto swipes: Pass, ninguna superficie nueva.**
+
+### Regresión — CERRADO
+
+`xcodebuild test -scheme Fintrol -destination 'platform=macOS'` ejecutado en esta sesión → **158 tests, 20 suites, TEST SUCCEEDED** (antes 113/13 — `BackupServiceTests`, `InvestmentsTests` y la ampliación de `LoanEngineTests` para `.revolving` aportan el resto). Sin fallos.
+
+---
+
 ## Verificación de fuentes con fecha de consulta
 
 - Apple, *App Sandbox*, *Preventing Insecure Network Connections (ATS)*, *Keychain Services* — no releídas línea por línea hoy (mismo criterio que SECURITY.md §1: no cambian sin anuncio). Comportamiento observado en build settings es consistente con lo documentado.
@@ -196,17 +238,24 @@ Releí SECURITY.md §9 ítem 8 en esta sesión: ya dice correctamente que `ENABL
 
 ---
 
-## Resumen por severidad (post-RECHECK 2, 2026-09-15)
+## Resumen por severidad (post-RECHECK 3, 2026-09-15)
 
 | Severidad | Cuenta | IDs |
 |---|---|---|
 | Critical | 0 | — |
 | High | 0 | — |
 | Medium | 1 abierto (riesgo aceptado temporal) | M-02 (Enhanced Security — mitigación identificada, pendiente de prueba) |
-| Low | 0 abiertos | L-01, L-02 cerrados |
+| Low | 1 nuevo, no bloqueante | `BackupService`: envolver `deleteStoreFiles`/`backupStoreFiles` completas en `#if DEBUG` (hoy solo la llamada lo está; funcionalmente ya no corren en Release) |
 | Info | 1 | Código sin commitear |
 
-## Estado de cada pendiente (post-RECHECK 2)
+## Estado de cada pendiente (post-RECHECK 3)
+
+| Nuevo | Estado | Owner | Fecha objetivo |
+|---|---|---|---|
+| `BackupService` (export/import completo) | **Pass** — token nunca exportado, sin copias temporales propias, import fail-closed con confirmación destructiva, backup automático DEBUG-only sin logs sensibles | Woz | Verificado 2026-09-15 |
+| `.revolving` (préstamos) | **Pass** — `Decimal` de extremo a extremo, sin logs, migración in-place justificada mientras el proyecto siga pre-release (nota operativa para el próximo cambio de schema, no hallazgo) | Woz | Verificado 2026-09-15 |
+| Inversiones | **Pass** — reutiliza `RecurringItem`, sin `@Model` nuevo, sin campos nuevos, sin logs | Woz | Verificado 2026-09-15 |
+| Swipes `isActive`/`isPaid` | **Pass** — mutan booleanos ya existentes, sin superficie nueva, acciones equivalentes accesibles | Woz | Verificado 2026-09-15 |
 
 | ID | Estado | Owner | Fecha objetivo |
 |---|---|---|---|
@@ -224,11 +273,11 @@ Releí SECURITY.md §9 ítem 8 en esta sesión: ya dice correctamente que `ENABL
 
 ## Gate de release
 
-**Veredicto (post-RECHECK 2, 2026-09-15): PASS WITH ACCEPTED RISK**
+**Veredicto (post-RECHECK 3, 2026-09-15): PASS WITH ACCEPTED RISK**
 
-M-01, C-12, `Loan`, L-01 y L-02 cerrados con evidencia de recheck (código leído, `grep` reproducible, entitlements comparados, build settings evaluados, `xcodebuild test` → 113 tests/13 suites verde). No quedan hallazgos Critical ni High. M-02 permanece como **riesgo aceptado temporal, no bloqueante** — sin cambios desde el recheck anterior: Woz debe probar `WorkspaceSettings.xcsettings` antes del primer archive Release. C-08 y C-09 mantienen su condición original: **Pass condicionado** a repetirse sobre el primer archive Release real (`codesign -d --entitlements :- <archive>`) — ese artefacto sigue sin existir.
+M-01, C-12, `Loan`, `BackupService`, `.revolving`, Inversiones, swipes, L-01 y L-02 cerrados/Pass con evidencia de recheck (código leído, `grep` reproducible, entitlements comparados, build settings evaluados, `xcodebuild test` → **158 tests/20 suites verde**, antes 113/13). No quedan hallazgos Critical ni High. M-02 permanece como **riesgo aceptado temporal, no bloqueante** — sin cambios desde el recheck anterior: Woz debe probar `WorkspaceSettings.xcsettings` antes del primer archive Release. Nuevo hallazgo Low no bloqueante en `BackupService` (envolver las funciones de backup automático completas en `#if DEBUG`, hoy solo la llamada lo está — higiene, no vulnerabilidad activa). C-08 y C-09 mantienen su condición original: **Pass condicionado** a repetirse sobre el primer archive Release real (`codesign -d --entitlements :- <archive>`) — ese artefacto sigue sin existir.
 
-**Pendiente, no bloqueante para Bertrand hoy:** anotar en SECURITY.md C-12 que Banxico devuelve HTTP 400 (no solo 401/403) para token inválido — ya está correctamente implementado y testeado en código, solo falta reflejarlo en el texto del control; y commitear `Apps/Fintrol/`.
+**Pendiente, no bloqueante para Bertrand hoy:** (1) anotar en SECURITY.md C-12 que Banxico devuelve HTTP 400 (no solo 401/403) para token inválido; (2) Low nuevo de `BackupService` (`#if DEBUG` completo); (3) commitear `Apps/Fintrol/` — sigue pendiente desde el primer recheck.
 
 **Qué debe hacer Woz, en orden:**
 

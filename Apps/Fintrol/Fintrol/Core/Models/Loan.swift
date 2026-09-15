@@ -21,6 +21,13 @@ public final class Loan {
     public var frequencyDay: Int?
     public var paymentOverride: Decimal?
     public var isActive: Bool = true
+    /// Added post-v1 (pre-release, `SchemaV2` in place — no migration): `.fixedTerm` keeps
+    /// `termMonths` as the source of truth exactly as before; `.revolving` ignores
+    /// `termMonths`/`paymentOverride` entirely and uses `expectedPayment` instead.
+    public var modeRaw: String = LoanMode.fixedTerm.rawValue
+    /// Only meaningful when `mode == .revolving` — the payment the user plans to make each
+    /// period until a real payment (an edited `LineItem`) overrides it for that period.
+    public var expectedPayment: Decimal?
 
     public init(
         id: UUID = UUID(),
@@ -33,7 +40,9 @@ public final class Loan {
         termMonths: Int,
         frequency: LoanFrequency,
         paymentOverride: Decimal? = nil,
-        isActive: Bool = true
+        isActive: Bool = true,
+        mode: LoanMode = .fixedTerm,
+        expectedPayment: Decimal? = nil
     ) {
         self.id = id
         self.name = name
@@ -45,7 +54,14 @@ public final class Loan {
         self.termMonths = termMonths
         self.paymentOverride = paymentOverride
         self.isActive = isActive
+        self.modeRaw = mode.rawValue
+        self.expectedPayment = expectedPayment
         self.setFrequency(frequency)
+    }
+
+    public var mode: LoanMode {
+        get { LoanMode(rawValue: modeRaw) ?? .fixedTerm }
+        set { modeRaw = newValue.rawValue }
     }
 
     public var direction: LoanDirection {

@@ -141,6 +141,126 @@ public enum LoanEngine {
         return installmentDate(index: n, startDate: startDate, frequency: frequency)
     }
 
+    // MARK: - `.revolving` ("Hasta liquidar") — credit-card-style, no fixed term
+
+    /// One period of a `.revolving` loan's projected/real schedule.
+    public struct RevolvingRow: Sendable, Hashable, Identifiable {
+        public var id: Int { index }
+        public let index: Int
+        public let date: CivilDate
+        public let payment: Decimal
+        /// Nonzero only on the first row of each civil month — interest accrues once per
+        /// month close, on the balance at the start of that month, independent of whether
+        /// this loan pays monthly or biweekly (TRD).
+        public let interest: Decimal
+        public let principal: Decimal
+        public let remainingBalance: Decimal
+        /// `false` when `actualPayments` had a real, user-entered payment for this date;
+        /// `true` when this row's `payment` is `expectedPayment` — a projection.
+        public let isProjected: Bool
+
+        public init(index: Int, date: CivilDate, payment: Decimal, interest: Decimal, principal: Decimal, remainingBalance: Decimal, isProjected: Bool) {
+            self.index = index
+            self.date = date
+            self.payment = payment
+            self.interest = interest
+            self.principal = principal
+            self.remainingBalance = remainingBalance
+            self.isProjected = isProjected
+        }
+    }
+
+    public struct RevolvingResult: Sendable {
+        public let rows: [RevolvingRow]
+        /// `true` when `expectedPayment` doesn't even cover the first month's interest on
+        /// `principal` — the balance would never go down at that rate. `rows` is still
+        /// bounded to 10 years in this case, never an infinite/unbounded projection.
+        public let neverEnds: Bool
+
+        public init(rows: [RevolvingRow], neverEnds: Bool) {
+            self.rows = rows
+            self.neverEnds = neverEnds
+        }
+    }
+
+    private static let revolvingMaxYears = 10
+
+    /// Pure, deterministic — same guarantees as `schedule`. `actualPayments` are real payments
+    /// already registered (an edited `LineItem`, keyed by that installment's `CivilDate`);
+    /// every date without one falls back to `expectedPayment`. A period straddling both real
+    /// and projected rows is the normal case, not an exception (TRD).
+    public static func revolvingSchedule(
+        principal: Decimal,
+        apr: Decimal,
+        expectedPayment: Decimal,
+        frequency: LoanFrequency,
+        start: CivilDate,
+        actualPayments: [CivilDate: Decimal]
+    ) -> RevolvingResult {
+        guard principal > 0 else { return RevolvingResult(rows: [], neverEnds: false) }
+
+        let monthlyRate = apr / 12
+        let initialMonthInterest = roundToCents(principal * monthlyRate)
+        // TRD: "expectedPayment <= el interés mensual del saldo inicial" — compared against
+        // what actually lands against the balance in a month, so for `.biweekly` (2 payments/
+        // month) this is `expectedPayment * 2`, not a single period's payment; otherwise a
+        // biweekly loan that truly does amortize (2 small payments together outpace the
+        // month's interest, even though neither alone does) would be wrongly flagged.
+        let paymentsPerMonth: Decimal
+        switch frequency {
+        case .monthly: paymentsPerMonth = 1
+        case .biweekly: paymentsPerMonth = 2
+        }
+        // TRD: computed once, against the INITIAL balance only — not re-evaluated as the
+        // balance moves, even if real payments later bring it under control.
+        let neverEndsFlag = (expectedPayment * paymentsPerMonth) <= initialMonthInterest
+
+        let periodsPerYear: Int
+        switch frequency {
+        case .monthly: periodsPerYear = 12
+        case .biweekly: periodsPerYear = 24
+        }
+        let maxPeriods = periodsPerYear * revolvingMaxYears
+
+        var rows: [RevolvingRow] = []
+        var balance = principal
+        var lastMonthYear: Int?
+        var lastMonth: Int?
+        var index = 0
+
+        while index < maxPeriods, balance > 0 {
+            index += 1
+            let date = installmentDate(index: index, startDate: start, frequency: frequency)
+
+            var interestThisRow: Decimal = 0
+            if date.year != lastMonthYear || date.month != lastMonth {
+                interestThisRow = roundToCents(balance * monthlyRate)
+                guard !interestThisRow.isNaN else { break }
+                balance += interestThisRow
+                lastMonthYear = date.year
+                lastMonth = date.month
+            }
+
+            let hasActual = actualPayments[date] != nil
+            var payment = actualPayments[date] ?? expectedPayment
+            // Liquidación anticipada (TRD): never pay more than the outstanding balance —
+            // the last payment adjusts down instead of leaving a negative balance.
+            if payment > balance { payment = balance }
+            guard payment > 0 else { break }
+
+            balance -= payment
+            balance = roundToCents(balance)
+            let principalPortion = max(0, payment - interestThisRow)
+
+            rows.append(RevolvingRow(
+                index: index, date: date, payment: payment, interest: interestThisRow,
+                principal: principalPortion, remainingBalance: balance, isProjected: !hasActual
+            ))
+        }
+
+        return RevolvingResult(rows: rows, neverEnds: neverEndsFlag)
+    }
+
     // MARK: - Private helpers
 
     /// Bertrand (crash, critical): with no explicit `NSDecimalNumberHandler`,
@@ -197,6 +317,14 @@ public enum LoanEngine {
         var input = value
         NSDecimalRound(&result, &input, 0, .up)
         return NSDecimalNumber(decimal: result).intValue
+    }
+
+    /// Public wrapper of `installmentDate` — `PeriodCoordinator` needs it to build the
+    /// installment-date calendar for a `.revolving` loan (to match real materialized
+    /// `LineItem`s back to a schedule index) without depending on `revolvingSchedule`'s
+    /// balance-dependent row count.
+    public static func revolvingInstallmentDate(index: Int, start: CivilDate, frequency: LoanFrequency) -> CivilDate {
+        installmentDate(index: index, startDate: start, frequency: frequency)
     }
 
     private static func installmentDate(index: Int, startDate: CivilDate, frequency: LoanFrequency) -> CivilDate {

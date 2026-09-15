@@ -2,11 +2,12 @@ import Testing
 import SwiftData
 @testable import Fintrol
 
-/// FIN-2026 (Avie): `SchemaV1` must never be edited in place again — its `versionIdentifier`
-/// stayed frozen at `1.0.0` through the CivilDate refactor, which is exactly the situation
-/// that breaks lightweight migration against a real on-disk store. `SchemaV2` (identical
-/// shape, new version) plus a `.lightweight` stage in `AppMigrationPlan` is the fix, and
-/// formalizes that any future shape change lands as a new `SchemaVN`, never an in-place edit.
+/// `SchemaV1`/`SchemaV2`/`AppMigrationPlan` — see `AppMigrationPlan.swift` for the full
+/// history: `SchemaV1` and `SchemaV2` reference the same live model types, so a real
+/// `.lightweight` migration stage between them crashes SwiftData ("Duplicate version
+/// checksums detected") the moment the shape actually changes (reproduced when
+/// `Subscription.isActive` was added). Pre-release, `AppMigrationPlan` carries only
+/// `SchemaV2` with no stages — the schema evolves in place until the app ships.
 @Suite("SchemaV1/V2 / AppMigrationPlan")
 struct SchemaV1Tests {
     @Test("ModelContainer opens cleanly with SchemaV1 alone (no migration plan involved)")
@@ -25,14 +26,15 @@ struct SchemaV1Tests {
         #expect(container.schema.entities.count == SchemaV2.models.count)
     }
 
-    @Test("AppMigrationPlan carries exactly the V1 -> V2 lightweight stage")
-    func migrationPlanHasV1ToV2Stage() {
-        #expect(AppMigrationPlan.schemas.count == 2)
-        #expect(AppMigrationPlan.stages.count == 1)
+    @Test("AppMigrationPlan carries only SchemaV2, no migration stages — pre-release, in-place evolution")
+    func migrationPlanHasNoStages() {
+        #expect(AppMigrationPlan.schemas.count == 1)
+        #expect(AppMigrationPlan.schemas.first is SchemaV2.Type)
+        #expect(AppMigrationPlan.stages.isEmpty)
     }
 
-    @Test("SchemaV1 and SchemaV2 declare the same model shape — V2 exists only to formalize the version bump")
-    func schemaV1AndV2HaveTheSameModelShape() {
+    @Test("SchemaV1 and SchemaV2 declare the same model types (they share live model classes, not independent shapes)")
+    func schemaV1AndV2ShareModelTypes() {
         #expect(SchemaV1.models.count == SchemaV2.models.count)
         #expect(SchemaV1.versionIdentifier != SchemaV2.versionIdentifier)
     }

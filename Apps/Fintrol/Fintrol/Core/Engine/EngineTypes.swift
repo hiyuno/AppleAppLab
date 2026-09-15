@@ -12,6 +12,9 @@ public struct RecurringItemSnapshot: Sendable, Hashable {
     public let startDate: CivilDate
     public let endDate: CivilDate?
     public let isActive: Bool
+    /// `.investment` → generated lines get `LineOrigin.investment` instead of `.recurring`
+    /// (feature #12, "Inversiones").
+    public let category: RecurringItemCategory
 
     public init(
         id: UUID,
@@ -22,7 +25,8 @@ public struct RecurringItemSnapshot: Sendable, Hashable {
         frequency: RecurringFrequency,
         startDate: CivilDate,
         endDate: CivilDate?,
-        isActive: Bool
+        isActive: Bool,
+        category: RecurringItemCategory = .general
     ) {
         self.id = id
         self.kind = kind
@@ -33,6 +37,7 @@ public struct RecurringItemSnapshot: Sendable, Hashable {
         self.startDate = startDate
         self.endDate = endDate
         self.isActive = isActive
+        self.category = category
     }
 }
 
@@ -47,8 +52,9 @@ public struct SubscriptionSnapshot: Sendable, Hashable {
     public let startDate: CivilDate
     public let endDate: CivilDate?
     public let kind: SubscriptionKind
+    public let isActive: Bool
 
-    public init(id: UUID, name: String, price: Decimal, currency: Currency, paymentDay: Int, startDate: CivilDate, endDate: CivilDate?, kind: SubscriptionKind = .subscription) {
+    public init(id: UUID, name: String, price: Decimal, currency: Currency, paymentDay: Int, startDate: CivilDate, endDate: CivilDate?, kind: SubscriptionKind = .subscription, isActive: Bool = true) {
         self.id = id
         self.name = name
         self.price = price
@@ -57,6 +63,7 @@ public struct SubscriptionSnapshot: Sendable, Hashable {
         self.startDate = startDate
         self.endDate = endDate
         self.kind = kind
+        self.isActive = isActive
     }
 }
 
@@ -74,8 +81,10 @@ public struct LoanSnapshot: Sendable, Hashable {
     public let frequency: LoanFrequency
     public let paymentOverride: Decimal?
     public let isActive: Bool
+    public let mode: LoanMode
+    public let expectedPayment: Decimal?
 
-    public init(id: UUID, name: String, direction: LoanDirection, principal: Decimal, currency: Currency, apr: Decimal, startDate: CivilDate, termMonths: Int, frequency: LoanFrequency, paymentOverride: Decimal?, isActive: Bool) {
+    public init(id: UUID, name: String, direction: LoanDirection, principal: Decimal, currency: Currency, apr: Decimal, startDate: CivilDate, termMonths: Int, frequency: LoanFrequency, paymentOverride: Decimal?, isActive: Bool, mode: LoanMode = .fixedTerm, expectedPayment: Decimal? = nil) {
         self.id = id
         self.name = name
         self.direction = direction
@@ -87,6 +96,8 @@ public struct LoanSnapshot: Sendable, Hashable {
         self.frequency = frequency
         self.paymentOverride = paymentOverride
         self.isActive = isActive
+        self.mode = mode
+        self.expectedPayment = expectedPayment
     }
 
     public var kind: LineKind { direction == .borrowed ? .expense : .income }
@@ -145,11 +156,15 @@ public struct LineSnapshot: Sendable, Hashable {
     public let amount: Decimal
     public let currency: Currency
     public let origin: LineOrigin
+    /// Swipe-leading on `LineItemRow` toggles this; `CarryOverEngine` excludes an inactive
+    /// line from every total, sobrante, "Mandar" and the carry-over chain.
+    public let isActive: Bool
 
-    public init(kind: LineKind, amount: Decimal, currency: Currency, origin: LineOrigin) {
+    public init(kind: LineKind, amount: Decimal, currency: Currency, origin: LineOrigin, isActive: Bool = true) {
         self.kind = kind
         self.amount = amount
         self.currency = currency
         self.origin = origin
+        self.isActive = isActive
     }
 }

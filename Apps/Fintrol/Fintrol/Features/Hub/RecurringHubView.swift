@@ -10,11 +10,12 @@ struct RecurringHubView: View {
     @Query private var subscriptions: [Subscription]
     @Query private var loans: [Loan]
 
-    private var incomeCount: Int { recurringItems.filter { $0.kind == .income }.count }
-    private var expenseCount: Int { recurringItems.filter { $0.kind == .expense }.count }
+    private var incomeCount: Int { recurringItems.filter { $0.kind == .income && $0.category != .investment }.count }
+    private var expenseCount: Int { recurringItems.filter { $0.kind == .expense && $0.category != .investment }.count }
     private var serviceCount: Int { subscriptions.filter { $0.kind == .service }.count }
     private var subscriptionCount: Int { subscriptions.filter { $0.kind == .subscription }.count }
     private var loanCount: Int { loans.count }
+    private var investmentCount: Int { recurringItems.filter { $0.category == .investment }.count }
 
     var body: some View {
         List {
@@ -42,6 +43,11 @@ struct RecurringHubView: View {
                 LoansView()
             } label: {
                 row(title: "Préstamos", systemImage: "banknote", count: loanCount)
+            }
+            NavigationLink {
+                InvestmentsView()
+            } label: {
+                row(title: "Inversiones", systemImage: "chart.line.uptrend.xyaxis", count: investmentCount)
             }
         }
         .navigationTitle("Recurrentes y pagos")

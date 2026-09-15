@@ -48,18 +48,19 @@ Esta sección traduce el comportamiento de la hoja de cálculo actual a reglas e
 ### Líneas de INCOME y EXPENSES
 
 - Cada quincena tiene dos listas independientes: **INCOME** (ingresos) y **EXPENSES** (egresos).
-- Cada línea tiene: descripción (texto libre), monto, moneda (USD por defecto, MXN opcional) y switch **"pagado/recibido"**.
-- **Switch "pagado/recibido" (DONE):** marca visual de que el ingreso ya se recibió o el gasto ya se pagó. Es puramente visual y **no afecta ningún cálculo** — todas las líneas cuentan siempre en los totales y el sobrante, sin importar este switch.
-- El switch "cuenta / no cuenta" (equivalente al IF de la hoja, que permitía excluir una línea del cálculo sin borrarla) **no entra en v1** — ver "Features — Fuera del MVP".
+- Cada línea tiene: descripción (texto libre), monto, moneda (USD por defecto, MXN opcional) y dos estados que se controlan con un **swipe** (no switches separados), persistidos por línea y sincronizados por iCloud:
+  - **Swipe izquierda→derecha — "cuenta / no cuenta"** (equivalente al IF de la hoja): alterna entre activa e inactiva. Inactiva se muestra semitransparente y **no** suma en TOTAL INCOME/EXPENSES, sobrante ni en el encadenado a la siguiente quincena. La línea no se borra — sigue visible y se puede reactivar en cualquier momento.
+  - **Swipe derecha→izquierda — "pagado/recibido"**: marca/desmarca una palomita discreta. Es puramente visual y **no afecta ningún cálculo** — cuenta siempre en los totales igual, esté marcada o no.
 
 ### Totales y sobrante
 
-- **TOTAL INCOME** = suma de montos (convertidos a USD) de todas las líneas de INCOME.
-- **TOTAL EXPENSES** = suma de montos (convertidos a USD) de todas las líneas de EXPENSES.
+- **TOTAL INCOME** = suma de montos (convertidos a USD) de todas las líneas de INCOME con estado "cuenta" activo.
+- **TOTAL EXPENSES** = suma de montos (convertidos a USD) de todas las líneas de EXPENSES con estado "cuenta" activo.
 - **Sobrante** = TOTAL INCOME − TOTAL EXPENSES. Se muestra en tamaño grande con código de color, umbral fijo en v1:
   - Verde: sobrante ≥ $100.
   - Amarillo: sobrante entre $0 y $99.99.
   - Rojo: sobrante < $0.
+- *Criterios de aceptación:* desactivar (swipe) la línea WALO en la quincena del 1–15 de septiembre reduce TOTAL INCOME de esa quincena y reduce el "Latest Month" encadenado en la quincena del 16–30 en el mismo monto; reactivarla restaura ambos valores exactamente. Marcar/desmarcar "pagado" en cualquier línea no cambia TOTAL INCOME, TOTAL EXPENSES, sobrante ni ningún encadenado.
 
 ### Encadenado quincena a quincena
 
@@ -87,7 +88,7 @@ Esta sección traduce el comportamiento de la hoja de cálculo actual a reglas e
   - Fecha de inicio
   - Fecha de fin (opcional — si no se define, se proyecta indefinidamente)
 - La app **genera automáticamente** la línea correspondiente en cada quincena futura mientras el ítem recurrente esté vigente (fecha de inicio ≤ quincena ≤ fecha de fin). El usuario edita lo variable o agrega líneas puntuales encima de lo generado.
-- Ejemplos de recurrentes con fecha de fin: "Ada" (ingreso — dinero que la hermana del usuario le devuelve, con fecha de fin conocida). Nota: los préstamos (antes Upstart #1 y #2) **ya no se modelan como recurrentes genéricos** — ver "Préstamos (Loans)" abajo; "Ada" tampoco se modela como préstamo porque no tiene APR ni amortización, sigue siendo un recurrente simple.
+- Nota: los préstamos (Upstart #1 y #2, modo estándar; "Ada", modo "Hasta liquidar") **ya no se modelan como recurrentes genéricos** — ver "Préstamos (Loans)" abajo.
 - Ejemplos de recurrentes sin fecha de fin: sueldo fijo WALO ($2,750/quincena), Rent ($1,900, quincena de fin de mes), T-Mobile, GYM, Abuelos ($2,750 MXN), Mustang Insurance, Novotech (MXN).
 - **La edición manual gana:** editar un ítem recurrente (monto, frecuencia, fecha fin) regenera/actualiza la línea correspondiente solo en las quincenas futuras cuya línea generada por ese recurrente **no** haya sido editada manualmente por el usuario. Las quincenas donde el usuario ya editó esa línea a mano quedan intactas — el cambio del recurrente no las sobrescribe.
   - *Criterio de aceptación:* si el usuario cambia el monto de un recurrente, todas las quincenas futuras sin edición manual en esa línea reflejan el nuevo monto; una quincena donde el usuario ya había modificado esa línea a mano conserva su valor editado sin cambios.
@@ -100,7 +101,26 @@ Esta sección traduce el comportamiento de la hoja de cálculo actual a reglas e
 - **Sobrescritura del pago:** si el usuario cambia manualmente el monto de un pago, la app recalcula el plazo restante y el saldo con ese nuevo monto hacia adelante (no solo esa línea aislada).
 - Cada pago programado cae en la quincena que le corresponde según su día (1–15 / 16–fin de mes) como línea generada con origen `"préstamo"`, sujeta a la misma regla "edición manual gana" y al mismo encadenado de sobrante que cualquier otra línea.
 - Ejemplos reales: Upstart 1 (día 20, pago ~$629, egreso), Upstart 2 (día 4, pago ~$534, egreso). Estas líneas dejan de capturarse como recurrentes sueltos y pasan a ser préstamos con amortización.
-- *Criterio de aceptación (ejemplo verificable):* préstamo de $10,000 USD, APR 12%, mensual, 24 meses → `r = 0.01`, `n = 24` → pago mensual = `10000 · 0.01 / (1 − 1.01^−24) ≈ $470.73/mes`. Primer pago: interés = `10000 × 0.01 = $100.00`, capital = `470.73 − 100.00 = $370.73`, saldo tras el pago = `10000 − 370.73 = $9,629.27`. La app debe reproducir estos tres valores exactos (±$0.01) para el primer período, y el saldo debe llegar a $0.00 (±$0.01) en el pago #24.
+- *Criterio de aceptación (ejemplo verificable, modo estándar):* préstamo de $10,000 USD, APR 12%, mensual, 24 meses → `r = 0.01`, `n = 24` → pago mensual = `10000 · 0.01 / (1 − 1.01^−24) ≈ $470.73/mes`. Primer pago: interés = `10000 × 0.01 = $100.00`, capital = `470.73 − 100.00 = $370.73`, saldo tras el pago = `10000 − 370.73 = $9,629.27`. La app debe reproducir estos tres valores exactos (±$0.01) para el primer período, y el saldo debe llegar a $0.00 (±$0.01) en el pago #24.
+
+**Modo "Hasta liquidar" (revolving):**
+
+- Switch "Hasta liquidar" en el formulario del préstamo: al activarlo, oculta plazo/fecha fin y en su lugar pide **"Pago esperado"** por período. Aplica a ambas direcciones (me lo prestaron / yo lo presté).
+- **Interés mensual** (como tarjeta de crédito) = saldo × APR/12, calculado al cierre de cada mes sobre el saldo vigente en ese momento.
+- Cada período genera una línea con el pago esperado, que el usuario edita libremente con el pago real recibido/hecho; **la edición manual gana** — el pago real sobrescribe el esperado para ese período.
+- **Saldo** = principal + intereses acumulados − suma de pagos reales de las líneas activas (con estado "cuenta" activo).
+- El préstamo **termina** en el primer período en que el saldo llega a ≤ 0; el último pago se ajusta automáticamente al saldo restante exacto (no se sobrepaga).
+- Si el pago esperado configurado es ≤ el interés mensual, la app **avisa que el préstamo nunca se liquida** con ese pago y proyecta un máximo de 10 años como techo de la tabla de amortización.
+- Ejemplo real: "Ada" — $824 prestados a su hermana, APR 26.2%, pago esperado $200 por quincena (ingreso).
+- *Criterio de aceptación (ejemplo verificable, modo revolving):* préstamo de $824, APR 26.2%, pago esperado $200/quincena → interés del primer mes = `824 × (0.262/12) ≈ $17.99`. La app debe calcular este valor (±$0.01), mostrar una fecha estimada de fin y la tabla proyectada período a período; si el usuario edita un pago real a $150 en vez de $200, el saldo y la fecha estimada de fin se recalculan hacia adelante a partir de ese período.
+
+### Inversiones (aportaciones recurrentes)
+
+- Una inversión tiene: cuenta destino (ej. GBM, Webull, crypto…), monto de aportación, moneda, frecuencia (cada quincena / mensual en día X), fecha de inicio, fecha de fin opcional, estado activo.
+- Cada aportación se proyecta como **EGRESO** en la quincena correspondiente, como línea generada con origen `"inversión"`, sujeta a la misma regla "edición manual gana" y al mismo encadenado de sobrante que cualquier otra línea.
+- La pantalla lista las cuentas con **"aportado a la fecha"** = suma de las líneas activas ya materializadas (quincenas que ya ocurrieron o fueron generadas), y un **total general** sumando todas las cuentas activas.
+- **Fuera de v1 explícitamente:** rendimientos, precios de mercado o valor actual de la inversión — v1 solo registra cuánto se ha aportado, no cuánto vale hoy. Etapa 2 añade "valor actual manual" (captura a mano) y más adelante control completo (precios, rendimiento).
+- *Criterio de aceptación:* inversión GBM de $300 cada quincena desde el 1 de septiembre genera una línea de $300 en la quincena 1–15 de septiembre y otra de $300 en la quincena 16–30; tras materializarse la primera quincena, "aportado a la fecha" para GBM muestra $300.
 
 ### Suscripciones (Services List)
 
@@ -124,7 +144,7 @@ En orden de prioridad. Todas para 1.0 — review (no hay features que requieran 
 
 | # | Feature | Por qué en MVP | Criterio de aceptación |
 |---|---------|---------------|----------------------|
-| 1 | Pantalla Quincena (INCOME + EXPENSES + totales + sobrante) | Es el core loop completo de la app — sin esto no hay producto | El usuario abre una quincena, ve sus líneas de ingreso y gasto, el switch "pagado" funciona como marca visual sin afectar el cálculo, el sobrante se calcula (todas las líneas cuentan siempre) y colorea correctamente (verde ≥ $100, amarillo $0–$99.99, rojo < $0) en tiempo real al editar |
+| 1 | Pantalla Quincena (INCOME + EXPENSES + totales + sobrante) | Es el core loop completo de la app — sin esto no hay producto | El usuario abre una quincena, ve sus líneas de ingreso y gasto; swipe izq→der alterna "cuenta/no cuenta" (inactiva = semitransparente, excluida de totales/sobrante/encadenado); swipe der→izq marca/desmarca "pagado" (puramente visual, sin efecto en cálculos); desactivar WALO en la quincena 1–15 de septiembre baja TOTAL INCOME y el "Latest Month" de la quincena 16–30, reactivarla lo restaura; el sobrante colorea correctamente (verde ≥ $100, amarillo $0–$99.99, rojo < $0) en tiempo real |
 | 2 | Conversión MXN → USD con tipo de cambio automático + override manual | Gasto real del usuario está en dos monedas; sin esto los totales están mal | Una línea en MXN se refleja convertida en el total USD; el tipo de cambio se obtiene de la API al abrir la app; el usuario puede editarlo y el cambio persiste para esa quincena |
 | 3 | "Mandar" (monto a enviar a México) | Es una decisión operativa que el usuario toma cada quincena | La cifra "Mandar: $X USD" es igual a la suma de líneas EXPENSES en MXN dividida entre el tipo de cambio vigente |
 | 4 | Encadenado de sobrante entre quincenas | Es el mecanismo central de la proyección — sin esto cada quincena vive aislada | El sobrante de la quincena N aparece automáticamente como primera línea de INCOME ("Latest Month") en la quincena N+1; editar una línea pasada recalcula el encadenado hacia adelante |
@@ -134,7 +154,8 @@ En orden de prioridad. Todas para 1.0 — review (no hay features que requieran 
 | 8 | Sync iCloud privado | Requisito de continuidad entre iPhone y Mac del mismo usuario | Un cambio hecho en iOS aparece en macOS (y viceversa) sin acción manual del usuario, sin login ni cuentas |
 | 9 | Ajustes (tipo de cambio manual, moneda por defecto, gestión de recurrentes/suscripciones) | Punto único para administrar lo que no vive en una quincena específica | El usuario puede crear/editar/eliminar recurrentes y suscripciones, y fijar el tipo de cambio manual desde un solo lugar |
 | 10 | Bloqueo biométrico opcional (Face ID / Touch ID) | Datos financieros personales — el usuario quiere poder proteger el acceso sin que sea obligatorio | Switch "Bloquear con Face ID / Touch ID" en Ajustes, apagado por defecto. Al activarlo, la app pide autenticación local (Face ID / Touch ID / contraseña del dispositivo) al abrir y al volver de background tras N segundos de inactividad (N sugerido: 60 s, valor final a decisión de Jonny/Woz). Con el switch activo, la app no muestra montos hasta autenticar exitosamente; si la autenticación falla, se muestra una pantalla de bloqueo con botón "Reintentar" |
-| 11 | Préstamos (Loans) con amortización estándar | Reemplaza el cálculo manual de Upstart 1/2 en la hoja y da visibilidad real de saldo/interés restante | Un préstamo de $10,000 USD, APR 12%, mensual, 24 meses calcula pago mensual ≈ $470.73, primer pago con interés $100.00 / capital $370.73 / saldo $9,629.27 (±$0.01), y saldo $0.00 en el pago #24; cada pago genera su línea en la quincena correcta según día de pago, respeta "edición manual gana", y el detalle muestra saldo restante, pagado a la fecha, interés total, fecha de fin y próximo pago |
+| 11 | Préstamos (Loans): amortización estándar + modo "Hasta liquidar" (revolving) | Reemplaza el cálculo manual de Upstart 1/2 (estándar) y de "Ada" (revolving) en la hoja, y da visibilidad real de saldo/interés restante | Estándar: préstamo de $10,000 USD, APR 12%, mensual, 24 meses calcula pago mensual ≈ $470.73, primer pago con interés $100.00 / capital $370.73 / saldo $9,629.27 (±$0.01), saldo $0.00 en el pago #24. Revolving: préstamo de $824, APR 26.2%, pago esperado $200/quincena calcula interés del primer mes ≈ $17.99 (±$0.01), termina en el primer período con saldo ≤ 0 (último pago ajustado), avisa si el pago esperado ≤ interés mensual y proyecta máx. 10 años. Ambos modos: cada pago genera su línea en la quincena correcta según día de pago, respeta "edición manual gana", y el detalle muestra saldo restante, pagado a la fecha, interés total, fecha de fin y próximo pago |
+| 12 | Inversiones (aportaciones recurrentes) | Reemplaza el cálculo manual de aportaciones a GBM/Webull/crypto en la hoja; solo aportaciones, sin rendimientos ni valor de mercado en v1 | Aportación GBM de $300 cada quincena desde el 1 de sep. genera una línea de EGRESO de $300 (origen `"inversión"`) en la quincena 1–15 y otra en 16–30, respetando "edición manual gana" y el encadenado; la pantalla muestra "aportado a la fecha" = $300 tras materializarse la primera quincena, y el total general sumando todas las cuentas activas |
 
 ---
 
@@ -144,11 +165,10 @@ Explícitamente descartadas para V1 (etapa 2, roadmap futuro — no se diseñan 
 
 - **Tarjetas de crédito** (saldos, APR, intereses, cálculo de Deuda Total) — espera a etapa 2; añade complejidad de cálculo de intereses compuestos que no es necesaria para el core loop quincenal.
 - **Goals / presupuesto por categoría** — espera a que el core de quincenas + recurrentes esté validado en uso real antes de añadir una capa de metas.
-- **Control de inversiones** — dominio distinto (rendimientos, portafolios), fuera del alcance de un presupuesto quincenal.
+- **Control de inversiones completo** (rendimientos, precios de mercado, portafolios) — v1 solo registra aportaciones recurrentes (feature #12); "valor actual manual" llega en etapa 2, control completo más adelante.
 - **Importación del histórico 2022–2025 desde la hoja de cálculo** — el usuario decidió arrancar desde cero en 2026; importar el histórico es trabajo adicional de parsing/mapeo que no bloquea el valor core.
 - **Multiusuario / compartir presupuesto** — la app es de un solo usuario por diseño; no hay modelo de cuentas ni permisos.
 - **Monetización (IAP, suscripción de la app)** — no aplica, uso personal.
-- **Switch "cuenta / no cuenta" por línea** — el usuario lo quería para simular "cuánto tendría si no pago esto"; regresa en etapa 2 como simulación.
 
 ---
 
@@ -156,7 +176,7 @@ Explícitamente descartadas para V1 (etapa 2, roadmap futuro — no se diseñan 
 
 - **Quincena** — pantalla principal, una por corte (15 / fin de mes). Lista INCOME, lista EXPENSES, totales, sobrante grande con color, "Mandar", navegación a quincena anterior/siguiente (incluye quincenas futuras generadas por recurrencia, hacia años adelante).
 - **Suscripciones (Services List)** — lista de servicios con precio, día de pago, categoría, tarjeta, vigencia. Alta/edición/baja.
-- **Recurrentes y pagos** (hub) — dos secciones: **Recurrentes** (ingresos/egresos simples, incluye "Ada", con monto/frecuencia/fecha inicio-fin, alta/edición/baja) y **Préstamos** (lista de préstamos activos; detalle por préstamo con resumen — saldo restante, pagado a la fecha, interés total, fecha de fin, próximo pago — y tabla de amortización período a período; los pagos marcados "pagado" en su quincena se reflejan en el avance del préstamo).
+- **Recurrentes y pagos** (hub) — tres secciones: **Recurrentes** (ingresos/egresos simples, con monto/frecuencia/fecha inicio-fin, alta/edición/baja), **Préstamos** (lista de préstamos activos, incluye Upstart 1/2 en modo estándar y "Ada" en modo "Hasta liquidar"; detalle por préstamo con resumen — saldo restante, pagado a la fecha, interés total, fecha de fin, próximo pago — y tabla de amortización período a período; los pagos marcados "pagado" en su quincena se reflejan en el avance del préstamo), e **Inversiones** (lista de cuentas con aportación recurrente — GBM, Webull, crypto…; muestra "aportado a la fecha" por cuenta y total general, sin rendimientos ni valor actual en v1).
 - **Overview** — resumen mensual (dos quincenas) y anual, solo lectura.
 - **Ajustes** — tipo de cambio (automático + override manual), moneda por defecto, switch de bloqueo biométrico (Face ID / Touch ID), y accesos a Recurrentes/Suscripciones si no viven como tabs independientes.
 
@@ -168,7 +188,7 @@ La navegación entre estas pantallas (tabs vs. sidebar, iOS vs. macOS) es decisi
 
 **Fase 1 — MVP**
 - Meta: reproducir completo el modelo mental de la hoja de cálculo actual en una app nativa con Liquid Glass, con proyección automática.
-- Entregables: features 1–11 de la tabla MVP.
+- Entregables: features 1–12 de la tabla MVP.
 - Estado final: el usuario puede abandonar la hoja de cálculo por completo — captura su quincena, ve su sobrante encadenado, administra suscripciones y recurrentes, y consulta el overview, todo sincronizado entre iPhone y Mac.
 
 **Fase 2 — Experiencia completa**
@@ -202,7 +222,7 @@ La navegación entre estas pantallas (tabs vs. sidebar, iOS vs. macOS) es decisi
 | 2026-09-15 | Tipo de cambio automático vía API con override manual editable | Decisión explícita del usuario |
 | 2026-09-15 | Préstamos (Upstart) e "Ada" se modelan como ingresos/egresos recurrentes genéricos con fecha de fin, no como entidades especiales | Decisión explícita del usuario — simplifica el modelo de datos |
 | 2026-09-15 | Sobrante se encadena automáticamente quincena a quincena, hacia adelante en toda la proyección | Decisión explícita del usuario, es el corazón del modelo mental de la hoja actual |
-| 2026-09-15 | Switch "cuenta/no cuenta" se elimina de v1 y pasa a etapa 2 como simulación; solo queda el switch "pagado", puramente visual, sin efecto en cálculos | Decisión explícita del usuario |
+| 2026-09-15 | Vuelve a v1 el estado "cuenta/no cuenta" — ya no como switches separados sino como dos gestos de swipe por línea: izq→der alterna "cuenta/no cuenta" (excluye de totales/sobrante/encadenado), der→izq marca "pagado" (puramente visual). Ambos persisten por línea y sincronizan por iCloud | Decisión explícita del usuario |
 | 2026-09-15 | "Mandar" se mantiene como cálculo visible por quincena | Decisión explícita del usuario |
 | 2026-09-15 | Solo Overview entra en v1; Goals se pospone | Decisión explícita del usuario |
 | 2026-09-15 | Un solo usuario, sync solo vía iCloud privado, sin cuentas ni compartir | Decisión explícita del usuario |
@@ -211,7 +231,9 @@ La navegación entre estas pantallas (tabs vs. sidebar, iOS vs. macOS) es decisi
 | 2026-09-15 | Color del sobrante con umbral fijo: verde ≥ $100, amarillo $0–$99.99, rojo < $0 | Decisión explícita del usuario |
 | 2026-09-15 | En conflicto entre recurrente y edición manual, gana la edición manual de esa quincena específica | Decisión explícita del usuario |
 | 2026-09-15 | Bloqueo biométrico opcional (Face ID / Touch ID) entra en v1, apagado por defecto, en Ajustes | Decisión explícita del usuario — protección de datos financieros personales sin fricción obligatoria |
-| 2026-09-15 | "Préstamos" es feature propia con amortización estándar (no recurrentes genéricos); Upstart 1 y 2 pasan a modelarse como préstamos, "Ada" sigue siendo recurrente simple | Decisión explícita del usuario |
+| 2026-09-15 | "Préstamos" es feature propia con amortización estándar (no recurrentes genéricos); Upstart 1 y 2 pasan a modelarse como préstamos | Decisión explícita del usuario |
+| 2026-09-15 | Préstamos añade modo "Hasta liquidar" (revolving, interés mensual sobre saldo tipo tarjeta de crédito, sin plazo fijo); "Ada" pasa de recurrente simple a préstamo revolving ($824, APR 26.2%, pago esperado $200/quincena) | Decisión explícita del usuario |
+| 2026-09-15 | "Inversiones" (aportaciones recurrentes) entra en v1 como sexta sección del hub "Recurrentes y pagos"; solo registra aportaciones (egresos), sin rendimientos ni valor actual — eso queda para etapa 2 | Decisión explícita del usuario |
 | 2026-09-15 | "Servicios del hogar" se implementa como `kind` (.subscription / .service) del mismo modelo que Suscripciones — misma mecánica de día de pago, pantalla, icono `house.fill` y categorías propias; dos listas para el usuario, sin diferencia de reglas de producto | Autorizado por Steve — decisión de implementación, no contradicción |
 
 ---

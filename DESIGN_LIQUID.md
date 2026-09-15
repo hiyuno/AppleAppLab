@@ -104,6 +104,7 @@ Estos tres son colores de sistema, no derivan del accent — el naranja de marca
 | `.subscription` — Suscripciones | `.secondary`, icono `repeat` | Distinto del anterior a propósito — Suscripciones y Recurrentes son fuentes de datos distintas para el usuario, aunque ambas auto-generan la línea |
 | `.subscription` — Servicios (renta, luz, internet, agua, gas, seguro) | `.secondary`, icono `house.fill` | Un tercer icono para un tercer origen visual — el usuario distingue "esto es un servicio del hogar" de "esto es Netflix" sin abrir la línea. Modelo de datos: mismo mecanismo que Suscripciones (día de pago 1–31, ver TRD `Subscription`); es decisión de Avie si vive como el mismo `@Model` con categorías de hogar o una entidad hermana — el diseño solo exige que la línea resultante sea identificable como `origin == .subscription` con esta variante de icono |
 | `.loan` — Préstamos (pago periódico generado por un `Loan`) | `.secondary`, icono `banknote` | Mismo símbolo que la fila del hub, por consistencia — un cuarto origen visual, distinto de recurrente/suscripción/servicio; ver "Préstamos (Loans)" |
+| `.investment` — Inversiones (aportación periódica generada por una cuenta de inversión) | `.secondary`, icono `chart.line.uptrend.xyaxis` | Mismo símbolo que la fila del hub, por consistencia — quinto origen visual, distinto de los otros cuatro; ver "Inversiones (Investments)" |
 | `.carryOver` | `.secondary`, icono `arrow.turn.down.right` | Igual — es texto de sistema, no accent |
 | Cualquier línea generada (`.recurring`/`.subscription`/`.loan`) con `isManuallyEdited == true` | `.secondary` con icono `pencil` en vez del icono base de su origen | Señala override, sigue siendo neutro — regla única para las tres, no solo para recurrentes |
 
@@ -253,26 +254,27 @@ Cada tab envuelve un `NavigationStack` propio. Push para detalle de línea recur
 
 ### Recurrentes y pagos — hub de cuatro entradas (iPhone) / ítems directos en sidebar (Mac)
 
-Decisión del usuario, en tres pasos: primero "Recurrentes" se dividió en **"Ingresos recurrentes"** y **"Gastos recurrentes"** (cada una lista solo su tipo, botón "+" crea ese tipo directo, sin picker de ingreso/egreso). Después se agregó **"Servicios"** — pagos del hogar (renta, luz, internet, agua, gas, seguro), mismo mecanismo automático por día de pago que Suscripciones (TRD, `Subscription`) pero con su propia pantalla, icono y categorías de hogar, distinta de Suscripciones (Netflix, Claude, Spotify…). Con tres listas ya viviendo fuera de un tab propio, mover también **Suscripciones** al mismo hub fue lo coherente: las cuatro son "cosas que la app genera solas en cada quincena sin captura manual". Ahora se agrega **"Préstamos"** (feature v1 nueva, ver "Préstamos (Loans)" más abajo) como quinta fila — un préstamo (Upstart, "Ada") también genera su línea sola en cada quincena, así que pertenece al mismo hub por la misma razón que las otras cuatro; no se le da tab propio porque la app ya está en el límite razonable de navegación de nivel top.
+Decisión del usuario, en cuatro pasos: primero "Recurrentes" se dividió en **"Ingresos recurrentes"** y **"Gastos recurrentes"** (cada una lista solo su tipo, botón "+" crea ese tipo directo, sin picker de ingreso/egreso). Después se agregó **"Servicios"** — pagos del hogar (renta, luz, internet, agua, gas, seguro), mismo mecanismo automático por día de pago que Suscripciones (TRD, `Subscription`) pero con su propia pantalla, icono y categorías de hogar, distinta de Suscripciones (Netflix, Claude, Spotify…). Con tres listas ya viviendo fuera de un tab propio, mover también **Suscripciones** al mismo hub fue lo coherente: las cuatro son "cosas que la app genera solas en cada quincena sin captura manual". Luego se agregó **"Préstamos"** (ver "Préstamos (Loans)" más abajo) como quinta fila. Ahora se agrega **"Inversiones"** (feature v1 nueva, ver "Inversiones (Investments)" más abajo) como sexta fila — aportaciones recurrentes a cuentas de inversión (GBM, Webull, crypto…) que también generan su línea sola en cada quincena, misma razón que las otras cinco. **Nota de alcance:** esto es distinto de "Control de inversiones" que el PRD marca fuera de v1 (Fase 3) — esa exclusión es sobre rendimientos/valor de portafolio; "Inversiones" aquí es solo el registro de la aportación periódica, tan simple como un recurrente con cuenta destino. El hueco de rendimientos/valor actual queda anotado en "Sin definir aún" para etapa 2, no se diseña ahora.
 
 Esto también informa el patrón de acceso rápido que ya existía en `SettingsView` (`Apps/Fintrol/Fintrol/Features/Settings/SettingsView.swift:92`, fila `NavigationLink("Recurrentes")`) — esa fila queda obsoleta como camino alterno mixto: Ajustes no debe ofrecer una segunda entrada a estas listas por fuera del hub; si Woz quiere mantener acceso rápido desde Ajustes, debe ser un solo `NavigationLink("Recurrentes y pagos")` que abre el mismo hub, no filas sueltas por tipo.
 
-- **iPhone:** la tab "Recurrentes y pagos" (icono `arrow.triangle.2.circlepath`) abre un hub — `List` de 5 filas `LabListRow` con chevron, en este orden (ingresos y gastos primero por ser el corazón de la proyección multi-año del PRD; servicios y suscripciones después por ser más operativos; préstamos al final por ser el caso de uso menos frecuente de tocar, solo consulta ocasional del saldo):
+- **iPhone:** la tab "Recurrentes y pagos" (icono `arrow.triangle.2.circlepath`) abre un hub — `List` de 6 filas `LabListRow` con chevron, en este orden (ingresos y gastos primero por ser el corazón de la proyección multi-año del PRD; servicios y suscripciones después por ser más operativos; préstamos e inversiones al final por ser los casos de uso menos frecuentes de tocar, solo consulta ocasional del saldo):
   1. "Ingresos recurrentes" — `systemImage: "arrow.down.circle"`, subtitle con conteo
   2. "Gastos recurrentes" — `systemImage: "arrow.up.circle"`, subtitle con conteo
   3. "Servicios" — `systemImage: "house.fill"`, subtitle con conteo
   4. "Suscripciones" — `systemImage: "repeat"`, subtitle con conteo
   5. "Préstamos" — `systemImage: "banknote"`, subtitle con conteo — **no** `creditcard.and.123`: el PRD excluye tarjetas de crédito de v1 explícitamente y ese símbolo visualmente lee como estado de cuenta de tarjeta; `banknote` comunica "dinero prestado/prestado a alguien" sin esa asociación
+  6. "Inversiones" — `systemImage: "chart.line.uptrend.xyaxis"`, subtitle con conteo — se acepta la sugerencia del coordinador: es el símbolo estándar de Apple para inversión/crecimiento, distinto de los otros cinco orígenes y sin ambigüedad con "gráficas de Overview" (Overview usa `chart.bar.fill`, una barra, no una línea — no se confunden en la tab bar)
   - Tap en cada fila hace push a su lista filtrada, donde vive el botón "+" que crea ese tipo directo. El hub no tiene botón "+" propio.
-- **Mac:** el límite de tabs es exclusivo de iPhone; el sidebar no lo tiene, así que ahí las cinco son **ítems directos**, sin hub intermedio — cada uno navega directo a su lista con su propio "+" en el toolbar.
+- **Mac:** el límite de tabs es exclusivo de iPhone; el sidebar no lo tiene, así que ahí las seis son **ítems directos**, sin hub intermedio — cada uno navega directo a su lista con su propio "+" en el toolbar.
 
 ### Mac — `NavigationSplitView`, sidebar + detail (sin columna media)
 
-8 secciones en sidebar (ancho 220pt): Quincena, Ingresos recurrentes, Gastos recurrentes, Servicios, Suscripciones, Préstamos, Overview, Ajustes. El PRD tiene solo 2 niveles de profundidad reales (lista → detalle de recurrente/suscripción/servicio/préstamo), así que no se usa columna `content` intermedia — sidebar + detail directo:
+9 secciones en sidebar (ancho 220pt): Quincena, Ingresos recurrentes, Gastos recurrentes, Servicios, Suscripciones, Préstamos, Inversiones, Overview, Ajustes. El PRD tiene solo 2 niveles de profundidad reales (lista → detalle de recurrente/suscripción/servicio/préstamo/inversión), así que no se usa columna `content` intermedia — sidebar + detail directo:
 
 ```swift
 NavigationSplitView {
-    SidebarView()   // Quincena, Ingresos recurrentes, Gastos recurrentes, Servicios, Suscripciones, Préstamos, Overview, Ajustes
+    SidebarView()   // Quincena, Ingresos recurrentes, Gastos recurrentes, Servicios, Suscripciones, Préstamos, Inversiones, Overview, Ajustes
 } detail: {
     // la vista de la sección seleccionada; Quincena maneja su propia
     // navegación interna (prev/next, jump a año) dentro del detail
@@ -347,20 +349,65 @@ Documentar `LineItemRow` y el bloque contenedor en `PROJECT_LEARNINGS.md` como c
 
 ### Fila de línea (`LineItemRow`) — estados visuales
 
+**Decisión del usuario: se eliminan los toggles visibles de la fila.** Ambos estados de una línea (activa/inactiva y pagada/no pagada) se controlan por swipe, no por un control tap en la fila. Nota de producto: "activar/desactivar una línea" excluyéndola de la suma coincide en efecto con el switch "cuenta/no cuenta" que el PRD v1.1 marca explícitamente fuera de v1 ("Features — Fuera del MVP") — se implementa el diseño tal como lo pidió el usuario tras ver la app en simulador, pero queda señalado aquí para que Steve confirme si esto actualiza el PRD o si "activar/desactivar" es conceptualmente distinto de lo que el PRD excluyó.
+
 | Estado | Apariencia |
 |---|---|
-| Reposo, manual | Descripción `.leading` + toggle "pagado" pequeño a la izquierda del texto + monto `.trailing` |
+| Reposo, manual, activa | Descripción `.leading` + monto `.trailing`, sin controles visibles en la fila |
 | Reposo, origen `.recurring` (Ingresos/Gastos recurrentes), sin editar | Igual + icono `arrow.triangle.2.circlepath` tamaño 12pt `.secondary` antes de la descripción |
 | Reposo, origen `.subscription` — Suscripciones, sin editar | Igual + icono `repeat` tamaño 12pt `.secondary` — icono distinto al de Recurrentes a propósito, ver "Iconografía de origen de línea" |
 | Reposo, origen `.subscription` — Servicios, sin editar | Igual + icono `house.fill` tamaño 12pt `.secondary` — tercer icono, distingue de un vistazo un pago del hogar de una suscripción de entretenimiento |
 | Reposo, origen `.loan` — Préstamos, sin editar | Igual + icono `banknote` tamaño 12pt `.secondary` — cuarto icono, distingue el pago de un préstamo de los otros tres orígenes generados |
-| Reposo, origen recurrente pero editado manualmente (`isManuallyEdited == true`) | Icono cambia a `pencil` 12pt `.secondary` — comunica "esto vino de un recurrente pero tiene un valor propio en esta quincena" |
+| Reposo, origen `.investment` — Inversiones, sin editar | Igual + icono `chart.line.uptrend.xyaxis` tamaño 12pt `.secondary` — quinto icono, distingue una aportación de inversión del resto |
+| Reposo, origen recurrente/suscripción/servicio/préstamo pero editado manualmente (`isManuallyEdited == true`) | Icono cambia a `pencil` 12pt `.secondary` — comunica "esto vino de un origen automático pero tiene un valor propio en esta quincena" |
 | Reposo, origen carry-over ("Latest Month") | Icono `arrow.turn.down.right` `.secondary`, no editable el título (solo el monto es de solo lectura — es el resultado calculado de la quincena anterior, no se edita a mano; si el usuario necesita cambiarlo debe editar la línea origen en la quincena previa) |
+| **Pagada** | Palomita discreta (`checkmark.circle.fill`, 14pt, tinte `.blue`) a la derecha del monto (o del nombre si la fila es muy angosta en iPhone) — no afecta números, no cambia opacidad de nada más en la fila |
+| **Inactiva** (excluida de la suma) | Opacidad de toda la fila reducida a `0.4`; monto con `.strikethrough()`; el motor de totales la omite del cálculo del bloque |
+| **Inactiva y pagada** | Se combinan: fila a opacidad `0.4`, monto tachado, palomita azul presente pero a la misma opacidad reducida (no se dibuja aparte a opacidad completa) — lee como "esto pasó, pero ahora mismo no cuenta" |
 | Línea en MXN | Bajo el monto principal (que siempre se muestra en su moneda de captura), una segunda línea `.caption` `.secondary` `.monospacedDigit()`: "≈ $842.30 USD · TC 18.42" |
 | Línea en MXN con override manual del tipo de cambio para esa quincena | Igual + badge `.caption2` pill pequeño "manual" en `accentSubtle`/`accentForeground`, junto al TC — señala que ese número no vino de la API |
-| Editando (inline) | La fila entera gana fondo `AppBackground.secondary`, radio 12pt (aplica aquí el nested radius de la nota en "Forma"), campos de descripción y monto se vuelven `LabTextField` editables, toggle de moneda USD/MXN aparece a la derecha del monto |
-| Swipe (iPhone) | Swipe-left revela "Eliminar" (rojo) — solo en líneas `.manual`; en líneas de origen recurrente/suscripción/carryOver el swipe no elimina, abre directo el modo edición inline (no tiene sentido "eliminar" una línea que se regenerará la próxima vez que se visite la quincena) |
-| Long-press / botón "···" | `.contextMenu`: Editar, Cambiar a MXN/USD, Eliminar (si aplica) — accesible también por tap en "···" al final de la fila para paridad con Mac (sin long-press ahí) |
+| Editando (inline, se abre con tap en la fila) | La fila entera gana fondo `AppBackground.secondary`, radio 12pt (aplica aquí el nested radius de la nota en "Forma"), campos de descripción y monto se vuelven `LabTextField` editables, toggle de moneda USD/MXN aparece a la derecha del monto |
+
+### Swipe actions — iPhone
+
+Con los toggles fuera de la fila, tap sigue siendo "editar inline" (sin cambios). Los dos ejes de swipe reemplazan lo que antes eran controles visibles:
+
+| Dirección | Acción | Icono / tinte | Full swipe | Notas |
+|---|---|---|---|---|
+| **Leading** (izquierda→derecha) | Activar / Desactivar (según estado actual) | Inactivo→Activo: `arrow.uturn.backward.circle.fill`, tinte `.blue` · Activo→Inactivo: `minus.circle.fill`, tinte `.gray` (`systemGray`) | Sí, permitido — dispara la acción sin confirmación | Nunca verde/rojo — esos dos colores son exclusivos del semáforo del sobrante en esta app; gris y azul se usan aquí porque no son ninguno de los tres estados reservados |
+| **Trailing** (derecha→izquierda), 1ª acción | Marcar / Desmarcar pagado | `checkmark.circle.fill` (marcar) / `circle` outline (desmarcar), tinte `.blue` | Sí — full swipe marca/desmarca directo | Mismo azul que "Activar" a propósito: ambas son acciones de estado, no destructivas ni de alerta |
+| **Trailing, 2ª acción** (revelada al deslizar más) — solo líneas `.manual` | Eliminar | `trash`, `role: .destructive` (rojo de sistema) | No — requiere tap explícito en la acción, nunca full swipe | El rojo aquí es la convención universal de "eliminar" de iOS/macOS, no una señal financiera — no compite con el semáforo porque no vive en el mismo contexto visual (aparece solo al deslizar más allá de "Pagado", nunca junto al sobrante) |
+| **Trailing, 2ª acción** — líneas de origen `.recurring`/`.subscription`/`.loan`/`.carryOver` | Editar | `pencil`, tinte `.gray` (`systemGray`) | No | Reemplaza a "Eliminar" en líneas generadas — no tiene sentido borrar algo que se regenerará al volver a esa quincena; es un atajo redundante con el tap en la fila, para paridad de gesto con las líneas manuales |
+
+### Menú contextual (long-press / botón "···", iPhone y Mac)
+
+Mismas acciones que el swipe, para descubribilidad y para Mac (donde el swipe de trackpad puede no ser obvio para todos los usuarios):
+
+`.contextMenu`: "Activar"/"Desactivar", "Marcar pagado"/"Desmarcar pagado", "Cambiar a MXN/USD", "Editar", "Eliminar" (solo líneas `.manual`) — accesible también por tap en "···" al final de la fila.
+
+### macOS — swipe y contexto
+
+- El `List` nativo de SwiftUI ya traduce `.swipeActions` a gestos de trackpad en macOS (deslizar con dos dedos sobre la fila) — mismas acciones, mismos iconos y tintes que iPhone, sin cambios de spec.
+- Se añade además el menú contextual (clic derecho) descrito arriba, porque en Mac no todos los usuarios tienen trackpad (mouse) ni descubren el gesto — es la vía primaria de acceso a estas acciones para esos casos, el swipe es el acelerador.
+
+### Accesibilidad obligatoria — el gesto no es descubrible
+
+Ni el swipe leading ni el swipe trailing son detectables por VoiceOver o Switch Control solo con `.swipeActions` — es una decisión de la skill de Jonny, no opcional, exponer las mismas acciones como `accessibilityActions` explícitas en cada fila:
+
+```swift
+.accessibilityAction(named: line.isActive ? Text("Desactivar") : Text("Activar")) {
+    toggleActive(line)
+}
+.accessibilityAction(named: line.isPaid ? Text("Desmarcar pagado") : Text("Marcar pagado")) {
+    togglePaid(line)
+}
+.accessibilityAction(named: Text("Editar")) { beginInlineEdit(line) }
+// Solo líneas .manual:
+.accessibilityAction(named: Text("Eliminar")) { requestDelete(line) }
+```
+
+- `accessibilityValue` de la fila concatena los dos estados cuando aplican, siempre en el mismo orden, nunca solo por color/icono: `"inactiva"` / `"pagada"` / `"inactiva, pagada"` / nada si la línea está activa y no pagada. Ejemplo completo de `accessibilityLabel` + `accessibilityValue`: "Renta, 1,900 dólares" + "inactiva, pagada".
+- Esto aplica igual en Mac (VoiceOver de macOS) y es lo que hace que Switch Control pueda operar la fila sin depender del gesto de swipe en absoluto — el menú contextual también sirve a este propósito para usuarios de mouse, pero las `accessibilityActions` son la vía que no depende de ningún gesto ni de un dispositivo señalador funcional.
 
 ### Captura rápida de un gasto/ingreso
 
@@ -424,7 +471,8 @@ Las cuatro comparten el mismo patrón — `LabList` con `LabListRow` — pero ca
 | Entrar en modo edición inline | Fondo de fila fade-in + campos aparecen | `.snappy` | 0.2s | Igual, ya es corto | Feedback inmediato de foco |
 | Navegar entre quincenas (chevron / swipe) | Contenido sale lateral + nuevo contenido entra lateral | `.easeOut` | 0.25s | Cross-fade simple, sin movimiento lateral | Transición direccional ligera, refuerza "estoy avanzando/retrocediendo" |
 | Jump sheet abre/cierra | Sistema (`.sheet`/`.popover`) | Sistema | Sistema | Sistema ya respeta RM | No custom |
-| Símbolo de "pagado" al activar el toggle | `.symbolEffect(.bounce)` en el checkmark | — | Sistema | Símbolo cambia sin bounce (`.contentTransition(.opacity)`) | Confirmación ligera, no bloqueante |
+| Marcar/desmarcar pagado (swipe trailing) | Palomita aparece/desaparece con `.symbolEffect(.bounce)` | — | Sistema | Símbolo cambia sin bounce (`.contentTransition(.opacity)`) | Confirmación ligera, no bloqueante |
+| Activar/desactivar línea (swipe leading) | Fila cruza a `opacity 0.4` + monto gana `.strikethrough()` | `.easeInOut` | 0.2s | Igual — es un cambio de opacidad/tachado, no espacial, se conserva completo | El cambio debe ser instantáneamente legible como "esto salió de la suma", sin narrativa |
 
 No hay glows ni efectos de luz en Fintrol — el tono "serio pero con carácter" del STYLE_BRIEF se logra con el naranja puntual y el semáforo, no con efectos atmosféricos. Si en el futuro se agrega un momento de celebración (ej. terminar de pagar un préstamo), especificarlo entonces, no antes.
 
@@ -435,7 +483,8 @@ No hay glows ni efectos de luz en Fintrol — el tono "serio pero con carácter"
 | Acción | Haptic |
 |---|---|
 | Confirmar línea en captura rápida | `.sensoryFeedback(.success, trigger: didAddLine)` |
-| Toggle "pagado" | `.sensoryFeedback(.impact(weight: .light))` |
+| Marcar/desmarcar pagado (swipe trailing, full swipe o tap en la acción) | `.sensoryFeedback(.impact(weight: .light))` |
+| Activar/desactivar línea (swipe leading, full swipe o tap en la acción) | `.sensoryFeedback(.impact(weight: .medium))` — más peso que "pagado" porque cambia el cálculo del bloque, no es solo visual |
 | Swipe to delete confirmado | `.sensoryFeedback(.impact(weight: .medium))` |
 | Editar tipo de cambio manual | `.sensoryFeedback(.selection)` al abrir el editor |
 | Face ID exitoso | `.sensoryFeedback(.success)` |
@@ -502,6 +551,12 @@ Ningún monto, título de línea ni cifra se renderiza detrás de esta pantalla 
 
 Feature v1 nueva. Modela lo que hoy son "recurrentes especiales con fecha fin" en el PRD (Upstart #1, Upstart #2, "Ada") pero con datos propios de amortización — saldo restante, interés, plazo — que un `RecurringItem` genérico no captura. Vive en el hub "Recurrentes y pagos" (fila 5) y como ítem directo en el sidebar de Mac. Explícitamente no es "tarjetas de crédito" (eso sigue fuera de v1, Fase 2 del PRD) — un préstamo tiene plazo fijo y amortización determinística, una tarjeta tiene saldo revolvente; no comparten modelo ni pantalla.
 
+Dos modos conviven en la misma entidad `Loan`: **Plazo fijo** (Upstart — monto, APR, plazo/fecha fin conocidos, pago fijo calculado) y **Hasta liquidar** (caso "Ada" — $824 al 26.2%, la hermana del usuario paga montos variables ~$200 por quincena, sin plazo definido de antemano; se liquida cuando el saldo llega a $0, lo que dependerá de cuánto pague realmente cada quincena). El modo es un switch en el formulario, no una entidad distinta — ambos comparten lista, detalle y origen de línea en Quincena.
+
+### 0. "Hasta liquidar" — diferencias sobre el modo Plazo fijo
+
+En vez de plazo/fecha fin conocidos, el préstamo define un **"Pago esperado"** por periodo y proyecta cuándo se liquidaría *si* los pagos reales coinciden con ese esperado — una estimación que se ajusta sola cada vez que el pago real de una quincena difiere del esperado (exactamente como el saldo restante ya se recalcula con cada pago real en el modo Plazo fijo, solo que aquí también recalcula la fecha de fin estimada, no solo el saldo).
+
 ### 1. Lista de préstamos
 
 `LabList` con una fila custom por préstamo (no cabe en `LabListRow` estándar — necesita dirección + progreso, se documenta como candidato a generalizar en `PROJECT_LEARNINGS.md`):
@@ -518,7 +573,10 @@ Fecha fin: ago 2030                                             ← .caption, .s
   - **"Me lo prestaron"** (es una deuda del usuario): chip pill con icono `arrow.up.forward` + texto **"Debo"**, tinte `.orange` (semántica de "advertencia/compromiso pendiente" del catálogo de estados, no el naranja de marca ni el semáforo verde/amarillo/rojo del sobrante — para no competir con esa semántica ya fija del PRD).
   - **"Lo presté"** (a alguien le presté, me deben): chip pill con icono `arrow.down.forward` + texto **"Me deben"**, tinte `.blue` (semántica "información neutral" del catálogo de estados).
 - **Barra de progreso**: `ProgressView(value:)` custom-estilizado (radio pill, altura 6pt, Continuous Corners), color = tinte de la dirección del préstamo (naranja si "Debo", azul si "Me deben") — no el accent de marca, para que la lectura de "cuánto llevo pagado de esta deuda" no se confunda visualmente con una acción primaria de la app.
-- Orden de lista: activos primero (por fecha de fin más próxima), luego préstamos ya liquidados (`isActive == false`) en una sección aparte "Liquidados", colapsada por defecto.
+- **Préstamo en modo "Hasta liquidar"** — la fila cambia dos elementos respecto al modo Plazo fijo:
+  - Donde iba "Fecha fin: ago 2030" aparece un badge pill `.caption2` `.secondary` con texto **"Sin plazo"**, seguido en la misma línea de "· termina aprox. mar 2029" (`.caption`, `.secondary`) — la estimación recalculada con el ritmo de pago real hasta la fecha; si aún no hay ningún pago real registrado, el texto es "termina aprox. según pago esperado" en vez de una fecha, para no aparentar precisión que no existe todavía.
+  - El progreso (barra + porcentaje) se calcula igual (saldo pagado / monto original) — no depende de tener plazo, así que no cambia de comportamiento.
+- Orden de lista: activos primero (por fecha de fin más próxima; los "Hasta liquidar" ordenan por su fecha estimada más próxima), luego préstamos ya liquidados (`isActive == false`) en una sección aparte "Liquidados", colapsada por defecto.
 - Tap/click → push a Detalle. Swipe/botón "+" en toolbar → Formulario de alta.
 
 ### 2. Formulario crear/editar
@@ -534,13 +592,17 @@ Fecha fin: ago 2030                                             ← .caption, .s
 | Fecha de inicio | `DatePicker` `.compact` | |
 | Plazo en meses ↔ Fecha de fin | Dos campos enlazados en la misma fila: `Stepper`/`LabTextField` de "Plazo (meses)" + `DatePicker` de "Fecha fin" | Editar uno recalcula el otro en vivo a partir de fecha de inicio + frecuencia (ej. 48 meses desde ago 2026 → fecha fin jul 2030; mover la fecha fin recalcula el plazo en meses). Un solo campo es la fuente de verdad en cada edición — el que el usuario tocó último — nunca hay estado inconsistente entre ambos |
 | Frecuencia | `Picker` `.pickerStyle(.menu)`: "Mensual, día X" / "Cada quincena" | Si "Mensual, día X": `Stepper` adicional 1–31 para el día |
-| Pago calculado | Texto informativo (`.body`, `.monospacedDigit()`, `.secondary`) bajo Frecuencia: "Pago calculado: $629.00/mes" — fórmula de amortización estándar (monto, APR, plazo) | Recalcula en vivo al cambiar monto/APR/plazo/frecuencia |
-| Override del pago | Botón de texto "Sobreescribir monto de pago" bajo el pago calculado | Al activarlo, el pago calculado se vuelve editable (`LabTextField`); al escribir un valor distinto, aparece debajo un texto informativo `.caption` `.secondary`: "Con este pago, el préstamo se liquida en 52 meses (ago 2030 → dic 2030)" — recalculando el plazo real a partir del pago fijo, en vez de al revés. Volver al cálculo automático restaura el plazo original |
+| **Hasta liquidar** | `LabToggleRow`, debajo de Frecuencia | Apagado por defecto (modo Plazo fijo). Al activarlo, oculta "Plazo (meses)" y "Fecha fin" (con animación de colapso — ver "Motion fallback"/Animaciones) y revela el campo "Pago esperado" descrito abajo |
+| *(modo Plazo fijo, oculto si "Hasta liquidar" está activo)* Plazo en meses ↔ Fecha de fin | Dos campos enlazados en la misma fila: `Stepper`/`LabTextField` de "Plazo (meses)" + `DatePicker` de "Fecha fin" | Editar uno recalcula el otro en vivo a partir de fecha de inicio + frecuencia (ej. 48 meses desde ago 2026 → fecha fin jul 2030; mover la fecha fin recalcula el plazo en meses). Un solo campo es la fuente de verdad en cada edición — el que el usuario tocó último — nunca hay estado inconsistente entre ambos |
+| *(modo Plazo fijo)* Pago calculado | Texto informativo (`.body`, `.monospacedDigit()`, `.secondary`) bajo el bloque de plazo: "Pago calculado: $629.00/mes" — fórmula de amortización estándar (monto, APR, plazo) | Recalcula en vivo al cambiar monto/APR/plazo/frecuencia |
+| *(modo Plazo fijo)* Override del pago | Botón de texto "Sobreescribir monto de pago" bajo el pago calculado | Al activarlo, el pago calculado se vuelve editable (`LabTextField`); al escribir un valor distinto, aparece debajo un texto informativo `.caption` `.secondary`: "Con este pago, el préstamo se liquida en 52 meses (ago 2030 → dic 2030)" — recalculando el plazo real a partir del pago fijo, en vez de al revés. Volver al cálculo automático restaura el plazo original |
+| *(modo Hasta liquidar)* Pago esperado | `LabTextField` numérico + toggle USD/MXN junto al campo (mismo patrón que Monto original) | Reemplaza a "Plazo/Fecha fin/Pago calculado" — es el único monto que el usuario define en este modo. Debajo, nota fija `.caption` `.secondary`: "Puedes cambiar el pago real en cada quincena" — deja claro que este número es solo la expectativa, no un compromiso fijo, y que la línea generada en Quincena sigue siendo editable línea por línea como cualquier otra |
+| *(modo Hasta liquidar)* Aviso de pago insuficiente | Texto inline `.caption`, tinte `.orange` (semántica de advertencia, no el semáforo del sobrante), aparece debajo de "Pago esperado" solo si aplica | Se calcula en vivo: interés mensual = saldo actual × APR/12; si Pago esperado < interés mensual, el saldo nunca bajaría a ese ritmo — texto: "Con este pago, el saldo no bajaría — el interés mensual es de $18.00" |
 | Activo | `LabToggleRow` | Un préstamo inactivo deja de generar línea en quincenas futuras no materializadas, pero conserva su historial y su Detalle es accesible desde la sección "Liquidados" de la lista |
 
 ### 3. Detalle — cabecera + tabla de amortización
 
-**Cabecera** (card `LabNestedCard`, mismo patrón visual que el badge de sobrante pero sin semáforo — un préstamo no tiene "bueno/malo", tiene estado factual):
+**Cabecera, modo Plazo fijo** (card `LabNestedCard`, mismo patrón visual que el badge de sobrante pero sin semáforo — un préstamo no tiene "bueno/malo", tiene estado factual):
 
 ```
 Saldo restante                    ← .caption2, ALL CAPS, .secondary
@@ -554,19 +616,37 @@ Próximo pago: $629.00 · 20 sept   ← .subheadline, .secondary
 Fecha de fin: ago 2030            ← .subheadline, .secondary
 ```
 
+**Cabecera, modo Hasta liquidar** — mismas cuatro filas de metadata, dos cambian de nombre/naturaleza para reflejar que son estimaciones, no hechos fijos:
+
+```
+Saldo actual                          ← .caption2, ALL CAPS, .secondary
+$824.00                               ← igual tratamiento tipográfico que arriba
+
+Interés acumulado a la fecha: $46.10  ← .subheadline, .secondary — "acumulado" en vez de "total",
+                                         porque sigue creciendo mientras no se liquide
+Próximo pago esperado: $200.00 · —    ← .subheadline, .secondary — sin fecha fija si la
+                                         frecuencia no la determina (ver Formulario)
+Fin estimado: mar 2029                ← .subheadline, .secondary — "estimado" explícito en el
+                                         label, nunca "Fecha de fin" a secas, para no leer
+                                         como un compromiso
+```
+
 **Tabla de amortización** — periodo a periodo (fecha, pago, interés, capital, saldo):
 
 - **iPhone:** `List` de filas custom (no `Table`, no soportado en compacto) — cada fila en `.monospacedDigit()`: fecha `.leading`, pago/interés/capital/saldo en `.trailing` apilados en dos líneas por espacio (fecha+pago en línea 1, interés/capital/saldo en línea 2 más pequeña `.caption`).
-- **Mac:** `Table` nativo con columnas Fecha / Pago / Interés / Capital / Saldo, todas `.monospacedDigit()`, `.trailing` salvo Fecha. Ordenable por columna no es necesario (el orden cronológico es el único que tiene sentido) — se deshabilita el sort de header.
-- **Fila ya pagada** (fecha ≤ hoy): `.secondary` en todo el texto, sin énfasis — es historial.
+- **Mac:** `Table` nativo con columnas Fecha / Pago / Interés / Capital / Saldo, todas `.monospacedDigit()`, `.trailing` salvo Fecha. Ordenable por columna no es necesario (el orden cronológico es el único que tiene sentido) — se deshabilita el sort de header. Igual en ambos modos — la diferencia entre modos vive en el contenido de las filas, no en el tipo de control.
+- **Fila ya pagada, pago real** (existe un `LineItem` materializado/editado en Quincena para ese periodo): `.secondary` en todo el texto, sin énfasis — es historial confirmado.
 - **Fila actual** (el próximo pago pendiente): fondo resaltado sutil (`accentSubtle` al 50% adicional de opacidad), texto `.primary`, único punto de la tabla con color de acento — es la única fila que representa una decisión próxima del usuario.
-- **Filas futuras** (después de la actual): `.secondary`, igual que las pagadas visualmente, pero sin el fondo resaltado — se distinguen de las pagadas solo por estar después de la fila resaltada, nunca hace falta un tercer tratamiento visual (la posición relativa a la fila actual ya lo comunica).
+- **Filas futuras proyectadas** (después de la actual, sin `LineItem` materializado todavía — todo el modo Plazo fijo más allá de "actual", y prácticamente toda la tabla en modo Hasta liquidar salvo pagos ya reales): `.secondary`, **más** una etiqueta `.caption2` "Proyectado" al final de la fila (Mac: columna adicional "Estado"; iPhone: texto inline después del saldo) — no basta con la opacidad reducida que ya comparten con las pagadas, porque en modo Hasta liquidar la diferencia entre "esto ya pasó" y "esto es una proyección que puede cambiar con el siguiente pago real" es información que el usuario necesita poder leer sin ambigüedad, así que se refuerza con texto, no solo opacidad.
+- **Interés cargado por mes**: cada fila de la columna "Interés" en modo Hasta liquidar se recalcula sobre el saldo real vigente al momento de ese periodo (saldo × APR/12), por lo que las filas proyectadas después de un pago real distinto al esperado muestran un interés distinto al que tenían antes de ese pago — es visible en la tabla como números que cambian, no oculto; no hace falta un indicador adicional, el propio recálculo es la comunicación.
 
 ### Accesibilidad
 
 - Cada fila de la lista de préstamos expone un solo `accessibilityElement(children: .combine)` cuyo `accessibilityLabel` concatena dirección + nombre + saldo en una frase, no solo el nombre — ej. "Debo, Upstart uno, saldo restante 18,420 dólares" — para que VoiceOver comunique la dirección y el saldo sin que el usuario tenga que navegar campo por campo dentro de la fila.
 - El chip de dirección nunca depende solo del color naranja/azul — el texto "Debo"/"Me deben" es parte del `accessibilityLabel` y está siempre visible tipográficamente, no oculto en un tooltip.
 - La barra de progreso expone `accessibilityValue` con el porcentaje en texto ("34 por ciento pagado"), no solo el `value` numérico del `ProgressView`.
+- El badge "Sin plazo" y su estimado ("termina aprox. mar 2029") se incluyen en el `accessibilityLabel` combinado de la fila — ej. "Me deben, Ada, saldo actual 824 dólares, sin plazo, termina aprox. marzo 2029" — nunca queda como un badge visual sin equivalente leído.
+- En la tabla de amortización, la etiqueta "Proyectado" se lee explícitamente en VoiceOver (`accessibilityLabel` de la fila incluye la palabra, no solo la opacidad reducida) — es información funcional, no decorativa, tanto en `List` (iPhone) como en `Table` (Mac, vía `accessibilityLabel` de la fila del `TableRow`).
 
 ### Estado vacío
 
@@ -574,7 +654,87 @@ Fecha de fin: ago 2030            ← .subheadline, .secondary
 
 ### Origen de línea en Quincena — regla de edición manual
 
-Igual que Recurrentes/Suscripciones/Servicios: la línea que un préstamo genera en una quincena nace con `origin: .loan`, `isManuallyEdited: false`; si el usuario la edita a mano, el icono cambia de `banknote` a `pencil` (ver tabla de iconografía de origen) y esa quincena específica queda protegida de la regeneración automática si el préstamo se edita después — misma regla "la edición manual gana" del TRD, sin caso especial para préstamos.
+Igual que Recurrentes/Suscripciones/Servicios: la línea que un préstamo genera en una quincena nace con `origin: .loan`, `isManuallyEdited: false`; si el usuario la edita a mano, el icono cambia de `banknote` a `pencil` (ver tabla de iconografía de origen) y esa quincena específica queda protegida de la regeneración automática si el préstamo se edita después — misma regla "la edición manual gana" del TRD, sin caso especial para préstamos. Esto aplica idéntico en ambos modos: la línea generada por un préstamo "Hasta liquidar" se ve exactamente igual que la de un préstamo a plazo fijo (mismo icono `banknote`, mismo comportamiento de edición) — el modo es una diferencia de cómo se calcula la proyección, no de cómo se presenta la línea ya materializada en Quincena. Es precisamente porque el usuario puede sobreescribir el pago real de cualquier quincena (nota del Formulario: "Puedes cambiar el pago real en cada quincena") que el modo Hasta liquidar no necesita tratamiento especial aquí — cada pago real es, de nuevo, solo una línea editada a mano como cualquier otra.
+
+### Motion — colapso de campos en el Formulario
+
+| Evento | Estado inicial → final | Curva | Duración | Reduce Motion |
+|---|---|---|---|---|
+| Activar/desactivar "Hasta liquidar" | "Plazo/Fecha fin/Pago calculado" colapsan (`opacity 1→0` + `height→0`) mientras "Pago esperado" aparece (`opacity 0→1`) | `.easeInOut` | 0.25s | Sin colapso animado — los campos cambian instantáneamente, es un `Form` de configuración, no necesita narrativa |
+
+---
+
+## Inversiones (Investments)
+
+Feature v1 nueva. Registra **aportaciones periódicas** a cuentas de inversión (GBM, Webull, crypto…) — es, en efecto, un recurrente con cuenta destino, no un portafolio. Vive en el hub "Recurrentes y pagos" (fila 6) y como ítem directo en el sidebar de Mac. **Fuera de alcance explícito en v1:** rendimientos, valor actual del portafolio, precios de mercado — el PRD ya excluye "control de inversiones" (dominio de portafolios/rendimientos) para Fase 3; esta feature es deliberadamente más chica que eso, limitada al registro de cuánto se aporta y cuándo. El hueco queda anotado en "Sin definir aún".
+
+### 1. Lista de cuentas de inversión
+
+Total general arriba, `LabNestedCard` simple, fuera de la lista:
+
+```
+Total aportado a la fecha
+$14,200.00                    ← .monospacedDigit(), bold, mismo tratamiento que cabeceras de
+                                 Préstamos, sin color de dirección (no aplica aquí) — .primary
+```
+
+Debajo, `LabList` con una fila por cuenta (`LabListRow` estándar sí alcanza aquí — no hay dirección ni progreso que mostrar, más simple que Préstamos):
+
+```
+[chart.line.uptrend.xyaxis] GBM
+Aportación: $200.00 · Cada quincena
+Aportado a la fecha: $8,400.00
+```
+
+- `systemImage` fijo `chart.line.uptrend.xyaxis` en todas las filas (no varía por cuenta — a diferencia de Servicios, aquí no hay categorías de hogar que distinguir, todas las cuentas son la misma clase de cosa).
+- Subtitle: aportación + frecuencia en una línea, "Aportado a la fecha" en una segunda línea `.secondary`.
+- Tap/click → push a Detalle. Botón "+" en toolbar → Formulario de alta.
+
+### 2. Formulario crear/editar
+
+`Form` nativo, mismo patrón que el resto del hub:
+
+| Campo | Control | Comportamiento |
+|---|---|---|
+| Cuenta destino | `LabTextField` | Texto libre — "GBM", "Webull", "Crypto (Coinbase)"; no es un picker de opciones fijas porque el usuario define sus propias cuentas |
+| Monto | `LabTextField` numérico + toggle USD/MXN junto al campo | Mismo patrón que captura de línea en Quincena |
+| Frecuencia | `Picker` `.pickerStyle(.menu)`: "Cada quincena" / "Mensual, día X" | Si "Mensual, día X": `Stepper` adicional 1–31 para el día |
+| Fecha de inicio | `DatePicker` `.compact` | |
+| Fecha de fin (opcional) | `LabToggleRow` "Tiene fecha de fin" + `DatePicker` condicional | Igual patrón que `RecurringItem` del TRD — sin fecha de fin, la aportación proyecta indefinidamente |
+| Activa | `LabToggleRow` | Una cuenta inactiva deja de generar línea en quincenas futuras no materializadas, conserva su historial |
+
+No hay campo de "rendimiento esperado" ni "valor actual" — es la ausencia deliberada que marca el alcance de v1.
+
+### 3. Detalle — simple, sin portafolio
+
+Cabecera (`LabNestedCard`, mismo tratamiento tipográfico que las demás cabeceras del hub, sin color de dirección):
+
+```
+Aportado a la fecha
+$8,400.00
+
+Próxima aportación: $200.00 · 4 oct
+```
+
+**Historial de aportaciones** — lista simple, no tabla de amortización (no hay saldo/interés que calcular, cada aportación es independiente):
+
+- **iPhone:** `List` de filas: fecha `.leading`, monto `.trailing`, `.monospacedDigit()`.
+- **Mac:** `Table` con columnas Fecha / Monto — mismo patrón de consistencia que Préstamos, aunque aquí solo dos columnas.
+- **Aportación real** (existe `LineItem` materializado/editado en Quincena): `.secondary`, sin etiqueta — es historial confirmado, igual convención que Préstamos.
+- **Aportación proyectada** (sin `LineItem` materializado todavía): `.secondary` + etiqueta `.caption2` "Proyectado", misma razón que en Préstamos — no depender solo de opacidad para comunicar la diferencia.
+
+### Accesibilidad
+
+- Cada fila de la lista de cuentas expone `accessibilityElement(children: .combine)` con `accessibilityLabel` que concatena cuenta + aportado a la fecha — ej. "GBM, aportado a la fecha 8,400 dólares".
+- Filas del historial marcadas "Proyectado" lo incluyen en el `accessibilityLabel`, igual que en Préstamos.
+
+### Estado vacío
+
+`LabEmptyState(systemImage: "chart.line.uptrend.xyaxis", title: "Sin inversiones todavía", subtitle: "Agrega una cuenta para registrar tus aportaciones periódicas")` con CTA.
+
+### Origen de línea en Quincena — regla de edición manual
+
+Igual que el resto del hub: la línea que una cuenta de inversión genera nace con `origin: .investment`, `isManuallyEdited: false`; editarla a mano cambia el icono de `chart.line.uptrend.xyaxis` a `pencil` y protege esa quincena de la regeneración — misma regla "la edición manual gana" del TRD, sin caso especial.
 
 ---
 
@@ -605,6 +765,14 @@ Igual que Recurrentes/Suscripciones/Servicios: la línea que un préstamo genera
 | Vacío (préstamo recién creado, sin pagos aún) | La tabla de amortización se muestra completa desde el primer pago (se calcula entera al crear el préstamo, no se genera perezosamente como las líneas de quincena) — no hay estado vacío real, la primera fila siempre es la resaltada como "actual" |
 | Error | No aplica (cálculo 100% local, sin red) |
 
+### Inversiones
+
+| Estado | Diseño |
+|---|---|
+| Vacío (lista de cuentas) | Estado vacío ya especificado en "Inversiones (Investments)" |
+| Loading | `.redacted(.placeholder)` sobre `LabList`/historial |
+| Error | No aplica (datos 100% locales, sin red) |
+
 ### Overview
 
 | Estado | Diseño |
@@ -618,7 +786,7 @@ Igual que Recurrentes/Suscripciones/Servicios: la línea que un préstamo genera
 
 ### iPhone
 
-- Thumb-zone: captura rápida y toggle "pagado" dentro del tercio inferior/medio de la pantalla en el uso típico (listas empiezan arriba pero el usuario captura scrolleando).
+- Thumb-zone: captura rápida y swipe de "pagado"/"activar-desactivar" dentro del tercio inferior/medio de la pantalla en el uso típico (listas empiezan arriba pero el usuario captura scrolleando).
 - Tap targets ≥ 44×44pt en toda fila, toggle, chevron de navegación.
 - Todo el contenido de Quincena vive en un `ScrollView` — no se fuerza a caber sin scroll en iPhone (eso es requisito exclusivo de Mac).
 
@@ -659,9 +827,17 @@ Fintrol no tiene una feature de búsqueda en v1 — el volumen de datos de un pr
 | 2026-09-15 | Pantalla de bloqueo Face ID no monta ningún dato real detrás, no es blur sobre contenido | Cierra el riesgo del PRD de montos visibles en app switcher/background |
 | 2026-09-15 | Sin `.searchable()` en v1 | Volumen de datos de un presupuesto personal no lo justifica |
 | 2026-09-15 | Mac: panel de resumen fijo a la derecha del detail, no columna adicional de `NavigationSplitView` | El PRD pide sidebar + contenido; una tercera columna de sistema competiría con la sidebar de secciones |
+| 2026-09-15 | Se eliminan los toggles visibles de `LineItemRow`; activar/desactivar y marcar pagado pasan a swipe leading/trailing + menú contextual + `accessibilityActions` | Decisión del usuario tras ver la app en simulador. **Señalado, no bloqueante:** "activar/desactivar" excluye la línea de la suma, lo cual coincide en efecto con el switch "cuenta/no cuenta" que el PRD v1.1 marca fuera de v1 — Steve debe confirmar si esto actualiza el PRD |
+| 2026-09-15 | Swipe/acciones de línea usan `.blue` (pagado, reactivar) y `.gray` (desactivar, editar en líneas generadas), nunca `.green`/`.red` | Verde/amarillo/rojo quedan exclusivos del semáforo del sobrante; `trash` de Eliminar es la única excepción, por ser convención universal de sistema, no señal financiera |
+| 2026-09-15 | Préstamos gana un segundo modo "Hasta liquidar" (switch en el Formulario, sin plazo, solo "Pago esperado") junto al modo Plazo fijo existente | Decisión del usuario — caso real "Ada": $824 al 26.2%, pagos variables ~$200/quincena, sin fecha de fin conocida de antemano |
+| 2026-09-15 | Tabla de amortización distingue filas de pago real de filas proyectadas con etiqueta explícita "Proyectado", no solo opacidad | En modo Hasta liquidar casi toda la tabla es proyección que se recalcula con cada pago real; la opacidad reducida sola (ya usada para "pagada") no basta para comunicar esa diferencia sin ambigüedad |
+| 2026-09-15 | La línea generada por un préstamo "Hasta liquidar" en Quincena es visualmente idéntica a la de un préstamo a plazo fijo (icono `banknote`) | El modo cambia cómo se proyecta, no cómo se presenta ni se edita la línea ya materializada — misma regla de edición manual sin caso especial |
+| 2026-09-15 | Nueva feature v1 "Inversiones": sexta fila del hub "Recurrentes y pagos", icono `chart.line.uptrend.xyaxis` | Decisión del usuario — registro de aportaciones periódicas a cuentas de inversión, deliberadamente más chico que "control de inversiones" (Fase 3 del PRD): sin rendimientos ni valor de portafolio |
+| 2026-09-15 | Inversiones no tiene campo de rendimiento ni valor actual en el Formulario ni en el Detalle | Ausencia deliberada — marca el límite de alcance de v1; ver "Sin definir aún" para el hueco de etapa 2 |
 
 ---
 
 ## Sin definir aún
 
 - [ ] Icono de la app — no se ha diseñado; queda pendiente de una sesión dedicada con Phil.
+- [ ] Inversiones — etapa 2: rendimientos, valor actual del portafolio, precios de mercado en vivo. v1 solo registra la aportación periódica; el diseño de "cuánto vale hoy mi cuenta" no está hecho y necesita decidir fuente de datos (API de precios) antes de poder diseñarse — no es solo una pantalla nueva, tiene las mismas preguntas de integración externa que resolvió el TRD para el tipo de cambio.

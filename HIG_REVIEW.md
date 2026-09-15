@@ -259,3 +259,107 @@ Ambos son cambios de una línea. Una vez aplicados, la app cumple HIG sin excepc
 ---
 
 **Auditoría completada:** 2026-09-15 · No se encontraron violaciones de Liquid Glass · Navegación conforme · Materiales conformes · 4 hallazgos totales (1 bloqueante, 1 alto, 2 medios) — todos corregibles.
+
+---
+
+## ACTUALIZACIÓN — Auditoría Incremental (2026-09-15, tarde)
+
+**Cambios de Woz:** LineItemRow reemplazó toggles por DragGesture custom (swipe-leading = toggle isActive, swipe-trailing = pagado/editar) tras ruptura de List en ScrollView. Nuevas pantallas: Loans "Hasta liquidar", Investments, Settings Export/Import.
+
+### 🟡 ALTO (nuevo)
+
+#### 5. LineItemRow DragGesture: sin hint de discoverabilidad + conflicto semántico swipe-trailing
+
+**Archivo:** `/Users/yuno/Documents/GitSync/Fintrol/Apps/Fintrol/Fintrol/UI/LineItemRow.swift:111-132`
+
+**Problema:**  
+Woz implementó dos swipes con `DragGesture` custom (fallback por List bloqueando touches). Sin embargo, viola dos reglas HIG:
+
+1. **No hay visual hint antes de primer swipe** (líneas 146, 154 muestran iconos solo al arrastrar). El usuario no sabe que las filas son swipeables — HIG exige gestures discoverable. iOS típicamente muestra un hint visual o usa patrones reconocibles (native `swipeActions`).
+
+2. **Semántica de swipe-trailing confusa** (línea 127): swipe-left tradicionalmente significa "delete" o "destructive"; aquí es solo "Marcar pagado" (toggle). El usuario esperaría Eliminar/Editar (per DESIGN_LIQUID.md original), pero eso está solo en contextMenu (línea 174-193). Esto crea **expectativa rota**: "¿por qué swipe-left no elimina?" aunque técnicamente sea correcto que "pagado" sea reversible.
+
+**Por qué importa:**  
+- Gestures sin hint son "hidden features" — viola principio HIG de "discoverable interaction".
+- Swipe-trailing que NO es destructivo es inesperado — usuarios confundidos sobre acción del gesto.
+
+**Verificación:**  
+- Usuario nuevo abre app, ve fila, ¿cómo sabe que es swipeable? Respuesta: no hay forma, debe probar.
+- Usuario swipe-left esperando eliminar, obtiene "pagado" — confusión.
+
+**Corrección (dos opciones):**
+
+*Opción A (recomendada): volver a native swipeActions si es posible*
+```swift
+// Eliminar DragGesture custom, usar .swipeActions nativo
+.swipeActions(edge: .leading) {
+    Button(line.isActive ? "Desactivar" : "Activar") { onToggleActive() }
+}
+.swipeActions(edge: .trailing) {
+    Button(role: .destructive, action: onDelete) { Label("Eliminar", systemImage: "trash") }
+    Button("Editar", systemImage: "pencil", action: onStartEditing)
+}
+```
+
+*Opción B (mantener DragGesture): agregar hint + revisar semántica*
+```swift
+// Si List sigue roto, mantener DragGesture pero:
+// 1. Agregar onAppear hint: "Desliza para cambiar estado" (TipKit o badge).
+// 2. Cambiar swipe-leading a "Eliminar" (si origin == .manual) o "Editar" (si auto-generada).
+// 3. Swipe-trailing a "Pagado" solo.
+// 4. Agregar haptic feedback: .sensoryFeedback(.impact(weight: .light)) en onEnded.
+```
+
+---
+
+### 🔵 MEDIOS (nuevo)
+
+#### 6. LineItemRow: falta haptic feedback en swipes, sin ReduceMotion en drag visual
+
+**Archivo:** `/Users/yuno/Documents/GitSync/Fintrol/Apps/Fintrol/Fintrol/UI/LineItemRow.swift:119-131`
+
+**Problema:**  
+Swipe actions (onToggleActive, onTogglePaid) no disparan haptic feedback. Línea 121 respeta `reduceMotion` para animación de settle, pero no hay haptic equivalente. Falta `.sensoryFeedback()` modifier.
+
+**Corrección:**  
+```swift
+.onEnded { value in
+    let translation = value.translation.width
+    let settle = { withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { dragTranslation = 0 } }
+    if translation >= swipeCommitThreshold {
+        settle()
+        onToggleActive()
+        if !reduceMotion { 
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
+    } else if translation <= -swipeCommitThreshold {
+        settle()
+        onTogglePaid()
+        if !reduceMotion {
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        }
+    } else {
+        settle()
+    }
+}
+```
+
+---
+
+### ✅ CONFORME
+
+- **LoansView:** native List + swipeActions (correcto, mismo patrón que Subscriptions/Recurring)
+- **InvestmentsView:** idem LoansView
+- **SettingsView Export/Import:** fileExporter (backup export) + confirmationDialog destructivo (línea 175-184, "Reemplazar todo") — **conforme HIG**
+
+---
+
+## Resumen Actualizado
+
+**Nuevos hallazgos:** 2 medios, 1 alto (swipe DragGesture).  
+**Total:** 1 bloqueante (original) + 2 altos (Dynamic Type + DragGesture) + 3 medios = **6 hallazgos**.
+
+**Prioridad para Woz:**
+1. 🔴 **Bloqueante:** SobranteBadge relativeTo (una línea)  
+2. 🟡 **Altos:** LineItemRow swipe-trailing semántica + discoverability
+3. 🔵 **Medios:** haptic, iconos Dynamic Type, accesibilidad origen

@@ -330,4 +330,101 @@ struct PeriodCoordinatorTests {
         let matches = (period.lineItems ?? []).filter { $0.sourceLoanID == loan.id }
         #expect(matches.count == 1, "two calls must not duplicate the loan's line")
     }
+
+    // MARK: - isActive / isPaid (swipe leading/trailing, replaces the old per-row toggles)
+
+    @Test("Deactivating a WALO-like line in Sep 1-15 lowers its TOTAL INCOME and Sep 16-30's Latest Month; reactivating restores both exactly")
+    func deactivatingLineLowersTotalsAndCarryOver() throws {
+        let context = try makeContext()
+        let sep1 = PeriodCoordinate(year: 2026, month: 9, half: .first)
+        let sep16 = sep1.next
+
+        let walo = RecurringItemSnapshot(
+            id: UUID(), kind: .income, title: "WALO", amount: 2750, currency: .usd,
+            frequency: .biweekly, startDate: CivilDate(year: 2026, month: 9, day: 1), endDate: nil, isActive: true
+        )
+
+        let periodA = PeriodCoordinator.materializeIfNeeded(coordinate: sep1, context: context, recurringItems: [walo], subscriptions: [], exchangeRate: 18)
+        let periodB = PeriodCoordinator.materializeIfNeeded(coordinate: sep16, context: context, recurringItems: [walo], subscriptions: [], exchangeRate: 18)
+
+        let baselineIncomeA = CarryOverEngine.total(for: PeriodCoordinator.snapshots(of: periodA), kind: .income, exchangeRate: 18)
+        let baselineCarryB = (periodB.lineItems ?? []).first { $0.origin == .carryOver }?.amount ?? 0
+        #expect(baselineIncomeA == 2750)
+        #expect(baselineCarryB == 2750)
+
+        let line = try #require((periodA.lineItems ?? []).first { $0.sourceRecurringID == walo.id })
+        line.isActive = false
+        try context.save()
+        PeriodCoordinator.recomputeForward(after: periodA, context: context, exchangeRate: 18)
+        try context.save()
+
+        let deactivatedIncomeA = CarryOverEngine.total(for: PeriodCoordinator.snapshots(of: periodA), kind: .income, exchangeRate: 18)
+        let deactivatedCarryB = (periodB.lineItems ?? []).first { $0.origin == .carryOver }?.amount ?? 0
+        #expect(deactivatedIncomeA == 0, "TOTAL INCOME must drop to 0 once the only income line is inactive")
+        #expect(deactivatedCarryB == 0, "Sep 16-30's Latest Month must reflect the reduced sobrante")
+
+        line.isActive = true
+        try context.save()
+        PeriodCoordinator.recomputeForward(after: periodA, context: context, exchangeRate: 18)
+        try context.save()
+
+        let restoredIncomeA = CarryOverEngine.total(for: PeriodCoordinator.snapshots(of: periodA), kind: .income, exchangeRate: 18)
+        let restoredCarryB = (periodB.lineItems ?? []).first { $0.origin == .carryOver }?.amount ?? 0
+        #expect(restoredIncomeA == baselineIncomeA, "reactivating must restore the exact original total")
+        #expect(restoredCarryB == baselineCarryB, "reactivating must restore the exact original carry-over")
+    }
+
+    @Test("Toggling isPaid changes nothing in totals, sobrante, or the carry-over chain")
+    func togglingIsPaidDoesNotAlterCalculations() throws {
+        let context = try makeContext()
+        let coordinate = PeriodCoordinate(year: 2026, month: 9, half: .first)
+        let period = PeriodCoordinator.materializeIfNeeded(coordinate: coordinate, context: context, recurringItems: [], subscriptions: [], exchangeRate: 18)
+
+        let income = LineItem(kind: .income, title: "Sueldo", amount: 1000, currency: .usd, sortOrder: 0, origin: .manual, period: period)
+        context.insert(income)
+        period.lineItems?.append(income)
+        try context.save()
+
+        let before = CarryOverEngine.sobrante(for: PeriodCoordinator.snapshots(of: period), exchangeRate: 18)
+
+        income.isPaid = true
+        try context.save()
+        let afterPaid = CarryOverEngine.sobrante(for: PeriodCoordinator.snapshots(of: period), exchangeRate: 18)
+        #expect(afterPaid == before)
+
+        income.isPaid = false
+        try context.save()
+        let afterUnpaid = CarryOverEngine.sobrante(for: PeriodCoordinator.snapshots(of: period), exchangeRate: 18)
+        #expect(afterUnpaid == before)
+    }
+
+    @Test("reprojectRecurring never overwrites a line whose isActive/isPaid were toggled by hand — it becomes a manual edit")
+    func reprojectRespectsManuallyToggledActiveAndPaid() throws {
+        let context = try makeContext()
+        let item = RecurringItem(kind: .expense, title: "Renta", amount: 1000, currency: .usd, frequency: .biweekly, startDate: Date.distantPast)
+        context.insert(item)
+        try context.save()
+
+        let coordinate = PeriodCoordinate(year: 2026, month: 9, half: .first)
+        let snapshot = RecurringItemSnapshot(id: item.id, kind: item.kind, title: item.title, amount: item.amount, currency: item.currency, frequency: item.frequency, startDate: item.civilStartDate, endDate: item.civilEndDate, isActive: item.isActive)
+        let period = PeriodCoordinator.materializeIfNeeded(coordinate: coordinate, context: context, recurringItems: [snapshot], subscriptions: [], exchangeRate: 18)
+
+        let line = try #require((period.lineItems ?? []).first { $0.sourceRecurringID == item.id })
+        line.isActive = false
+        line.isPaid = true
+        line.isManuallyEdited = true // exactly what toggleActive/togglePaid do for a non-.manual line
+        try context.save()
+
+        // The source recurring item's amount changes...
+        item.amount = 5000
+        try context.save()
+        PeriodCoordinator.reprojectRecurring(item: item, context: context, exchangeRate: 18)
+
+        // ...but the manually-toggled line must be left completely untouched: not reactivated,
+        // still marked paid, and its amount never overwritten with the new 5000.
+        let refreshed = try #require((period.lineItems ?? []).first { $0.sourceRecurringID == item.id })
+        #expect(refreshed.isActive == false)
+        #expect(refreshed.isPaid == true)
+        #expect(refreshed.amount == 1000)
+    }
 }

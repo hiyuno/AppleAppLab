@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import CloudKit
+import UniformTypeIdentifiers
 import AppleAppLabUI
 
 /// "Ajustes generales" — Form nativo con dos Section (DESIGN_LIQUID.md). En iOS es un tab;
@@ -13,6 +14,18 @@ struct SettingsView: View {
     @State private var lockErrorMessage: String?
     @State private var iCloudStatusText = "Sincronizando…"
     @State private var iCloudStatusIcon = "icloud"
+
+    @State private var isPresentingSubscriptionImporter = false
+    @State private var subscriptionImportResultMessage: String?
+    @State private var isShowingSubscriptionImportResult = false
+
+    @State private var isPresentingBackupExporter = false
+    @State private var backupExportDocument: BackupJSONDocument?
+    @State private var isPresentingBackupImporter = false
+    @State private var isPresentingBackupImportConfirm = false
+    @State private var pendingBackupImportURL: URL?
+    @State private var backupResultMessage: String?
+    @State private var isShowingBackupResult = false
 
     var body: some View {
         Form {
@@ -52,6 +65,26 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
                 .task { await refreshCloudKitStatus() }
+
+                Button {
+                    isPresentingSubscriptionImporter = true
+                } label: {
+                    Text("Importar suscripciones y servicios…")
+                }
+
+                Button {
+                    let backup = BackupService.exportBackup(context: context)
+                    backupExportDocument = BackupJSONDocument(backup: backup)
+                    isPresentingBackupExporter = true
+                } label: {
+                    Text("Exportar respaldo completo (JSON)")
+                }
+
+                Button {
+                    isPresentingBackupImporter = true
+                } label: {
+                    Text("Importar respaldo completo…")
+                }
             }
 
             Section("Seguridad") {
@@ -101,6 +134,105 @@ struct SettingsView: View {
             }
         }
         .navigationTitle("Ajustes")
+        .fileImporter(isPresented: $isPresentingSubscriptionImporter, allowedContentTypes: [.json]) { result in
+            switch result {
+            case .success(let url):
+                importSubscriptions(from: url)
+            case .failure:
+                subscriptionImportResultMessage = "No se pudo abrir el archivo seleccionado."
+                isShowingSubscriptionImportResult = true
+            }
+        }
+        .alert("Importación", isPresented: $isShowingSubscriptionImportResult) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(subscriptionImportResultMessage ?? "")
+        }
+        .fileExporter(
+            isPresented: $isPresentingBackupExporter,
+            document: backupExportDocument,
+            contentType: .json,
+            defaultFilename: "fintrol-respaldo-\(backupFilenameStamp())"
+        ) { result in
+            switch result {
+            case .success:
+                backupResultMessage = "Respaldo exportado correctamente."
+            case .failure:
+                backupResultMessage = "No se pudo guardar el respaldo."
+            }
+            isShowingBackupResult = true
+        }
+        .fileImporter(isPresented: $isPresentingBackupImporter, allowedContentTypes: [.json]) { result in
+            switch result {
+            case .success(let url):
+                pendingBackupImportURL = url
+                isPresentingBackupImportConfirm = true
+            case .failure:
+                backupResultMessage = "No se pudo abrir el archivo seleccionado."
+                isShowingBackupResult = true
+            }
+        }
+        .confirmationDialog(
+            "Esto reemplaza TODOS los datos actuales con los del respaldo. ¿Continuar?",
+            isPresented: $isPresentingBackupImportConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Reemplazar todo", role: .destructive) {
+                if let url = pendingBackupImportURL { importFullBackup(from: url) }
+            }
+            Button("Cancelar", role: .cancel) { pendingBackupImportURL = nil }
+        }
+        .alert("Respaldo", isPresented: $isShowingBackupResult) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(backupResultMessage ?? "")
+        }
+    }
+
+    /// Ajustes → Preferencias → "Importar respaldo completo…". Destructive — the
+    /// `confirmationDialog` above must run first. Dedupe by id, full replace
+    /// (`BackupService.importBackup`).
+    private func importFullBackup(from url: URL) {
+        let needsSecurityScope = url.startAccessingSecurityScopedResource()
+        defer { if needsSecurityScope { url.stopAccessingSecurityScopedResource() } }
+
+        guard let data = try? Data(contentsOf: url), let backup = BackupService.decode(data) else {
+            backupResultMessage = "El archivo no es un respaldo válido de Fintrol."
+            isShowingBackupResult = true
+            return
+        }
+        let summary = BackupService.importBackup(backup, context: context)
+        backupResultMessage = "Restaurado: \(summary.periods) quincenas, \(summary.lineItems) líneas, \(summary.recurringItems) recurrentes, \(summary.subscriptions) suscripciones/servicios, \(summary.loans) préstamos."
+        isShowingBackupResult = true
+    }
+
+    private func backupFilenameStamp() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        return formatter.string(from: Date())
+    }
+
+    /// Ajustes → Preferencias → "Importar suscripciones y servicios…". Reads the
+    /// user-selected JSON file, parses it defensively (`SubscriptionImportService` — a
+    /// malformed item is skipped, not fatal), persists the valid items
+    /// (`PeriodCoordinator.importSubscriptions`, deduped by name), and reports one summary
+    /// alert. Never logs amounts or file contents (SECURITY.md C-05).
+    private func importSubscriptions(from url: URL) {
+        let needsSecurityScope = url.startAccessingSecurityScopedResource()
+        defer { if needsSecurityScope { url.stopAccessingSecurityScopedResource() } }
+
+        guard let data = try? Data(contentsOf: url) else {
+            subscriptionImportResultMessage = "No se pudo leer el archivo seleccionado."
+            isShowingSubscriptionImportResult = true
+            return
+        }
+
+        let parsed = SubscriptionImportService.parse(data: data)
+        let summary = PeriodCoordinator.importSubscriptions(
+            parsed.valid, context: context, exchangeRate: rateStore.currentRate ?? 0, skippedCount: parsed.issues.count
+        )
+        subscriptionImportResultMessage = "\(summary.imported) importados, \(summary.updated) actualizados, \(summary.skipped) omitidos."
+        isShowingSubscriptionImportResult = true
     }
 
     @AppStorage("fintrol.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
@@ -313,5 +445,30 @@ private struct ExchangeRateSettingsView: View {
             tokenTestMessage = "No se pudo verificar — revisa tu conexión e intenta de nuevo."
             tokenTestIsError = true
         }
+    }
+}
+
+/// `FileDocument` wrapper so `BackupService.Backup` can go through `.fileExporter`.
+struct BackupJSONDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.json] }
+
+    let backup: BackupService.Backup
+
+    init(backup: BackupService.Backup) {
+        self.backup = backup
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        guard let data = configuration.file.regularFileContents, let decoded = BackupService.decode(data) else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        backup = decoded
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        guard let data = BackupService.encode(backup) else {
+            throw CocoaError(.fileWriteUnknown)
+        }
+        return FileWrapper(regularFileWithContents: data)
     }
 }

@@ -7,13 +7,15 @@
 
 ## Resumen ejecutivo
 
-**Total de hallazgos:** 23  
+**Total de hallazgos:** 29 (v1: 23 + v2: 6 nuevos)  
 **Bloqueantes:** 5  
-**Altos:** 6  
-**Medios:** 8  
-**Bajos:** 4
+**Altos:** 10 (+4 en v2: Loans, Investments, Settings)  
+**Medios:** 9 (+1 en v2)  
+**Bajos:** 5 (+1 en v2)
 
-La app cuenta con accesibilidad básica en estructuras del sistema (Pickers, Toggles, Forms), pero **tiene deficiencias críticas en los componentes custom:** SobranteBadge, LineItemRow, SummaryPanel, y LockView carecen de labels de accesibilidad, values declarados, y respeto a preferencias del usuario (Reduce Motion, Reduce Transparency). El naranja de marca sobre Frost translúcido cae por debajo del ratio WCAG AA. La pantalla de quincena no se ha probado con Dynamic Type en tamaños Accessibility (AX5+).
+**v1 (Initial audit):** Deficiencias críticas en componentes custom (SobranteBadge, LineItemRow, SummaryPanel, LockView) — falta de labels, values, Reduce Motion, Reduce Transparency. Naranja sobre Frost cae por debajo de WCAG AA. Dynamic Type no probado en AX5+.
+
+**v2 (Post-DragGesture):** LineItemRow ahora implementa swipe leading/trailing con accesibilidad completa (`.accessibilityActions`, `.accessibilityValue`, `originLabel`). Nuevas pantallas (Loans "Hasta liquidar", Investments, Settings Exportar/Importar) descubren 6 hallazgos de a11y en avisos naranja, botones, y confirmaciones destructivas sin labels accesibles.
 
 ---
 
@@ -823,6 +825,80 @@ HStack(alignment: .top, spacing: 20) {
 ### Pantalla de bloqueo
 - [ ] Verificar que el botón "Desbloquear" tiene foco inicial
 - [ ] En Voice Control, debe poder decir "Tap Desbloquear" sin navegar primero
+
+---
+
+---
+
+## Revisión incremental — Post-DragGesture (v2, 2026-09-15)
+
+**LineItemRow.swift (cambios implementados):**
+✅ Línea 31: `@Environment(\.accessibilityReduceMotion)` cargado  
+✅ Línea 62-74: `originLabel` con etiquetas ("recurrente", "suscripción", "préstamo", "inversión")  
+✅ Línea 121: Settle animation respeta `reduceMotion`  
+✅ Línea 164-172: `.accessibilityElement(children: .combine)`, `.accessibilityValue()`, `.accessibilityActions()` ("Activar/Desactivar", "Marcar/Desmarcar pagado")  
+✅ Línea 223: `.strikethrough(!line.isActive)` previene opacidad como único indicador  
+✅ Línea 236-237: Opacidad 0.4 + animación que respeta Reduce Motion  
+✅ Línea 248-253: `accessibilityStateValue` anuncia "inactiva" y "pagada" por separado  
+⚠️ **Línea 115-116:** DragGesture valida vertical drags, pero dos dedos de VoiceOver (swipe de exploración) pueden conflictuar — verificar en dispositivo real
+
+**Nuevos hallazgos (pantallas nuevas):**
+
+#### 24. LoansView — Aviso naranja SIN `.accessibilityLabel()`
+**Archivo:** `/Apps/Fintrol/Fintrol/Features/Loans/LoansView.swift:413-416`  
+**Problema:** Préstamo "Hasta liquidar" con pago menor que interés mensual — solo visual naranja ("Este pago no cubre el interés..."). Sin `.accessibilityLabel()`, VoiceOver no anuncia advertencia.  
+**Fix:** `.accessibilityLabel("Advertencia: pago insuficiente para cubrir interés mensual")`  
+**Severidad:** 🟡 ALTO (es financiero e importante)
+
+#### 25. LoansView — Botón "plus" SIN `.accessibilityLabel()`
+**Archivo:** `/Apps/Fintrol/Fintrol/Features/Loans/LoansView.swift:76`  
+**Problema:** `Button { ... } label: { Image(systemName: "plus") }` sin label.  
+**Fix:** `.accessibilityLabel("Agregar préstamo")`  
+**Severidad:** 🟡 ALTO
+
+#### 26. InvestmentsView — Botón "plus" y icono chart SIN labels
+**Archivo:** `/Apps/Fintrol/Fintrol/Features/Investments/InvestmentsView.swift:81, 94-96`  
+**Problema:** Botón "plus" sin label, icono chart.line sin `.accessibilityLabel()` ni `.accessibilityHidden()`.  
+**Fix:** Botón: `.accessibilityLabel("Agregar cuenta de inversiones")` — Icono: `.accessibilityHidden(true)` (es decorativo, el nombre la describe)  
+**Severidad:** 🟡 ALTO
+
+#### 27. InvestmentsView — Fila de inversión SIN `.accessibilityValue()`
+**Archivo:** `/Apps/Fintrol/Fintrol/Features/Investments/InvestmentsView.swift:186`  
+**Problema:** `.accessibilityElement(children: .combine)` en línea 168-188, pero sin `.accessibilityValue()` que anuncie estado (desactivada/editada/proyectada).  
+**Fix:** `.accessibilityValue(entry.line.isActive ? (entry.line.isManuallyEdited ? "editada" : "proyectada") : "desactivada")`  
+**Severidad:** 🟡 ALTO
+
+#### 28. SettingsView — Botón toggle "eye" (mostrar/ocultar token)
+**Archivo:** `/Apps/Fintrol/Fintrol/Features/Settings/SettingsView.swift:350`  
+**Problema:** ✅ Ya tiene `.accessibilityLabel()` ("Ocultar token" / "Mostrar token"). No es hallazgo.  
+**Severidad:** N/A
+
+#### 29. SettingsView — confirmationDialog destructivo SIN contexto accesible
+**Archivo:** `/Apps/Fintrol/Fintrol/Features/Settings/SettingsView.swift:175-184`  
+**Problema:** `confirmationDialog("Esto reemplaza TODOS los datos actuales...")` — el diálogo es accesible (del sistema), pero sin `.accessibilityLabel()` adicional que enfatice "DESTRUCTIVO".  
+**Fix:** El título ya lo dice. VoiceOver lo anunciará. Sin acción requerida.  
+**Severidad:** 🟢 BAJO (el sistema ya lo maneja)
+
+#### 30. SettingsView — Mensajes de error/éxito de token SIN a11y
+**Archivo:** `/Apps/Fintrol/Fintrol/Features/Settings/SettingsView.swift:360-364`  
+**Problema:** Texto de resultado en rojo o verde (línea 362-363) sin `.accessibilityLabel()`. VoiceOver lee el color, no el contexto.  
+**Fix:** `.accessibilityLabel(tokenTestIsError ? "Error: " + tokenTestMessage : "Éxito: " + tokenTestMessage)`  
+**Severidad:** 🟡 ALTO (es información crítica)
+
+#### 31. SettingsView — Opacity 0.4 SIN texto alternativo
+**Archivo:** `/Apps/Fintrol/Fintrol/Features/Settings/SettingsView.swift:119`  
+**Problema:** Picker "Tiempo de re-bloqueo" con `.opacity(lockStore.isLockEnabled ? 1 : 0.4)`. La opacidad es el único indicador de que está deshabilitado.  
+**Fix:** `.accessibilityHint(lockStore.isLockEnabled ? "" : "Disponible cuando Face ID/Touch ID esté habilitado")`  
+**Severidad:** 🔵 MEDIO
+
+**Resumen v2:**
+- 6 nuevos hallazgos (todos en pantallas nuevas: Loans, Investments, Settings)
+- 4 altos (avisos/botones/valores financieros sin labels)
+- 1 medio (opacity sin hint)
+- 1 bajo (confirmationDialog — ya manejado por sistema)
+- 1 ya correcto (toggle eye button)
+
+**Total acumulado:** 23 (v1) + 6 (v2) = **29 hallazgos** (5 bloqueantes, 10 altos, 9 medios, 5 bajos)
 
 ---
 

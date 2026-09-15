@@ -196,3 +196,92 @@ struct LoanEngineTests {
         #expect(schedule.allSatisfy { $0.date.day == 20 })
     }
 }
+
+/// TRD "Modo `.revolving` — `LoanEngine.revolvingSchedule`": the 4 mandatory tests, all pure.
+@Suite("LoanEngine — revolvingSchedule (\"Hasta liquidar\")")
+struct LoanEngineRevolvingTests {
+    private let start = CivilDate(year: 2026, month: 1, day: 1)
+
+    // MARK: - 1. Caso Ada: interés mes 1 ~= 17.99, saldo tras 2 pagos
+
+    @Test("Ada: principal=824, apr=26.2%, expectedPayment=200 quincenal -> interest month 1 ~= 17.99, balance after 2 payments")
+    func adaCaseInterestAndBalanceAfterTwoPayments() {
+        let result = LoanEngine.revolvingSchedule(
+            principal: 824, apr: Decimal(string: "0.262")!, expectedPayment: 200,
+            frequency: .biweekly, start: start, actualPayments: [:]
+        )
+        #expect(result.neverEnds == false)
+        #expect(result.rows.count >= 2)
+
+        let row1 = result.rows[0]
+        #expect(row1.interest == Decimal(string: "17.99")!)
+        #expect(row1.payment == 200)
+        #expect(row1.remainingBalance == Decimal(string: "641.99")!)
+        #expect(row1.isProjected == true)
+
+        // Row 2 lands in the same civil month (Jan 1 -> Jan 16) -> no second interest charge.
+        let row2 = result.rows[1]
+        #expect(row2.date.month == row1.date.month)
+        #expect(row2.interest == 0)
+        #expect(row2.payment == 200)
+        #expect(row2.remainingBalance == Decimal(string: "441.99")!)
+
+        // A projected end date must exist (the schedule terminates, doesn't run forever).
+        #expect(result.rows.last?.remainingBalance == 0)
+    }
+
+    // MARK: - 2. A real payment overrides expectedPayment and reshapes the balance forward
+
+    @Test("A real payment of 150 (instead of the expected 200) on an already-materialized period recalculates the balance from there")
+    func realPaymentOverridesExpectedAndReshapesBalance() {
+        let secondDate = start.addingDays(15)
+        let result = LoanEngine.revolvingSchedule(
+            principal: 824, apr: Decimal(string: "0.262")!, expectedPayment: 200,
+            frequency: .biweekly, start: start, actualPayments: [secondDate: 150]
+        )
+
+        let row1 = result.rows[0]
+        #expect(row1.isProjected == true, "row 1 has no actual payment recorded -> still projected")
+        #expect(row1.remainingBalance == Decimal(string: "641.99")!)
+
+        let row2 = result.rows[1]
+        #expect(row2.date == secondDate)
+        #expect(row2.payment == 150)
+        #expect(row2.isProjected == false, "a real payment was recorded for this date")
+        #expect(row2.remainingBalance == Decimal(string: "491.99")!, "641.99 - 150, not 641.99 - 200")
+    }
+
+    // MARK: - 3. neverEnds when expectedPayment doesn't cover month-1 interest
+
+    @Test("expectedPayment <= the initial month's interest -> neverEnds == true, bounded to 10 years, no infinite loop")
+    func expectedPaymentBelowInterestNeverEnds() {
+        // Month-1 interest on 824 at 26.2% APR is ~17.99 (see Ada test); biweekly means two
+        // payments land per month, so the real comparison is 8*2=16, still short of 17.99.
+        let result = LoanEngine.revolvingSchedule(
+            principal: 824, apr: Decimal(string: "0.262")!, expectedPayment: 8,
+            frequency: .biweekly, start: start, actualPayments: [:]
+        )
+        #expect(result.neverEnds == true)
+        // Bounded to 10 years of biweekly periods (24/year) -> exactly 240 rows, not unbounded.
+        #expect(result.rows.count == 24 * 10)
+        // The balance must never have reached 0 (that's the whole point of "never ends").
+        #expect(result.rows.allSatisfy { $0.remainingBalance > 0 })
+    }
+
+    // MARK: - 4. Liquidación anticipada: a real payment bigger than the balance clamps, never negative
+
+    @Test("A real payment larger than the remaining balance clamps to exactly the balance — never a negative balance or an unexplained overpayment")
+    func earlyPayoffClampsToExactBalance() {
+        let thirdDate = LoanEngine.endDate(startDate: start, termMonths: 3, frequency: .monthly(day: 1))
+        let result = LoanEngine.revolvingSchedule(
+            principal: 300, apr: 0, expectedPayment: 100,
+            frequency: .monthly(day: 1), start: start, actualPayments: [thirdDate: 500]
+        )
+        #expect(result.rows.count == 3)
+        #expect(result.rows[0].remainingBalance == 200)
+        #expect(result.rows[1].remainingBalance == 100)
+        let last = result.rows[2]
+        #expect(last.payment == 100, "clamped down from the 500 actual payment to the exact 100 remaining")
+        #expect(last.remainingBalance == 0)
+    }
+}

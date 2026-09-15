@@ -14,6 +14,7 @@
 		0A79791F1C12E3459E19A4FB /* FintrolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5370CF4674A90E65EB76DAB1 /* FintrolApp.swift */; };
 		0E3F33440DFA5A4295EAF1DC /* CivilDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DDDEDDF7E3C201E0A27E4A4 /* CivilDate.swift */; };
 		11CAAE09334C0636C967AD7E /* LockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5964AF2F1983AC124D8E9127 /* LockView.swift */; };
+		198F7F0385EB8E68646774F3 /* InvestmentsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C913669873C7AB638CC20C /* InvestmentsTests.swift */; };
 		1A2395EADDE6EC8639AF6452 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 24B1DC55433DE08AC3220482 /* SettingsView.swift */; };
 		1A5E670DB6E434FD7493A2CF /* SubscriptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60758C3951BA86F46835DB6A /* SubscriptionsView.swift */; };
 		1F8C49F5977EAAB390BA4AA9 /* PeriodCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9AC0F29C763AEC54F48E526 /* PeriodCoordinator.swift */; };
@@ -27,6 +28,7 @@
 		3821C728EF4AF6CB6101C4A7 /* LineItemRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F449DFDD65A97258A0E6D17 /* LineItemRow.swift */; };
 		48238688EC5228BFF14D4D04 /* ExchangeRateParser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1D0DEDC90BA7BFE287E95846 /* ExchangeRateParser.swift */; };
 		4FB62CA1221564B0204B20B1 /* CarryOverEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 422FA577565059C3C76334B3 /* CarryOverEngineTests.swift */; };
+		559708D241BCF6AEB9CEDE8C /* InvestmentsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58B7F458C6C66604B9582158 /* InvestmentsView.swift */; };
 		5898034E90B9DEA4D287A352 /* FintrolEnums.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DAD2937F423E2E88779C1D7 /* FintrolEnums.swift */; };
 		58FFE88721E527CFE81E4FB4 /* BiometricLockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 637B58D6B3A3F2A8DCE68B9E /* BiometricLockStore.swift */; };
 		5B6A6767102BAD8C2A6CD267 /* SchemaV1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21E8A4D5E23555DBCBD83939 /* SchemaV1.swift */; };
@@ -49,6 +51,7 @@
 		9BADBDD6F7D7537FF953027C /* LoanDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 685447DD5EA2840846D7D750 /* LoanDetailView.swift */; };
 		A123F0DB5EE279803445F221 /* ProjectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 407E30CEC4402B9644F1EEB7 /* ProjectionEngine.swift */; };
 		A14FE770B28993740AF0266A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58A4DB18C8F47B32200C86BE /* RootView.swift */; };
+		A279DC5E3B2FE0582775AA7B /* SubscriptionImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4756E40F5FBEF48E07F15EE /* SubscriptionImportService.swift */; };
 		AA33E04720F15DD9E7CEC737 /* LoansView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 143019058E3A32124A690623 /* LoansView.swift */; };
 		AC0344FEF46ECB4504AD689F /* ExchangeRateServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779AF77C5F0B9A84ACF875A0 /* ExchangeRateServiceTests.swift */; };
 		AC6867235EA85294AA6E65E7 /* SchemaV1Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9ECA88964595DF093459732 /* SchemaV1Tests.swift */; };
@@ -60,11 +63,15 @@
 		BE9A72BC6A5325B5035A0722 /* CurrencyConversion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AA5AC1BC3720BED0F1DB161 /* CurrencyConversion.swift */; };
 		C914807C575A724C2102E4F8 /* PeriodCoordinateTitleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1840D41607A8A2F3A033394E /* PeriodCoordinateTitleTests.swift */; };
 		CDE48F2F7CB2BD595E68CAE6 /* PeriodDateEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14A86F66EACF89681EEC3A46 /* PeriodDateEngineTests.swift */; };
+		D1B2688563F24B5B84188767 /* BackupServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A8B79E3AFB7125A791C562A7 /* BackupServiceTests.swift */; };
 		D1E5038035AA4733865101FE /* ExchangeRateStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0F8AA61D2957368739F96A86 /* ExchangeRateStoreTests.swift */; };
+		D55D7CF646FB4D3629D72B95 /* Info-iOS-extra.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4CAFDD48DAD3790FDECC4CE2 /* Info-iOS-extra.plist */; };
 		D593E02A9A32E17E8AD4FD83 /* Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 109B691C8E0D1BE788716349 /* Validation.swift */; };
 		DA895DF4DF376F7336EFECA2 /* LoanEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36C4060BA9B266F4E1B06095 /* LoanEngine.swift */; };
 		E05AECF96F4CD97019E569E5 /* RecurringListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16B86BB729B340F616B8DE0F /* RecurringListView.swift */; };
+		E7E9696786C9041A81FBEB97 /* SubscriptionImportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D5362C9AA51785039A2E67E /* SubscriptionImportServiceTests.swift */; };
 		EBE2712427A60C5AC18B3540 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58740E5644A9FC34CC2CB438 /* KeychainStore.swift */; };
+		EC136827336ECE200BF4103F /* BackupService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74F2BF056113BD121E26D415 /* BackupService.swift */; };
 		ED4A24355090FEE88AD9CE4C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 5B1EF6D2AA73802B0C544D87 /* Assets.xcassets */; };
 		F0D8C6F9ACA314F9BF5F39F1 /* CurrencyConversionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2952DC677977D07536F48676 /* CurrencyConversionTests.swift */; };
 		F74A6EB486BA59E8D0A55E65 /* Period.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDDE37C3F087B192719019B7 /* Period.swift */; };
@@ -108,11 +115,13 @@
 		422FA577565059C3C76334B3 /* CarryOverEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarryOverEngineTests.swift; sourceTree = "<group>"; };
 		4AA5AC1BC3720BED0F1DB161 /* CurrencyConversion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrencyConversion.swift; sourceTree = "<group>"; };
 		4BFB532C23EA4267021A610B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		4CAFDD48DAD3790FDECC4CE2 /* Info-iOS-extra.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-iOS-extra.plist"; sourceTree = "<group>"; };
 		4E3BBE08E44596EC5C77C746 /* SummaryPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryPanel.swift; sourceTree = "<group>"; };
 		5370CF4674A90E65EB76DAB1 /* FintrolApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FintrolApp.swift; sourceTree = "<group>"; };
 		580436E95AF69CE70C691745 /* PeriodView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodView.swift; sourceTree = "<group>"; };
 		58740E5644A9FC34CC2CB438 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		58A4DB18C8F47B32200C86BE /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		58B7F458C6C66604B9582158 /* InvestmentsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestmentsView.swift; sourceTree = "<group>"; };
 		5964AF2F1983AC124D8E9127 /* LockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockView.swift; sourceTree = "<group>"; };
 		5B1EF6D2AA73802B0C544D87 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		60758C3951BA86F46835DB6A /* SubscriptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionsView.swift; sourceTree = "<group>"; };
@@ -121,22 +130,26 @@
 		6652F990E541D1BDC8D9C65A /* Decimal+Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Decimal+Formatting.swift"; sourceTree = "<group>"; };
 		685447DD5EA2840846D7D750 /* LoanDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoanDetailView.swift; sourceTree = "<group>"; };
 		735D769B6B54904BFBE97C2A /* EdgeCaseEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EdgeCaseEngineTests.swift; sourceTree = "<group>"; };
+		74F2BF056113BD121E26D415 /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
 		779AF77C5F0B9A84ACF875A0 /* ExchangeRateServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateServiceTests.swift; sourceTree = "<group>"; };
 		7AC3270B50627B8804936A84 /* Fintrol-macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Fintrol-macOS.entitlements"; sourceTree = "<group>"; };
 		7BFB8EABB58D0EA220DD5E1B /* JumpSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpSheet.swift; sourceTree = "<group>"; };
 		8519B1D9E52BDD8098759799 /* AppMigrationPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMigrationPlan.swift; sourceTree = "<group>"; };
+		8D5362C9AA51785039A2E67E /* SubscriptionImportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionImportServiceTests.swift; sourceTree = "<group>"; };
 		8D63937C11EADCF4F6AF835A /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
 		8F471542AEAB1F58B5658BC0 /* SchemaV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaV2.swift; sourceTree = "<group>"; };
 		8FCDB25D1D9A74446484B90C /* Calendar+Fintrol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Calendar+Fintrol.swift"; sourceTree = "<group>"; };
 		91CFC0EAD13F275520ACAD22 /* AppleAppLabUI */ = {isa = PBXFileReference; lastKnownFileType = folder; name = AppleAppLabUI; path = ../../Packages/AppleAppLabUI; sourceTree = SOURCE_ROOT; };
 		953E68696F2BE19F5BB1B3A1 /* ExchangeRateParserTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateParserTests.swift; sourceTree = "<group>"; };
 		A4F4F7434766B5EC762084C6 /* ExchangeRateCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateCache.swift; sourceTree = "<group>"; };
+		A8B79E3AFB7125A791C562A7 /* BackupServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupServiceTests.swift; sourceTree = "<group>"; };
 		A9ECA88964595DF093459732 /* SchemaV1Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaV1Tests.swift; sourceTree = "<group>"; };
 		AEB3FA02D477577967741806 /* ProjectionEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectionEngineTests.swift; sourceTree = "<group>"; };
 		BF0962B22E9720DCB4EAEDDF /* SobranteStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SobranteStatus.swift; sourceTree = "<group>"; };
 		BF15AFC381821B8160A698FF /* PeriodCoordinate+Title.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PeriodCoordinate+Title.swift"; sourceTree = "<group>"; };
 		C13995C039B33A6DAF2F9748 /* ProjectionRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectionRegressionTests.swift; sourceTree = "<group>"; };
 		C1BA3D7F2BFABFF684660DB5 /* PeriodCoordinatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodCoordinatorTests.swift; sourceTree = "<group>"; };
+		C4756E40F5FBEF48E07F15EE /* SubscriptionImportService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionImportService.swift; sourceTree = "<group>"; };
 		C8E470E33169582D672183B5 /* RecurringItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecurringItem.swift; sourceTree = "<group>"; };
 		C9AC0F29C763AEC54F48E526 /* PeriodCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodCoordinator.swift; sourceTree = "<group>"; };
 		D55B8A2CF17EEFED276B42C8 /* Loan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Loan.swift; sourceTree = "<group>"; };
@@ -144,6 +157,7 @@
 		D95D42AD53F5F416B2CFD60A /* CarryOverEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarryOverEngine.swift; sourceTree = "<group>"; };
 		D9D87236BC3B667B8A8816A3 /* EngineTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineTypes.swift; sourceTree = "<group>"; };
 		DE8F546B2B544310D95425C3 /* Fintrol-iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Fintrol-iOS.entitlements"; sourceTree = "<group>"; };
+		E8C913669873C7AB638CC20C /* InvestmentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestmentsTests.swift; sourceTree = "<group>"; };
 		EC882F5DF8F984BA0E4D5504 /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
 		F3695B6D6E219D97D703A990 /* ExchangeRateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateService.swift; sourceTree = "<group>"; };
 		FBB24923FD71AE593BED955C /* PeriodDateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodDateEngine.swift; sourceTree = "<group>"; };
@@ -230,12 +244,14 @@
 		2F8BE111DEB9F4A77278E18D /* FintrolTests */ = {
 			isa = PBXGroup;
 			children = (
+				A8B79E3AFB7125A791C562A7 /* BackupServiceTests.swift */,
 				422FA577565059C3C76334B3 /* CarryOverEngineTests.swift */,
 				2952DC677977D07536F48676 /* CurrencyConversionTests.swift */,
 				735D769B6B54904BFBE97C2A /* EdgeCaseEngineTests.swift */,
 				953E68696F2BE19F5BB1B3A1 /* ExchangeRateParserTests.swift */,
 				779AF77C5F0B9A84ACF875A0 /* ExchangeRateServiceTests.swift */,
 				0F8AA61D2957368739F96A86 /* ExchangeRateStoreTests.swift */,
+				E8C913669873C7AB638CC20C /* InvestmentsTests.swift */,
 				04F52199E5869BBC23728CF3 /* KeychainStoreTests.swift */,
 				1052E0CFE7E98D118F219221 /* LoanEngineTests.swift */,
 				0B01638C95569D9F3DCD4754 /* PaymentDayStorageTests.swift */,
@@ -245,6 +261,7 @@
 				AEB3FA02D477577967741806 /* ProjectionEngineTests.swift */,
 				C13995C039B33A6DAF2F9748 /* ProjectionRegressionTests.swift */,
 				A9ECA88964595DF093459732 /* SchemaV1Tests.swift */,
+				8D5362C9AA51785039A2E67E /* SubscriptionImportServiceTests.swift */,
 			);
 			path = FintrolTests;
 			sourceTree = "<group>";
@@ -270,6 +287,7 @@
 			isa = PBXGroup;
 			children = (
 				CCCF8D3155EEBF76564E984E /* Hub */,
+				BB21845F245E48F52687CF04 /* Investments */,
 				0F21583F816922B5366AA718 /* Loans */,
 				4F9E2B59BFB0A61869A673CC /* Lock */,
 				7D9F7F475E3AD747CE5C9FF2 /* Overview */,
@@ -324,6 +342,7 @@
 				5B1EF6D2AA73802B0C544D87 /* Assets.xcassets */,
 				DE8F546B2B544310D95425C3 /* Fintrol-iOS.entitlements */,
 				7AC3270B50627B8804936A84 /* Fintrol-macOS.entitlements */,
+				4CAFDD48DAD3790FDECC4CE2 /* Info-iOS-extra.plist */,
 				4BFB532C23EA4267021A610B /* PrivacyInfo.xcprivacy */,
 			);
 			path = Fintrol;
@@ -382,6 +401,7 @@
 		A7894F7038A16CF4FA67C8FD /* Engine */ = {
 			isa = PBXGroup;
 			children = (
+				74F2BF056113BD121E26D415 /* BackupService.swift */,
 				D95D42AD53F5F416B2CFD60A /* CarryOverEngine.swift */,
 				0DDDEDDF7E3C201E0A27E4A4 /* CivilDate.swift */,
 				4AA5AC1BC3720BED0F1DB161 /* CurrencyConversion.swift */,
@@ -390,6 +410,7 @@
 				FBB24923FD71AE593BED955C /* PeriodDateEngine.swift */,
 				407E30CEC4402B9644F1EEB7 /* ProjectionEngine.swift */,
 				BF0962B22E9720DCB4EAEDDF /* SobranteStatus.swift */,
+				C4756E40F5FBEF48E07F15EE /* SubscriptionImportService.swift */,
 			);
 			path = Engine;
 			sourceTree = "<group>";
@@ -400,6 +421,14 @@
 				24B1DC55433DE08AC3220482 /* SettingsView.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		BB21845F245E48F52687CF04 /* Investments */ = {
+			isa = PBXGroup;
+			children = (
+				58B7F458C6C66604B9582158 /* InvestmentsView.swift */,
+			);
+			path = Investments;
 			sourceTree = "<group>";
 		};
 		CCCF8D3155EEBF76564E984E /* Hub */ = {
@@ -507,6 +536,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				ED4A24355090FEE88AD9CE4C /* Assets.xcassets in Resources */,
+				D55D7CF646FB4D3629D72B95 /* Info-iOS-extra.plist in Resources */,
 				25DBDBEA92FAAB60B6AA4758 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -518,12 +548,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D1B2688563F24B5B84188767 /* BackupServiceTests.swift in Sources */,
 				4FB62CA1221564B0204B20B1 /* CarryOverEngineTests.swift in Sources */,
 				F0D8C6F9ACA314F9BF5F39F1 /* CurrencyConversionTests.swift in Sources */,
 				79A57F5F80F59AA69EDC0021 /* EdgeCaseEngineTests.swift in Sources */,
 				843ECC89DB3A38C57DD850D2 /* ExchangeRateParserTests.swift in Sources */,
 				AC0344FEF46ECB4504AD689F /* ExchangeRateServiceTests.swift in Sources */,
 				D1E5038035AA4733865101FE /* ExchangeRateStoreTests.swift in Sources */,
+				198F7F0385EB8E68646774F3 /* InvestmentsTests.swift in Sources */,
 				718DBC36253C97CC3ECF33D1 /* KeychainStoreTests.swift in Sources */,
 				32BA93D9CEB76C8673303307 /* LoanEngineTests.swift in Sources */,
 				AE0C4D87B2095B03DDE3440C /* PaymentDayStorageTests.swift in Sources */,
@@ -533,6 +565,7 @@
 				2547499E20AFA45EB980FCF1 /* ProjectionEngineTests.swift in Sources */,
 				27C3E8A1EBBA5043AADB5D51 /* ProjectionRegressionTests.swift in Sources */,
 				AC6867235EA85294AA6E65E7 /* SchemaV1Tests.swift in Sources */,
+				E7E9696786C9041A81FBEB97 /* SubscriptionImportServiceTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -541,6 +574,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				0254C54999A1B2671DA79A70 /* AppMigrationPlan.swift in Sources */,
+				EC136827336ECE200BF4103F /* BackupService.swift in Sources */,
 				58FFE88721E527CFE81E4FB4 /* BiometricLockStore.swift in Sources */,
 				9068A77D69C077ECCF4442EE /* Calendar+Fintrol.swift in Sources */,
 				97168AA702FAE200F3A7AB89 /* CarryOverEngine.swift in Sources */,
@@ -554,6 +588,7 @@
 				210CEEFE4CD5AA7C28A85DAE /* ExchangeRateStore.swift in Sources */,
 				0A79791F1C12E3459E19A4FB /* FintrolApp.swift in Sources */,
 				5898034E90B9DEA4D287A352 /* FintrolEnums.swift in Sources */,
+				559708D241BCF6AEB9CEDE8C /* InvestmentsView.swift in Sources */,
 				04E89BD195E2D5B96B9B1EBA /* JumpSheet.swift in Sources */,
 				EBE2712427A60C5AC18B3540 /* KeychainStore.swift in Sources */,
 				5C5EFAB2C3798E7AA7771023 /* LineItem.swift in Sources */,
@@ -581,6 +616,7 @@
 				080E0B3657C80B186399DC31 /* SobranteBadge.swift in Sources */,
 				8B8223224942FECD32DCE888 /* SobranteStatus.swift in Sources */,
 				7890CF4B8F0AC8E4E297B822 /* Subscription.swift in Sources */,
+				A279DC5E3B2FE0582775AA7B /* SubscriptionImportService.swift in Sources */,
 				1A5E670DB6E434FD7493A2CF /* SubscriptionsView.swift in Sources */,
 				BDAFEC61A48E72C1D303834E /* SummaryPanel.swift in Sources */,
 				D593E02A9A32E17E8AD4FD83 /* Validation.swift in Sources */,
@@ -611,8 +647,11 @@
 				ENABLE_HARDENED_RUNTIME = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "Fintrol/Info-iOS-extra.plist";
+				"INFOPLIST_FILE[sdk=iphonesimulator*]" = "Fintrol/Info-iOS-extra.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Fintrol;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Fintrol usa Face ID para proteger el acceso a tu presupuesto.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -827,8 +866,11 @@
 				ENABLE_HARDENED_RUNTIME = NO;
 				"ENABLE_HARDENED_RUNTIME[sdk=macosx*]" = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				"INFOPLIST_FILE[sdk=iphoneos*]" = "Fintrol/Info-iOS-extra.plist";
+				"INFOPLIST_FILE[sdk=iphonesimulator*]" = "Fintrol/Info-iOS-extra.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = Fintrol;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.finance";
+				INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace = YES;
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Fintrol usa Face ID para proteger el acceso a tu presupuesto.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

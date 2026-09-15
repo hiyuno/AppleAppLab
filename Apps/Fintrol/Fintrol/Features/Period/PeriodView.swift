@@ -39,13 +39,13 @@ struct PeriodView: View {
 
     private var recurringSnapshots: [RecurringItemSnapshot] {
         recurringItems.map {
-            RecurringItemSnapshot(id: $0.id, kind: $0.kind, title: $0.title, amount: $0.amount, currency: $0.currency, frequency: $0.frequency, startDate: $0.civilStartDate, endDate: $0.civilEndDate, isActive: $0.isActive)
+            RecurringItemSnapshot(id: $0.id, kind: $0.kind, title: $0.title, amount: $0.amount, currency: $0.currency, frequency: $0.frequency, startDate: $0.civilStartDate, endDate: $0.civilEndDate, isActive: $0.isActive, category: $0.category)
         }
     }
 
     private var subscriptionSnapshots: [SubscriptionSnapshot] {
         subscriptions.map {
-            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind)
+            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind, isActive: $0.isActive)
         }
     }
 
@@ -226,6 +226,15 @@ struct PeriodView: View {
             .accessibilityHidden(true) // the block's own accessibilityLabel below covers this
 
             VStack(spacing: 0) {
+                // FALLBACK (documented in the approved plan): a `List` here — the only way to
+                // get native `.swipeActions` — was tried first but blocks touches to
+                // `captureRow` below it even at zero rows/`.fixedSize(vertical:)` (confirmed
+                // empirically in the simulator: "Agregar ingreso" stopped responding at all).
+                // `LineItemRow` implements its own leading/trailing swipe via `DragGesture`
+                // instead (see that file) — full-swipe-only (no partial reveal-then-tap
+                // state): leading commits Activar/Desactivar, trailing commits Marcar/
+                // Desmarcar pagado. Eliminar/Editar stay reachable via `.contextMenu` (long
+                // press) and `accessibilityActions`, both already gesture-independent.
                 ForEach(lines) { line in
                     LineItemRow(
                         line: line,
@@ -235,7 +244,9 @@ struct PeriodView: View {
                         onStartEditing: { editingLineID = line.id },
                         onCommit: { commitEdit() },
                         onDelete: line.origin == .manual ? { deleteLine(line) } : nil,
-                        onDiscardDraft: draftLineID == line.id ? { discardDraft() } : nil
+                        onDiscardDraft: draftLineID == line.id ? { discardDraft() } : nil,
+                        onToggleActive: { toggleActive(line) },
+                        onTogglePaid: { togglePaid(line) }
                     )
                     if line.id != lines.last?.id {
                         Divider()
@@ -396,6 +407,27 @@ struct PeriodView: View {
               let line = (period.lineItems ?? []).first(where: { $0.id == draftLineID }) else { return }
         period.lineItems?.removeAll { $0.id == draftLineID }
         context.delete(line)
+        try? context.save()
+    }
+
+    /// Swipe-leading (DESIGN_LIQUID.md): toggles `isActive`, which affects every total —
+    /// needs the same persist-then-`recomputeForward` sequence as any other edit. Counts as a
+    /// manual edit on non-manual lines so `reproject*` never silently reactivates it later.
+    private func toggleActive(_ line: LineItem) {
+        line.isActive.toggle()
+        if line.origin != .manual { line.isManuallyEdited = true }
+        try? context.save()
+        if let period {
+            PeriodCoordinator.recomputeForward(after: period, context: context, exchangeRate: effectiveRate)
+            try? context.save()
+        }
+    }
+
+    /// Swipe-trailing's first action: purely visual, no recompute — but still counts as a
+    /// manual edit so a later `reproject*` doesn't reset it (same reasoning as `toggleActive`).
+    private func togglePaid(_ line: LineItem) {
+        line.isPaid.toggle()
+        if line.origin != .manual { line.isManuallyEdited = true }
         try? context.save()
     }
 

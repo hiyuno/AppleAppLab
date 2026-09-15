@@ -11,6 +11,7 @@ enum FintrolSection: String, CaseIterable, Identifiable {
     case services
     case subscriptions
     case loans
+    case investments
     case overview
 
     var id: String { rawValue }
@@ -23,6 +24,7 @@ enum FintrolSection: String, CaseIterable, Identifiable {
         case .services: "Servicios"
         case .subscriptions: "Suscripciones"
         case .loans: "Préstamos"
+        case .investments: "Inversiones"
         case .overview: "Overview"
         }
     }
@@ -35,6 +37,7 @@ enum FintrolSection: String, CaseIterable, Identifiable {
         case .services: "house.fill"
         case .subscriptions: "repeat"
         case .loans: "banknote"
+        case .investments: "chart.line.uptrend.xyaxis"
         case .overview: "chart.bar.fill"
         }
     }
@@ -182,6 +185,7 @@ private struct MacRootView: View {
         case .services: ServicesView()
         case .subscriptions: SubscriptionsView()
         case .loans: LoansView()
+        case .investments: InvestmentsView()
         case .overview: OverviewView()
         }
     }

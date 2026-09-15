@@ -14,6 +14,14 @@ public final class RecurringItem {
     public var startDate: Date = Date()
     public var endDate: Date?
     public var isActive: Bool = true
+    /// Added post-v1 (pre-release, `SchemaV2` in place — no migration): `.investment` marks
+    /// this as an "Inversiones" contribution (feature #12) instead of an ordinary recurring
+    /// income/expense — its generated lines get `LineOrigin.investment` instead of
+    /// `.recurring`, and it's excluded from "Ingresos/Gastos recurrentes".
+    public var categoryRaw: String = RecurringItemCategory.general.rawValue
+    /// Only meaningful when `category == .investment` — the account/broker name ("GBM",
+    /// "Cetesdirecto"), shown in the Inversiones list instead of a generic title.
+    public var accountName: String?
 
     public init(
         id: UUID = UUID(),
@@ -24,7 +32,9 @@ public final class RecurringItem {
         frequency: RecurringFrequency,
         startDate: Date,
         endDate: Date? = nil,
-        isActive: Bool = true
+        isActive: Bool = true,
+        category: RecurringItemCategory = .general,
+        accountName: String? = nil
     ) {
         self.id = id
         self.kindRaw = kind.rawValue
@@ -34,7 +44,14 @@ public final class RecurringItem {
         self.startDate = startDate
         self.endDate = endDate
         self.isActive = isActive
+        self.categoryRaw = category.rawValue
+        self.accountName = accountName
         self.setFrequency(frequency)
+    }
+
+    public var category: RecurringItemCategory {
+        get { RecurringItemCategory(rawValue: categoryRaw) ?? .general }
+        set { categoryRaw = newValue.rawValue }
     }
 
     public var kind: LineKind {

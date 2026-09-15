@@ -168,8 +168,56 @@ public enum PeriodCoordinator {
             order += 1
         }
 
+        // `.revolving` loans (per-loan, since each needs its own actualPayments calendar).
+        for loan in loans where loan.isActive && loan.mode == .revolving {
+            let actualPayments = revolvingActualPayments(for: loan, context: context)
+            if let generated = ProjectionEngine.generateRevolvingLoanLine(for: coordinate, loan: loan, actualPayments: actualPayments) {
+                let line = LineItem(
+                    kind: generated.kind, title: generated.title, amount: generated.amount, currency: generated.currency,
+                    sortOrder: order, origin: generated.origin, sourceLoanID: generated.sourceLoanID,
+                    exchangeRateSnapshot: generated.currency == .mxn ? exchangeRate : nil,
+                    period: period
+                )
+                context.insert(line)
+                lines.append(line)
+                order += 1
+            }
+        }
+
         period.lineItems = lines
         return period
+    }
+
+    /// Builds the `[CivilDate: Decimal]` real-payment map `generateRevolvingLoanLine` needs
+    /// for `loan`, by scanning every already-materialized `Period` for a manually-edited
+    /// `LineItem` whose `sourceLoanID` matches, and pairing it with the installment date at
+    /// that period's calendar index (`LoanEngine.revolvingInstallmentDate`). Only manually
+    /// edited lines count as "real" — an untouched, still-projected `expectedPayment` line is
+    /// not a real payment yet.
+    private static func revolvingActualPayments(for loan: LoanSnapshot, context: ModelContext) -> [CivilDate: Decimal] {
+        guard loan.mode == .revolving else { return [:] }
+        let allPeriods = ((try? context.fetch(FetchDescriptor<Period>())) ?? []).sorted { $0.coordinate < $1.coordinate }
+        return revolvingActualPayments(loanID: loan.id, expectedPayment: loan.expectedPayment ?? 0, frequency: loan.frequency, start: loan.startDate, allPeriods: allPeriods)
+    }
+
+    /// Core of the above — separated so `reprojectLoan` (which already has `allPeriods`
+    /// fetched) can reuse it without a second fetch.
+    private static func revolvingActualPayments(
+        loanID: UUID, expectedPayment: Decimal, frequency: LoanFrequency, start: CivilDate, allPeriods: [Period]
+    ) -> [CivilDate: Decimal] {
+        var result: [CivilDate: Decimal] = [:]
+        var index = 0
+        // installmentDate index is monotonic with calendar date for both frequencies, so a
+        // single forward walk in period order (ascending) keeps the index in lockstep with the
+        // periods, without needing to search per line.
+        for period in allPeriods {
+            guard let line = (period.lineItems ?? []).first(where: { $0.sourceLoanID == loanID }) else { continue }
+            index += 1
+            guard line.isManuallyEdited else { continue }
+            let date = LoanEngine.revolvingInstallmentDate(index: index, start: start, frequency: frequency)
+            result[date] = line.amount
+        }
+        return result
     }
 
     // MARK: - Carry-over propagation after an edit
@@ -188,7 +236,7 @@ public enum PeriodCoordinator {
             let carryAmount = (next.lineItems ?? []).first { $0.origin == .carryOver }?.amount ?? 0
             let nonCarryOver = (next.lineItems ?? [])
                 .filter { $0.origin != .carryOver }
-                .map { LineSnapshot(kind: $0.kind, amount: $0.amount, currency: $0.currency, origin: $0.origin) }
+                .map { LineSnapshot(kind: $0.kind, amount: $0.amount, currency: $0.currency, origin: $0.origin, isActive: $0.isActive) }
             chain.append(CarryOverEngine.ChainEntry(coordinate: cursor, nonCarryOverLines: nonCarryOver, previousCarryOverReceived: carryAmount))
             chainPeriods[cursor] = next
             cursor = cursor.next
@@ -249,7 +297,8 @@ public enum PeriodCoordinator {
     public static func reprojectRecurring(item: RecurringItem, context: ModelContext, exchangeRate: Decimal) {
         let snapshot = RecurringItemSnapshot(
             id: item.id, kind: item.kind, title: item.title, amount: item.amount, currency: item.currency,
-            frequency: item.frequency, startDate: item.civilStartDate, endDate: item.civilEndDate, isActive: item.isActive
+            frequency: item.frequency, startDate: item.civilStartDate, endDate: item.civilEndDate, isActive: item.isActive,
+            category: item.category
         )
         let allPeriods = ((try? context.fetch(FetchDescriptor<Period>())) ?? []).sorted { $0.coordinate < $1.coordinate }
         guard !allPeriods.isEmpty else { return }
@@ -302,7 +351,7 @@ public enum PeriodCoordinator {
     public static func reprojectSubscription(kind: SubscriptionKind, context: ModelContext, exchangeRate: Decimal) {
         let allSubscriptions = (try? context.fetch(FetchDescriptor<Subscription>())) ?? []
         let snapshots = allSubscriptions.filter { $0.kind == kind }.map {
-            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind)
+            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind, isActive: $0.isActive)
         }
         let allPeriods = ((try? context.fetch(FetchDescriptor<Period>())) ?? []).sorted { $0.coordinate < $1.coordinate }
         guard !allPeriods.isEmpty else { return }
@@ -345,6 +394,82 @@ public enum PeriodCoordinator {
         }
     }
 
+    // MARK: - JSON import (Ajustes → "Importar suscripciones y servicios…")
+
+    public struct SubscriptionImportSummary: Sendable {
+        public let imported: Int
+        public let updated: Int
+        public let skipped: Int
+    }
+
+    /// Persists `items` (already validated by `SubscriptionImportService.parse`) as
+    /// `Subscription` rows, deduped by `name` — an existing row with a matching name is
+    /// updated in place, everything else is inserted new. `skippedCount` is the caller's
+    /// `SubscriptionImportService.ParseResult.issues.count` (items that never made it this
+    /// far); it's only threaded through so the UI can report one combined summary. Finishes
+    /// with `reprojectSubscription(kind:)` for both kinds, exactly like any other
+    /// create/edit/delete of a `Subscription`.
+    @discardableResult
+    public static func importSubscriptions(
+        _ items: [SubscriptionImportService.ValidatedItem],
+        context: ModelContext,
+        exchangeRate: Decimal,
+        skippedCount: Int = 0
+    ) -> SubscriptionImportSummary {
+        let existing = (try? context.fetch(FetchDescriptor<Subscription>())) ?? []
+        var byName: [String: Subscription] = Dictionary(existing.map { ($0.name, $0) }, uniquingKeysWith: { first, _ in first })
+
+        var imported = 0
+        var updated = 0
+
+        for item in items {
+            if let match = byName[item.name] {
+                match.price = item.amount
+                match.currency = item.currency
+                match.paymentDay = item.payDay
+                match.civilStartDate = item.startDate
+                match.civilEndDate = item.endDate
+                match.card = item.paymentMethod
+                match.isActive = item.isActive
+                match.kind = item.kind
+                switch item.kind {
+                case .subscription: match.category = item.subscriptionCategory
+                case .service: match.homeServiceCategory = item.homeServiceCategory
+                }
+                updated += 1
+            } else {
+                let created: Subscription
+                switch item.kind {
+                case .service:
+                    created = Subscription(
+                        name: item.name, price: item.amount, currency: item.currency, paymentDay: item.payDay,
+                        startDate: item.startDate.date(calendar: .current), endDate: item.endDate?.date(calendar: .current),
+                        homeServiceCategory: item.homeServiceCategory, isActive: item.isActive
+                    )
+                case .subscription:
+                    created = Subscription(
+                        name: item.name, price: item.amount, currency: item.currency, paymentDay: item.payDay,
+                        startDate: item.startDate.date(calendar: .current), endDate: item.endDate?.date(calendar: .current),
+                        card: item.paymentMethod, kind: .subscription, category: item.subscriptionCategory, isActive: item.isActive
+                    )
+                }
+                // `paymentMethod` (JSON) <-> `card` (model) applies to both kinds — the service
+                // init above has no `card:` parameter (Services UI never shows one), so it's
+                // set here uniformly for both branches instead of duplicating it per case.
+                created.card = item.paymentMethod
+                context.insert(created)
+                byName[item.name] = created
+                imported += 1
+            }
+        }
+
+        try? context.save()
+        reprojectSubscription(kind: .subscription, context: context, exchangeRate: exchangeRate)
+        reprojectSubscription(kind: .service, context: context, exchangeRate: exchangeRate)
+
+        return SubscriptionImportSummary(imported: imported, updated: updated, skipped: skippedCount)
+    }
+
     /// Same bug, same fix, for `Loan` — symmetric to `reprojectRecurring`, keyed by
     /// `sourceLoanID` instead of `sourceRecurringID`. A period stops getting a line once it's
     /// past the loan's schedule (deactivated, term ended, or `paymentOverride` shortened it).
@@ -352,17 +477,29 @@ public enum PeriodCoordinator {
         let snapshot = LoanSnapshot(
             id: item.id, name: item.name, direction: item.direction, principal: item.principal,
             currency: item.currency, apr: item.apr, startDate: item.civilStartDate, termMonths: item.termMonths,
-            frequency: item.frequency, paymentOverride: item.paymentOverride, isActive: item.isActive
+            frequency: item.frequency, paymentOverride: item.paymentOverride, isActive: item.isActive,
+            mode: item.mode, expectedPayment: item.expectedPayment
         )
         let allPeriods = ((try? context.fetch(FetchDescriptor<Period>())) ?? []).sorted { $0.coordinate < $1.coordinate }
         guard !allPeriods.isEmpty else { return }
+
+        // `.revolving` (TRD): "cualquier pago real registrado en cualquier quincena dispara un
+        // recálculo completo hacia adelante" — computed once, from every currently-materialized
+        // period's real (manually-edited) payment, then reused for every period below instead
+        // of recomputing per period (which would be quadratic).
+        let revolvingActuals: [CivilDate: Decimal] = {
+            guard item.mode == .revolving, let expected = item.expectedPayment else { return [:] }
+            return revolvingActualPayments(loanID: item.id, expectedPayment: expected, frequency: item.frequency, start: item.civilStartDate, allPeriods: allPeriods)
+        }()
 
         var earliestTouched: Period?
 
         for period in allPeriods {
             dedupeLines(in: period, context: context, matching: { $0.sourceLoanID == item.id })
             let existingLine = (period.lineItems ?? []).first { $0.sourceLoanID == item.id }
-            let generated = ProjectionEngine.generateLoanLines(for: period.coordinate, loans: [snapshot]).first
+            let generated: GeneratedLine? = snapshot.mode == .revolving
+                ? ProjectionEngine.generateRevolvingLoanLine(for: period.coordinate, loan: snapshot, actualPayments: revolvingActuals)
+                : ProjectionEngine.generateLoanLines(for: period.coordinate, loans: [snapshot]).first
 
             if let existingLine {
                 guard !existingLine.isManuallyEdited else { continue }
@@ -578,7 +715,7 @@ public enum PeriodCoordinator {
 
     public static func snapshots(of period: Period) -> [LineSnapshot] {
         (period.lineItems ?? [])
-            .map { LineSnapshot(kind: $0.kind, amount: $0.amount, currency: $0.currency, origin: $0.origin) }
+            .map { LineSnapshot(kind: $0.kind, amount: $0.amount, currency: $0.currency, origin: $0.origin, isActive: $0.isActive) }
     }
 
     /// Idempotency belt (Avie): `reprojectRecurring`/`reprojectSubscription`/`reprojectLoan`

@@ -21,6 +21,36 @@ struct CarryOverEngineTests {
         #expect(SobranteStatus(sobrante: -0.01) == .negative)
     }
 
+    // MARK: - isActive (user's swipe-leading change, replaces the old "cuenta/no cuenta" toggle)
+
+    @Test("total/sobrante exclude isActive == false lines entirely")
+    func totalExcludesInactiveLines() {
+        let lines: [LineSnapshot] = [
+            LineSnapshot(kind: .income, amount: 2750, currency: .usd, origin: .recurring, isActive: true),
+            LineSnapshot(kind: .income, amount: 500, currency: .usd, origin: .manual, isActive: false),
+            LineSnapshot(kind: .expense, amount: 100, currency: .usd, origin: .manual, isActive: false),
+        ]
+        #expect(CarryOverEngine.total(for: lines, kind: .income, exchangeRate: 18) == 2750)
+        #expect(CarryOverEngine.total(for: lines, kind: .expense, exchangeRate: 18) == 0)
+        #expect(CarryOverEngine.sobrante(for: lines, exchangeRate: 18) == 2750)
+    }
+
+    @Test("mandar excludes an inactive MXN expense")
+    func mandarExcludesInactiveMXNExpense() {
+        let rate = Decimal(string: "18.00")!
+        let lines: [LineSnapshot] = [
+            LineSnapshot(kind: .expense, amount: 900, currency: .mxn, origin: .manual, isActive: true),
+            LineSnapshot(kind: .expense, amount: 900, currency: .mxn, origin: .manual, isActive: false),
+        ]
+        #expect(CarryOverEngine.mandar(for: lines, exchangeRate: rate) == 900 / rate)
+    }
+
+    @Test("isActive defaults to true — a snapshot built without specifying it still counts")
+    func isActiveDefaultsTrue() {
+        let line = LineSnapshot(kind: .income, amount: 100, currency: .usd, origin: .manual)
+        #expect(line.isActive == true)
+    }
+
     @Test("Mandar sums only MXN expenses and divides by the exchange rate")
     func mandarCalculation() {
         let rate = Decimal(string: "18.00")!

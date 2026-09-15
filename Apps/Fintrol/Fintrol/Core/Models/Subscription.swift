@@ -15,6 +15,12 @@ public final class Subscription {
     /// Interpreted against `SubscriptionCategory` when `kind == .subscription`, or
     /// `HomeServiceCategory` when `kind == .service` — one string field, two category sets.
     public var categoryRaw: String = SubscriptionCategory.tools.rawValue
+    /// Added post-v1 (pre-release, in place — no migration needed per TRD): mirrors
+    /// `RecurringItem.isActive`/`Loan.isActive`, which `Subscription` was missing entirely.
+    /// The JSON import format carries an explicit `isActive` per item (a deactivated
+    /// subscription/service the user still wants on record but no longer projected), and
+    /// there was no field to honor that without this.
+    public var isActive: Bool = true
 
     public init(
         id: UUID = UUID(),
@@ -26,7 +32,8 @@ public final class Subscription {
         endDate: Date? = nil,
         card: String = "",
         kind: SubscriptionKind = .subscription,
-        category: SubscriptionCategory
+        category: SubscriptionCategory,
+        isActive: Bool = true
     ) {
         self.id = id
         self.name = name
@@ -38,6 +45,7 @@ public final class Subscription {
         self.card = card
         self.kindRaw = kind.rawValue
         self.categoryRaw = category.rawValue
+        self.isActive = isActive
     }
 
     public convenience init(
@@ -48,11 +56,13 @@ public final class Subscription {
         paymentDay: Int,
         startDate: Date,
         endDate: Date? = nil,
-        homeServiceCategory: HomeServiceCategory
+        homeServiceCategory: HomeServiceCategory,
+        isActive: Bool = true
     ) {
         self.init(
             id: id, name: name, price: price, currency: currency, paymentDay: paymentDay,
-            startDate: startDate, endDate: endDate, card: "", kind: .service, category: .tools
+            startDate: startDate, endDate: endDate, card: "", kind: .service, category: .tools,
+            isActive: isActive
         )
         self.categoryRaw = homeServiceCategory.rawValue
     }

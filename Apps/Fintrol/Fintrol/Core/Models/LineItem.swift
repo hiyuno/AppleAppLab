@@ -9,6 +9,12 @@ public final class LineItem {
     public var amount: Decimal = 0
     public var currencyRaw: String = Currency.usd.rawValue
     public var isPaid: Bool = false
+    /// Added post-v1 (pre-release, SchemaV2 in place — no migration): swipe-leading on
+    /// `LineItemRow` toggles this instead of the old inline toggle. `false` excludes the line
+    /// from TOTAL INCOME/EXPENSES, sobrante, "Mandar", and the carry-over chain — see
+    /// `CarryOverEngine`. Toggling it counts as a manual edit (`isManuallyEdited`), same as
+    /// editing the amount, so a future `reproject*` never silently reactivates it.
+    public var isActive: Bool = true
     public var sortOrder: Int = 0
     public var originRaw: String = LineOrigin.manual.rawValue
     public var sourceRecurringID: UUID?
@@ -31,6 +37,7 @@ public final class LineItem {
         amount: Decimal,
         currency: Currency,
         isPaid: Bool = false,
+        isActive: Bool = true,
         sortOrder: Int = 0,
         origin: LineOrigin = .manual,
         sourceRecurringID: UUID? = nil,
@@ -46,6 +53,7 @@ public final class LineItem {
         self.amount = amount
         self.currencyRaw = currency.rawValue
         self.isPaid = isPaid
+        self.isActive = isActive
         self.sortOrder = sortOrder
         self.originRaw = origin.rawValue
         self.sourceRecurringID = sourceRecurringID
