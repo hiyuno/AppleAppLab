@@ -738,13 +738,20 @@ Si la app usa cualquiera de estas APIs (UserDefaults, FileManager, CoreLocation,
 
 ## Xcode 27 MCP — build/test/preview sin salir del loop
 
-Xcode 27 expone un MCP server nativo (`xcrun mcpbridge`) sobre el proceso vivo de Xcode. Si está registrado (`claude mcp list` muestra `xcode`) y el usuario activó **Settings → Intelligence → Model Context Protocol → "Allow external agents to use Xcode tools"**, úsalo en vez de shell-out a `xcodebuild` cuando el proyecto ya está abierto en Xcode: compila el scheme activo con errores/warnings estructurados, corre tests específicos, lee console output y crash logs en vivo, renderiza SwiftUI previews a imagen, y sintetiza input en el simulador — todo sin que el usuario toque Xcode.
+Xcode 27 expone un MCP server nativo (`xcrun mcpbridge`, 53 tools verificados) sobre el proceso vivo de Xcode. Si está registrado (`claude mcp list` muestra `xcode`) y el usuario activó **Settings → Intelligence → Model Context Protocol → "Allow external agents to use Xcode tools"**, úsalo en vez de shell-out a `xcodebuild` cuando el proyecto ya está abierto en Xcode:
 
-**Cuándo sigues usando `xcodebuild`/Makefile en su lugar:** CI (Craig), archivado y export para distribución, y cualquier flujo donde Xcode no esté corriendo o el MCP no esté conectado. El MCP es para el loop de desarrollo interactivo; el pipeline de release sigue siendo `xcodebuild` reproducible por línea de comandos.
+- **Build:** `BuildProject` (errores estructurados con `filePath`/`lineNumber`) y `GetBuildLog` (filtra por severidad/regex/glob) en vez de parsear stdout de `xcodebuild`.
+- **Run/Debug:** `RunProject`/`StopProject` (⌘R/⌘.), `InvokeDebuggerCommand` para LLDB crudo sobre la sesión de debug activa — comparte estado con la consola que el usuario tiene abierta, así que un `continue` tuyo también avanza lo que él ve.
+- **Preview:** `RenderPreview` renderiza un `#Preview`/`PreviewProvider` a imagen — úsalo para verificar un cambio visual sin pedirle al usuario que mire Xcode.
+- **Simulador/dispositivo:** `DeviceInteractionStartWorkspaceSession` → `DeviceInteractionInstallAndRun` → `DeviceInteractionSynthesize` (tap/swipe/type, devuelve screenshot + UI hierarchy) → `DeviceInteractionEndSession`. Siempre calcula posiciones desde el hierarchy dump más reciente, nunca desde un screenshot solo — y cierra la sesión al terminar, dejarla abierta es costoso y visible para el usuario.
+- **Archivos del proyecto:** `XcodeRead`/`XcodeWrite`/`XcodeUpdate`/`XcodeGrep`/`XcodeGlob` operan sobre la **organización del proyecto Xcode (project navigator)**, no sobre paths de filesystem crudos — un grupo del navigator no siempre es una carpeta real en disco.
+- **Entitlements/Info.plist:** usa `AddEntitlement`/`AddInfoPlist`, nunca edites esos archivos a mano — Xcode los regenera y pisaría tu cambio.
 
-**No asumas que está disponible.** Si las tools del MCP `xcode` no aparecen o fallan, cae de vuelta a `xcodebuild`/`xcrun simctl` sin bloquear el trabajo — el usuario puede no haber activado el toggle.
+**Cuándo sigues usando `xcodebuild`/Makefile en su lugar:** CI (Craig), archivado y export para distribución (no hay tool de archive/export en este MCP), y cualquier flujo donde Xcode no esté corriendo o el MCP no esté conectado. El MCP es para el loop de desarrollo interactivo; el pipeline de release sigue siendo `xcodebuild` reproducible por línea de comandos.
 
-Detalle de capacidades y setup: `Research/xcode-external-agents/00-index.md`.
+**No asumas que está disponible.** Si las tools del MCP `xcode` no aparecen o fallan, cae de vuelta a `xcodebuild`/`xcrun simctl` sin bloquear el trabajo — el usuario puede no haber activado el toggle, o esta sesión arrancó antes de que el server se registrara (los tools de un MCP nuevo solo cargan en sesiones que empiezan después del registro).
+
+Detalle completo de los 53 tools (build, test, debug, localización, diagnósticos de producción): `Research/xcode-external-agents/00-index.md`.
 
 ---
 
