@@ -66,13 +66,17 @@ ls *.xcresult 2>/dev/null            # ¿resultados previos?
 | Solo simulador | Fase 2 con `xctrace` en simulador — números marcados como *orientativos* |
 | Nada | Fase 2 se documenta como pendiente con pasos exactos para el usuario; Fase 3 completa |
 
+Si el MCP `xcode` está conectado (Steve lo confirma al arrancar), `XcodeListRunDestinations` sustituye a `xctrace list devices` y dice además cuál destino está activo; `XcodeSwitchRunDestination` lo cambia al dispositivo de medición sin tocar el scheme a mano.
+
 4. **Baseline.** Antes de tocar nada, un trace por flujo crítico. Sin baseline no hay forma de demostrar mejora.
 
 ---
 
 ## Fase 1 — Producción (Bertrand, solo si la app ya está en manos de usuarios)
 
-Xcode Organizer es GUI — no se automatiza. Bertrand pide al usuario:
+**Con el MCP `xcode` conectado**, Bertrand lee lo mismo que Organizer sin GUI: `GetTopFieldPerformanceIssues` con `diagnostic_type` `launches`, `hangs`, `diskwrites` y `energy` (sin `app_version` devuelve las versiones disponibles), `GetFieldPerformanceIssueLogs` para el detalle de cada signature, y `GetTopCrashIssues`/`GetCrashIssueLogs` para los crashes de 14 días. `bundle_id` y `platform` se resuelven del scheme activo; `is_beta` elige TestFlight o App Store. Es telemetría de usuarios reales: Bertrand anuncia en una línea qué bundle y canal consulta, y **redacta identificadores, emails y rutas personales** de los logs antes de escribirlos en `PERFORMANCE_AUDIT.md` (regla de Ivan, `/ivan` §Agentes externos).
+
+**Sin MCP**, Xcode Organizer es GUI — no se automatiza. Bertrand pide al usuario:
 
 > "Abre Xcode → Window → Organizer → [app] → Metrics. Exporta o pega: Launch Time, Hang Rate, Scroll Hitch Rate, Memory, Disk Writes, Terminations. Y en Reports → Hangs, los stack traces de los 3 hangs más frecuentes."
 
@@ -134,6 +138,8 @@ func testHomeListScroll() {
     }
 }
 ```
+
+Con el MCP conectado, estos tests se lanzan con `RunSomeTests` (identificadores de `GetTestList`) y su salida se lee con `GetConsoleOutput`; siguen siendo XCTest — `measure` no migra a Swift Testing.
 
 Salida de la fase: tabla *flujo → métrica → medido → umbral → estado*.
 
@@ -301,7 +307,8 @@ Solo se ejecuta cuando el usuario aprueba la etapa `n`. Si pide `go 3` y la 1 o 
 ```
 Steve (lee la etapa n del plan)
 → Woz (implementa solo lo que dice la etapa, un commit por etapa)
-→ Bertrand (re-mide el flujo afectado contra el baseline; corre los tests de performance)
+→ Bertrand (re-mide el flujo afectado contra el baseline; corre los tests de performance — con MCP: `RunSomeTests` + una sesión `device-interaction`)
+→ Ivan (solo si la etapa tocó entitlements, Info.plist o build settings de seguridad)
 → Steve (actualiza PERFORMANCE_AUDIT.md: hallazgos → ✅, etapa → ✅ Cerrada con medición antes/después)
 → Steve pregunta: "Etapa n cerrada: [antes] → [después]. ¿Aplico la etapa n+1?"
 ```

@@ -114,6 +114,8 @@ Un `[ ]` aquí es 🔴: el build no se puede ni subir.
 
 Todo lo que el repo permite verificar sin tocar App Store Connect. Cada check es un hallazgo con `archivo:línea` si falla.
 
+Con el MCP `xcode` conectado (Steve lo confirma al arrancar), los `grep`/`find`/`cat` de 2.2–2.6 tienen equivalente en `XcodeGrep`/`XcodeGlob`/`XcodeRead` — paths del project navigator, salida JSON-escapada — y un purpose string faltante se añade con `AddInfoPlist`, nunca editando el plist. Lo que **no** cambia: el archive, el export y `altool` de 2.1 y el `codesign` de 2.7 siguen en shell; el MCP no tiene esos tools.
+
 ### 2.1 Compila y valida
 
 ```bash
@@ -131,7 +133,7 @@ xcrun altool --validate-app -f build/export/<App>.ipa -t ios \
 # Alternativa GUI: Xcode → Organizer → Archives → Validate App
 ```
 
-Sin API key de ASC, Woz da los pasos del Organizer y el usuario pega el resultado.
+Sin API key de ASC, Woz da los pasos del Organizer y el usuario pega el resultado. Antes del archive, `BuildProject` con `buildForTesting: true` sobre el scheme Release es el pre-check barato: si hay errores, salen con `filePath:lineNumber` sin esperar los minutos del archive.
 
 ### 2.2 Versiones e identidad
 
@@ -211,6 +213,7 @@ cat *.entitlements 2>/dev/null; grep -n "entitlements\|capabilities" project.yml
 codesign -d --entitlements :- build/<App>.xcarchive/Products/Applications/<App>.app 2>/dev/null
 ```
 
+- La ruta autoritativa del archivo es el `CODE_SIGN_ENTITLEMENTS` evaluado de `GetTargetBuildSettings` — no un `find **/*.entitlements`, que también encuentra huérfanos. Cualquier cambio aquí es etapa que Ivan revisa antes de cerrarse (Fase 9)
 - Solo los entitlements que la app **usa**. Uno sin uso es pregunta de App Review
 - **macOS → Mac App Store:** `com.apple.security.app-sandbox = true` es **obligatorio**. Sin sandbox no entra — punto. Hardened runtime activo. Cada excepción de sandbox (`files.user-selected`, `network.client`, `temporary-exception.*`) justificada; las `temporary-exception` son 🟡 y suelen ser rechazadas
 - iOS: push, iCloud, App Groups, Sign in with Apple, Associated Domains — cada uno configurado también en el portal de identificadores (Fase 1)
@@ -317,7 +320,7 @@ Cada uno confirma sobre **el build candidato exacto**, no sobre uno anterior:
 
 - **Ivan** — `SECURITY_AUDIT.md` en `PASS` o `PASS WITH ACCEPTED RISK` sobre el archive Release. `BLOCKED` = NO LISTA. Entitlements del archive coinciden con los auditados
 - **Kate** — Privacy Policy **publicada** en URL estable y enlazada en ASC y en la app; términos si hay suscripción; export compliance clasificado; DSA trader status; COPPA si aplica; licencias de fuentes/assets/SDKs
-- **Bertrand** — `TEST_PLAN.md` sin 🔴; crash-free en TestFlight; los flujos que el reviewer va a tocar probados en el dispositivo mínimo
+- **Bertrand** — `TEST_PLAN.md` sin 🔴; crash-free en TestFlight — con MCP, `GetTopCrashIssues` con `is_beta: true` sobre el build candidato es el número, no una impresión (anuncia bundle y canal; redacta PII de los logs); los flujos que el reviewer va a tocar probados en el dispositivo mínimo, en una sola sesión `device-interaction` cuya salida reutilizan Chris y Sarah
 - **Chris** — `COMPAT_AUDIT.md` sin 🔴; probado en la versión mínima de OS del target
 - **Sarah** — sin bloqueantes de accesibilidad en flujos core; qué Accessibility Labels se pueden declarar
 - **Kara** (si cobra) — StoreKit probado en sandbox y TestFlight; restore funciona; paywall cumple 3.1.2
@@ -502,7 +505,7 @@ Si el veredicto es **NO VIABLE**, el resumen es el menú de la Fase 7 con la rec
 ```
 Steve (lee la etapa n; cruza con otros planes activos)
 → Woz / Phil / Kate (implementa solo lo que dice la etapa; un commit si es código)
-→ Bertrand (archive + validate pasan; tests pasan; el flujo tocado probado en dispositivo)
+→ Bertrand (archive + validate pasan; tests pasan — `RunAllTests` con MCP; el flujo tocado probado en dispositivo — sesión `device-interaction` una vez, Chris/Sarah leen su salida)
 → Ivan (solo si la etapa toca entitlements, red, auth, sandbox o Privacy Manifest)
 → Phil (re-verifica el check o guideline que la etapa cerraba → PASS)
 → Steve (actualiza APP_STORE_READINESS.md: hallazgos ✅, etapa ✅; recalcula el veredicto)
@@ -558,7 +561,7 @@ Si algo se rompe o un gate vuelve a FAIL: revertir, marcar la etapa ⚠️ Rever
 |------|--------|-----------|
 | Ivan — SECURITY_AUDIT | PASS / BLOCKED | [fecha, archive] |
 | Kate — legal publicado | ✅ / ❌ | [URL policy, DSA, export] |
-| Bertrand — estabilidad | ✅ / ❌ | [TestFlight build, crash-free %] |
+| Bertrand — estabilidad | ✅ / ❌ | [TestFlight build, crash-free % — `GetTopCrashIssues is_beta` o Organizer] |
 | Chris — compat | ✅ / ❌ | [COMPAT_AUDIT 🔴 abiertos] |
 | Sarah — a11y | ✅ / ⚠️ | [bloqueantes] |
 | Kara — StoreKit | ✅ / ❌ / N.A. | [restore, paywall] |

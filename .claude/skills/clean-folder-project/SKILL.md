@@ -320,7 +320,7 @@ Las reglas comunes a todas las rutinas — cada etapa compila sola, un tipo de c
    9. Dividir archivos multi-tipo
    10. Borrar huérfanos confirmados (archivos, assets, strings con OK de Kim)
    11. `project.yml`, `Makefile`, CI, scripts, docs: rutas actualizadas — aunque normalmente cada etapa ya lo hace
-4. **Cada etapa regenera y compila.** `xcodegen generate && xcodebuild build` + tests + previews. Si XcodeGen no está y el usuario no quiso adoptarlo, la etapa incluye la instrucción de arrastre en Xcode y el commit del `.xcodeproj`.
+4. **Cada etapa regenera y compila.** `xcodegen generate && xcodebuild build` + tests + previews — con el MCP `xcode` conectado: `BuildProject`, `RunAllTests`, `RenderPreview` de las vistas movidas y `DeviceInteractionInstallAndRun` si la etapa movió recursos. Si XcodeGen no está y el usuario no quiso adoptarlo, la etapa incluye la instrucción de arrastre en Xcode y el commit del `.xcodeproj`. **`XcodeMV` no sustituye a `git mv`:** mueve en el navigator y en disco, pero el historial lo conserva git — el movimiento sigue siendo `git mv`.
 5. **Una etapa por PR**, sobre `main` limpio. Mover 40 archivos en un commit es imposible de revisar; mover una feature sí.
 6. **Nada de "ya que estoy".** Si al mover un archivo Woz ve código malo, lo anota para `/optimize-app`. No lo arregla en esa etapa.
 
@@ -366,7 +366,7 @@ Steve muestra el resumen y **se detiene**:
 ```
 Steve (lee la etapa n; cruza zonas con otros planes activos; confirma main limpio)
 → Woz (git mv / git rm según la tabla; xcodegen generate; un commit con mensaje "chore(structure): etapa n — …")
-→ Bertrand (make build en verde · todos los tests pasan, ninguno borrado ni skip · previews compilan · si la etapa movió recursos, la app los carga en el dispositivo o simulador)
+→ Bertrand (make build en verde · todos los tests pasan, ninguno borrado ni skip · previews compilan · si la etapa movió recursos, la app los carga en el dispositivo o simulador — con MCP: `BuildProject`, `RunAllTests`, `RenderPreview`, `DeviceInteractionInstallAndRun`)
 → Avie (el árbol de la zona coincide con el objetivo; nombres = tipos; sin huérfanos nuevos)
 → Ivan (solo si la etapa tocó entitlements, PrivacyInfo, Info.plist o configs)
 → Steve (PROJECT_STRUCTURE.md: etapa ✅, tabla actualizada · TRD.md: sección "Estructura" refleja la realidad · CLAUDE.md del proyecto si menciona rutas)

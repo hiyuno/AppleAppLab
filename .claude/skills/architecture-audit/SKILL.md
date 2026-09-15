@@ -332,7 +332,7 @@ Solo cuando el usuario aprueba la etapa `n`. Si pide `go 3` con la 1 o 2 abierta
 ```
 Steve (lee la etapa n; cruza con PERFORMANCE_AUDIT.md — zona libre)
 → Woz (implementa solo lo que dice la etapa; un commit)
-→ Bertrand (todos los tests pasan; ninguno se borró ni se marcó skip; comportamiento a mano si la etapa lo pide)
+→ Bertrand (todos los tests pasan — `RunAllTests` si el MCP `xcode` está conectado, `xcodebuild test` si no; ninguno se borró ni se marcó skip; comportamiento a mano si la etapa lo pide)
 → Avie (verifica que el criterio que la etapa cerraba ahora está en PASS, con la misma evidencia de la Fase 3)
 → Ivan (solo si la etapa toca red, auth, secretos o entitlements)
 → Steve (actualiza ARCHITECTURE_AUDIT.md: etapa ✅, criterios ✅ · actualiza TRD.md · pide baseline nuevo a Bertrand si hay PERFORMANCE_AUDIT.md en esa zona)

@@ -151,7 +151,9 @@ Varias rutinas le piden lo mismo al repo. Dentro de `/global-audit`, Steve lo ej
 | **Periphery** (declaraciones sin referencias) | una corrida | `/optimize-app` 3.5 toma símbolos *dentro* de archivos · `/clean-folder-project` 1.5 toma archivos completos |
 | **SwiftLint** | una corrida | `/optimize-app` 3.5 (complejidad) · `/clean-folder-project` 1.3 (nombres) |
 | `git ls-files` y churn (`git log --stat`) | una corrida | arquitectura 4 (churn) · limpieza 1.2 (rastreados indebidos) |
-| Archive Release + tests en verde | Bertrand, una vez | `/app-store-ready` 2.1 · gate de arquitectura y limpieza |
+| Archive Release + tests en verde (`RunAllTests` con MCP) | Bertrand, una vez | `/app-store-ready` 2.1 · gate de arquitectura y limpieza |
+| Sesión `device-interaction` (screenshot + UI hierarchy + logs por flujo) | Bertrand, una vez — nunca dos sesiones sobre el mismo simulador | `/app-store-ready` 5 (Chris compat, Sarah a11y) · re-medición de `/optimize-app` |
+| Telemetría de producción (`GetTopCrashIssues`, `GetTopFieldPerformanceIssues`) | Bertrand, una vez, con aviso de bundle/canal y PII redactada | `/optimize-app` 1 · `/app-store-ready` 5 |
 | Gates de Ivan y Kate | se leen una vez | `/app-store-ready` 5 · arquitectura 5 |
 
 Sueltas, cada rutina corre lo suyo. Juntas, no se duplica trabajo.
