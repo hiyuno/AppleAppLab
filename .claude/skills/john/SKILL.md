@@ -51,6 +51,8 @@ Esta es la decisión más importante. No hay respuesta universal.
 | **Actualizable sin nueva versión** | ❌ Requiere update de la app | ✅ El proveedor actualiza el modelo |
 | **Tamaño del binario** | ❌ Modelos pueden pesar 50–500 MB | ✅ Sin impacto en tamaño |
 
+Las latencias de la tabla son órdenes de magnitud, no mediciones. Antes de diseñar la UI de espera (sección "Manejo de latencia"), pide a Bertrand el número real en el dispositivo mínimo del target — con el MCP `xcode` conectado lo obtiene con `RunCodeSnippet` (inferencia en contexto del target) y `GetConsoleOutput`; sin MCP, con Instruments. John no mide.
+
 ### Árbol de decisión
 
 ```

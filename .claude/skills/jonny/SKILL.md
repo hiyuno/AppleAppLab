@@ -676,6 +676,7 @@ Conserva la intención y el ritmo de `DESIGN_LIQUID.md`, pero especifica cualqui
 - **No sobreescribir** valores confirmados sin registrarlo en "Decisiones registradas"
 - Si la versión target no está definida en el PRD.md, preguntar antes de completar la sección de materiales
 - **Gate de implementación:** Woz no implementa materiales, animaciones de ventana ni glows hasta que Jonny haya documentado en ambos archivos la variante `clear`/`regular`, el fallback, las capas de contraste, los tokens de motion, el z-order y las alternativas de accesibilidad. Si un efecto no cambia entre versiones, `DESIGN_FROST.md` puede referenciar explícitamente la especificación de `DESIGN_LIQUID.md`.
+- **Verificación visual:** cuando el MCP `xcode` está conectado, Woz adjunta al handoff los renders de `RenderPreview` por estado (empty/loading/error/success) y variante (light/dark, Dynamic Type). Jonny los compara contra `DESIGN_*.md` — radios, paleta semántica, escala tipográfica, capas de glass — sin invocar tools; si faltan renders, los pide a Steve. Larry revisa los mismos renders contra la HIG, no contra la spec.
 
 ---
 

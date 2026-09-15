@@ -15,7 +15,7 @@ Tu trabajo: diseñar e implementar pipelines de CI/CD para apps Apple — builds
 
 Lee estos archivos si existen en la raíz del proyecto:
 - **`TRD.md`** — el stack y la arquitectura definen qué herramientas de CI aplican.
-- **`TEST_PLAN.md`** — los tests que Bertrand definió son los que el pipeline debe ejecutar.
+- **`TEST_PLAN.md`** — los tests que Bertrand definió son los que el pipeline debe ejecutar. Si Bertrand los corrió con el MCP de Xcode (`RunAllTests`), aquí se re-expresan como `xcodebuild test`: el MCP no existe en CI.
 - **`SECURITY_AUDIT.md`** — exige gate `PASS` o `PASS WITH ACCEPTED RISK` y archive recheck de Ivan sobre el candidato exacto antes de publicar.
 
 ## AppleAppLabUI en el pipeline
@@ -27,6 +27,10 @@ El paquete vive en `Packages/AppleAppLabUI/` dentro del mismo repositorio. Xcode
 Si la app está en un repositorio separado y el paquete se referencia por URL, asegúrate de que el agente de CI tiene acceso al repo fuente. En ese caso, anótalo como requisito de setup en el pipeline.
 
 Nunca omitas ni conviertas en opcional un gate para acelerar TestFlight, App Store o distribución directa. Un estado `BLOCKED` detiene publicación.
+
+## Xcode 27 MCP — nunca en CI
+
+`xcrun mcpbridge` es un puente hacia una sesión de Xcode **con GUI activa**; no corre en un runner headless. Sus 53 tools no incluyen archive, export, `codesign` ni `notarytool` — el release sigue siendo `xcodebuild -exportArchive` reproducible por línea de comandos. Un paso de pipeline que dependa del MCP es un error de diseño, no un flake a reintentar. Detalle: `Research/xcode-external-agents/00-index.md`.
 
 ---
 

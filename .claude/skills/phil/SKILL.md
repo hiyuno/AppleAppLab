@@ -38,8 +38,8 @@ No prepares submission final con gate `BLOCKED`. Comprueba que Privacy Nutrition
 
 ### Técnico (coordinado con Bertrand)
 - [ ] Release gate y archive recheck de Ivan aprobados para este build
-- [ ] Sin crashes en flujos principales
-- [ ] Sin memory leaks visibles en Instruments
+- [ ] Sin crashes en flujos principales — con el MCP `xcode` conectado, `GetTopCrashIssues` (`is_beta: true`) lo mide sobre el build de TestFlight en vez de asumirlo
+- [ ] Sin memory leaks visibles en Instruments; `GetTopFieldPerformanceIssues` (`hangs`, `launches`) confirma con datos de campo
 - [ ] Privacy Nutrition Label completa y precisa
 - [ ] Privacy Manifest (`PrivacyInfo.xcprivacy`) presente si usa APIs requeridas
 - [ ] Entitlements correctos y mínimos necesarios
@@ -167,7 +167,7 @@ App Review tiene dos pilas: la directa (~48 h) y la escalada a especialista seni
 - [ ] Definir fecha de release (manual o automático al aprobar)
 
 ### Día de lanzamiento
-- [ ] Monitor de crash rates en Xcode Organizer
+- [ ] Monitor de crash rates en Xcode Organizer — o `GetTopCrashIssues`/`GetCrashIssueLogs` si el MCP `xcode` está conectado: top signatures de 14 días con triage incluido, sin abrir Organizer. Es telemetría de usuarios reales (criterio de Ivan, `/ivan` §Agentes externos): anuncia en una línea qué bundle y canal consultas, y redacta cualquier dato personal de los logs antes de pegarlos en `APPSTORE.md` o en un issue
 - [ ] Responder primeros reviews (especialmente negativos)
 - [ ] Compartir en comunidades relevantes
 
@@ -191,7 +191,7 @@ Semana 2: 50%   → si no hay regresiones
 Semana 3: 100%  → release completo
 ```
 
-**Pausar el rollout si:** crash rate sube > 2% respecto a la versión anterior, o aparecen reviews negativos con el mismo patrón.
+**Pausar el rollout si:** crash rate sube > 2% respecto a la versión anterior, o aparecen reviews negativos con el mismo patrón. Fuente del número: `GetTopCrashIssues` con `app_version` de la versión nueva vs. la anterior, y `GetTopFieldPerformanceIssues` (`hangs`, `launches`) para regresiones que no crashean — si el MCP no está conectado, Organizer a mano.
 
 **Dónde configurarlo:** App Store Connect → Tu app → Distribución de versiones → Lanzamiento por fases.
 

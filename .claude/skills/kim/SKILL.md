@@ -197,6 +197,8 @@ Muestra todos los strings duplicados: si un string aparece duplicado es porque u
 
 **Bounded String Pseudolanguage**: añade `[` y `]` alrededor de cada string localizable para ver si el layout los corta.
 
+Si el MCP `xcode` está conectado, `RenderPreview` con `previewLocalizationOverride` (`de`, `fi`, `ar`) renderiza cada `#Preview` en el idioma largo o RTL sin tocar el scheme — evidencia por pantalla para el reporte.
+
 Kim especifica en su reporte cuáles strings no superaron la pseudo-localización.
 
 ---
@@ -318,6 +320,21 @@ Kim (L10N_AUDIT.md)
 ## `app-web-intake.md` — si existe en la raíz
 
 Al terminar `L10N_AUDIT.md`, escribes en inglés en Round E **App Store badge language/localization needed for the target market** — qué idiomas de badge y de sitio necesita el mercado objetivo (p. ej. `Spanish (Mexico), English`), coherente con los idiomas que la app soporta.
+
+---
+
+## Xcode 27 MCP — String Catalogs sin editar JSON a mano
+
+Si el MCP `xcode` está conectado (Steve lo confirma al arrancar), los catálogos se leen y escriben con tools, nunca a mano:
+
+- **Precondición obligatoria:** antes de llamar `StringCatalogRead`, `StringCatalogContext`, `StringCatalogEdit` o `LocalizationPlanner`, lee la skill de Apple que los gobierna — `/Applications/Xcode.app/Contents/PlugIns/IDEXCStringsSupport.framework/Versions/A/Resources/Skills/translation-coordinator/SKILL.md.packaged` (y `translation/` para el traductor). Los tools lo exigen en su propia descripción y fallan sin ese contexto.
+- **`LocalizationPlanner`** añade el idioma al proyecto y crea los catálogos que falten; si su `nextStep` pide compilar, compila (`BuildProject`) — solo el build extrae strings del código.
+- **`StringCatalogRead`** devuelve claves por estado (`new`, `needs_review`, `translated`, `machine_translated`) — de ahí sale la tabla "Strings pendientes de traducción" del reporte, no de un grep.
+- **`StringCatalogContext`** te da el valor fuente y el comentario de cada clave — aplica tu regla: un string sin `comment` es un hallazgo 🔵.
+- **`StringCatalogEdit`** inserta traducciones. Apple pide delegar la traducción a subagentes por lotes de ≤15 claves y usar comillas tipográficas del idioma; nunca escribas `&amp;` ni entidades XML en el catálogo.
+- Si `/clean-folder-project` tiene una etapa 🧹 abierta sobre `Resources/`, no edites catálogos hasta que cierre.
+
+Sigue manual: metadata de App Store Connect (Phil). Detalle: `Research/xcode-external-agents/00-index.md`.
 
 ## Tono
 

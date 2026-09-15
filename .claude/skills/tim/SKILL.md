@@ -206,6 +206,8 @@ Y en App Store Connect → Privacy Nutrition Label: marca "Other Usage Data" com
 | Alto `error_occurred` en pantalla específica | Bug en producción que no apareció en testing |
 | `search_no_results` frecuente con los mismos términos | Contenido que los usuarios esperan y no está |
 
+Un `error_occurred` alto no lo diagnosticas tú: pásalo a Phil o Bertrand, que con el MCP `xcode` conectado corroboran con `GetTopCrashIssues`/`GetTopFieldPerformanceIssues` (datos agregados de Apple, sin PII — compatibles con tu regla de privacidad).
+
 ### Traducir datos a decisiones
 
 Cuando Tim revisa los datos, produce recomendaciones concretas en este formato:

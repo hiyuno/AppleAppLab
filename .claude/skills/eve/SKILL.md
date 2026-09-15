@@ -325,6 +325,7 @@ struct AppShortcuts: AppShortcutsProvider {
 - [ ] App Intents registrados en `AppShortcutsProvider`
 - [ ] Probado en StandBy (pantalla en horizontal con iPhone cargando)
 - [ ] Privacy manifest actualizado si el widget accede a datos sensibles
+- [ ] Si el MCP `xcode` está conectado: `RenderPreview` con `timelineIndex` 0, 1, 2… confirma cada entry del timeline y el placeholder; `toggleState` cubre los dos estados del interactive widget; variantes light/dark cubren los 3 modos — sin esperar el reload de 30 minutos
 
 ---
 
@@ -338,6 +339,17 @@ struct AppShortcuts: AppShortcutsProvider {
 ```
 Woz (app base lista) → Eve (extensiones) → Larry (HIG de widgets) → Bertrand
 ```
+
+---
+
+## Xcode 27 MCP y las skills de App Intents de Apple
+
+- **`app-intents-specialist`** (skill oficial de Apple, instalada por `setup.sh` en `~/.claude/skills/`): consúltala siempre al escribir o revisar intents, entities, queries y `AppShortcutsProvider` — cubre las trampas que no son obvias (`perform()` no es `@MainActor`, ids estables, `@Dependency` registrado al arranque, frases con `\(.applicationName)`).
+- **`app-intents-whats-new-27`**: solo si el deployment target es ≥ iOS 26 / macOS 26. Nunca subas el target para adoptar una API nueva — eso lo decide Avie.
+- **`RenderPreview`** con `timelineIndex`/`toggleState` (ver checklist) es tu evidencia visual; los estados de una Live Activity se renderizan igual, uno por índice.
+- Sigue manual: el intent corriendo en background real y el App Group compartiendo datos — eso se prueba con `DeviceInteractionSynthesize` en la sesión que abre Bertrand o Woz.
+
+Detalle: `Research/xcode-external-agents/00-index.md`.
 
 ---
 

@@ -251,7 +251,7 @@ Al terminar, escribe `COMPAT_AUDIT.md` en la raíz del proyecto.
 | **Accessibility Inspector** | Xcode → Open Developer Tool → Accessibility Inspector |
 | **Instruments → Allocations** | Memory pressure, leaks |
 | **Simulator → Device Conditions** | Temperatura, red, batería simulada |
-| **Console.app** | Logs del dispositivo real durante pruebas |
+| **Console.app** | Logs del dispositivo real durante pruebas — o `GetConsoleOutput` (filtro OSLog por severidad y regex) si el MCP `xcode` está conectado |
 | **Settings → Developer** | Slow Animations, Network Simulation (iOS) |
 
 ---
@@ -273,6 +273,19 @@ Si el hallazgo requiere cambio de diseño (layout roto, UX degradada):
 ```
 Chris → Jonny (rediseña) → Woz (implementa) → Chris (re-verifica)
 ```
+
+---
+
+## Xcode 27 MCP — la matriz de dispositivos, reproducible
+
+Si el MCP `xcode` está conectado (Steve lo confirma al arrancar), la tabla "Configuraciones probadas" deja de depender de lo que recuerdes haber probado:
+
+- **`XcodeListRunDestinations`** enumera exactamente qué simuladores y runtimes están instalados — eso, y no el PRD, define la fila "Limitaciones de esta auditoría". `XcodeSwitchRunDestination` cambia de perfil (SE, Pro Max, iPad, mínimo del target).
+- **Por cada perfil**, lanza el subagente `device-interaction` de Apple (skill exportada por `setup.sh`; se invoca con Agent tool, `general-purpose`): abre `DeviceInteractionStartWorkspaceSession`, `DeviceInteractionInstallAndRun`, ejecuta los pasos del escenario con `DeviceInteractionSynthesize` y **cierra con `DeviceInteractionEndSession`**. Cada paso devuelve screenshot + UI hierarchy + logs: eso es la evidencia del campo "Reproducción" — no la reescribas de memoria.
+- **`GetBuildLog` con `severity: warning`** detecta `#available` faltantes antes de probar en el OS mínimo.
+- Dentro de `/app-store-ready` y `/global-audit`, Bertrand abre la sesión una vez; tú lees su salida — nunca dos sesiones sobre el mismo simulador.
+
+Sigue manual: Network Link Conditioner, storage lleno, interrupciones (llamadas, notificaciones), revocación de permisos en caliente — no hay tool para eso. Detalle: `Research/xcode-external-agents/00-index.md`.
 
 ---
 

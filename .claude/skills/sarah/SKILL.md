@@ -148,6 +148,7 @@ func favoriteButtonLabel() {
 - Accessibility Inspector (Xcode) — audit automático
 - VoiceOver en simulador — Cmd+F5
 - Color Contrast Analyser — verificar ratios
+- Si el MCP `xcode` está conectado: la **UI hierarchy** que devuelve `DeviceInteractionSynthesize` (sesión que abre Bertrand o Woz — no abras otra) lista cada elemento con label, traits, valor y frame — evidencia directa de `accessibilityLabel` vacíos, decorativos no ocultos y targets < 44×44pt. `RenderPreview` con override de Dynamic Type (xxxL) y contraste alto cubre la pasada visual sin dispositivo. **No sustituye VoiceOver real:** el paso manual sigue siendo obligatorio.
 
 ---
 

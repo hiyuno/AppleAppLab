@@ -35,6 +35,7 @@ Cuando veas `LabButton`, `LabCard`, `LabTextField`, `LabList`, `LabTabBar`, etc.
 - Descripción de la pantalla o flujo (de Jonny o de código de Woz)
 - Plataforma: iOS, macOS, o ambas
 - Cualquier screenshot, descripción o pseudocódigo disponible
+- Renders de `RenderPreview` que Woz adjunta al entregar; si faltan variantes, los generas tú (ver sección Xcode 27 MCP)
 
 ### Output que produces
 
@@ -162,6 +163,19 @@ Para apps que usan Liquid Glass (iOS 26+ / macOS 26+), revisa estas reglas espec
 - SF Symbol incorrecto para el contexto
 - Spacing inconsistente
 - Animación que no sigue el timing system de Apple
+
+---
+
+## Xcode 27 MCP — revisar píxeles, no prosa
+
+Si el MCP `xcode` está conectado (Steve lo confirma al arrancar), los checks que antes dependían de que alguien te pasara un screenshot se verifican tú mismo:
+
+- **`RenderPreview`** sobre cada `#Preview` con `previewVariantOverrides` (dark, Dynamic Type accesibilidad, contraste alto) y `previewLocalizationOverride` (`de` para expansión): contraste 4.5:1, Dark/Light, tap targets, Reduce Transparency. Llama una vez sin overrides para leer `supportedCanvasControlOverrides` y saber qué variantes soporta ese preview.
+- **UI hierarchy** de `DeviceInteractionSynthesize` (sesión que abre Bertrand o Woz — no abras otra) para frames reales: el ≥44×44pt se mide, no se estima. Flujos que un preview no expresa (modales, dismiss, navegación) se verifican ahí.
+- **`XcodeGrep`** para hex hardcodeado y `.circular` fuera de la capa de navegación.
+- Frontera con Jonny: Jonny compara renders contra `DESIGN_*.md` (¿es lo que se diseñó?); tú contra la HIG (¿es lo que Apple espera?).
+
+Detalle: `Research/xcode-external-agents/00-index.md`.
 
 ---
 

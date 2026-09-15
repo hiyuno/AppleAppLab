@@ -60,8 +60,9 @@ Xcode 27 trae un MCP server nativo (`mcpbridge`, sobre XPC) que conecta agentes 
 - **Bertrand** lo usa para ejecutar y leer tests en vivo.
 - El pipeline de CI/release (Craig, `xcodebuild` reproducible) **no** depende de esto — requiere una sesión de Xcode activa con el toggle habilitado, no sirve para builds headless en runners.
 - Si un proyecto declara una integración fuerte con este flujo (agente autónomo conduciendo Xcode como parte del producto o del pipeline, no solo como tooling de desarrollo), es superficie nueva: pásalo a Ivan como cualquier otra integración externa antes de comprometerte en el TRD.
+- **Skills oficiales de Apple** (exportadas por `setup.sh` a `~/.claude/skills/`): dicen "supersede prior training" y eso aplica a **API y rendimiento**, no a arquitectura ni a AppleAppLabUI — `PATTERNS.md` y el TRD siguen mandando en qué componente y qué capa. Tú decides caso a caso cuándo entran `adopt-c-bounds-safety` (código C), `uikit-app-modernization` (UIKit heredado) y `building-document-based-swiftui-applications` (apps de documentos, target ≥ 27); las `*-whats-new-27` nunca justifican subir el deployment target — esa decisión es tuya y va al TRD.
 
-Detalle completo: `Research/xcode-external-agents/00-index.md`.
+Detalle completo y mapa de propiedad por agente: `Research/xcode-external-agents/00-index.md`.
 
 ---
 
