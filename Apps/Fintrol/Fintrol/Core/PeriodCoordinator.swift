@@ -711,6 +711,34 @@ public enum PeriodCoordinator {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && amount > 0
     }
 
+    // MARK: - Loan progress (TRD "paidAt/progreso real", 2026-09-16)
+
+    /// The single source of truth for a loan's real paid-to-date amount — sum of `amount`
+    /// across every materialized `LineItem` with `sourceLoanID == loanID && isPaid == true`,
+    /// any period, past or future. Deliberately NOT derived from the amortization schedule by
+    /// elapsed time (that was the old, wrong behavior this replaces): progress only advances
+    /// when the user manually confirms a payment via the swipe toggle in `PeriodView`, never
+    /// just because a scheduled date has passed. Both `LoanDetailView` and `LoansView`'s
+    /// `LoanRow` call this instead of each computing their own version.
+    public static func loanPaidToDate(loanID: UUID, context: ModelContext) -> Decimal {
+        let periods = (try? context.fetch(FetchDescriptor<Period>())) ?? []
+        return periods
+            .flatMap { $0.lineItems ?? [] }
+            .filter { $0.sourceLoanID == loanID && $0.isPaid }
+            .reduce(Decimal(0)) { $0 + $1.amount }
+    }
+
+    /// "Fecha del último pago" — the latest `paidAt` among that loan's `isPaid == true`
+    /// lines, or `nil` if none are marked paid yet.
+    public static func loanLastPaymentDate(loanID: UUID, context: ModelContext) -> CivilDate? {
+        let periods = (try? context.fetch(FetchDescriptor<Period>())) ?? []
+        return periods
+            .flatMap { $0.lineItems ?? [] }
+            .filter { $0.sourceLoanID == loanID && $0.isPaid }
+            .compactMap(\.paidAt)
+            .max()
+    }
+
     // MARK: - Helpers
 
     public static func snapshots(of period: Period) -> [LineSnapshot] {

@@ -4,6 +4,11 @@ import SwiftData
 struct LoanDetailView: View {
     let loan: Loan
     @Environment(\.modelContext) private var context
+    // Coordinator (2026-09-16): "Editar" in the detail toolbar reuses `LoanEditSheet` (same
+    // form LoansView uses for "Nuevo préstamo"/its own "Editar" swipe action) instead of a
+    // second implementation — same validation, same `reprojectLoan` + `isManuallyEdited`
+    // respect on save.
+    @State private var isPresentingEdit = false
 
     private var isRevolving: Bool { loan.mode == .revolving }
 
@@ -13,10 +18,19 @@ struct LoanDetailView: View {
 
     private var schedule: [LoanInstallment] { LoanEngine.schedule(for: snapshot) }
     private var today: CivilDate { CivilDate.today() }
-    private var lastPast: LoanInstallment? { schedule.last { $0.date <= today } }
     private var currentInstallment: LoanInstallment? { schedule.first { $0.date > today } }
-    private var currentBalance: Decimal { lastPast?.remainingBalance ?? loan.principal }
-    private var paidToDate: Decimal { loan.principal - currentBalance }
+    // TRD "paidAt/progreso real de préstamos" (2026-09-16): `paidToDate` is the real,
+    // user-confirmed sum (`PeriodCoordinator.loanPaidToDate`) — no longer derived from the
+    // schedule by elapsed time. `currentBalance` = principal + accumulated interest through
+    // today − that real paidToDate.
+    private var paidToDate: Decimal { PeriodCoordinator.loanPaidToDate(loanID: loan.id, context: context) }
+    private var lastPaymentDateText: String {
+        PeriodCoordinator.loanLastPaymentDate(loanID: loan.id, context: context)
+            .map { $0.date(calendar: .current).formatted(date: .abbreviated, time: .omitted) } ?? "—"
+    }
+    private var currentBalance: Decimal {
+        loan.principal + LoanEngine.accumulatedInterest(schedule: schedule, through: today) - paidToDate
+    }
     private var totalInterest: Decimal { schedule.reduce(Decimal(0)) { $0 + $1.interest } }
 
     // MARK: - Revolving ("Hasta liquidar")
@@ -45,12 +59,14 @@ struct LoanDetailView: View {
         return LoanEngine.revolvingSchedule(principal: loan.principal, apr: loan.apr, expectedPayment: expected, frequency: loan.frequency, start: loan.civilStartDate, actualPayments: revolvingActualPayments)
     }
 
-    private var revolvingLastPast: LoanEngine.RevolvingRow? { revolvingResult?.rows.last { $0.date <= today } }
     private var revolvingNext: LoanEngine.RevolvingRow? { revolvingResult?.rows.first { $0.date > today } }
-    private var revolvingBalance: Decimal { revolvingLastPast?.remainingBalance ?? loan.principal }
     private var revolvingInterestToDate: Decimal {
-        guard let revolvingResult else { return 0 }
-        return revolvingResult.rows.filter { $0.date <= today }.reduce(Decimal(0)) { $0 + $1.interest }
+        LoanEngine.accumulatedInterest(revolvingRows: revolvingResult?.rows ?? [], through: today)
+    }
+    // Same real-paidToDate formula as `.fixedTerm` above — revolving loans use the same
+    // `PeriodCoordinator.loanPaidToDate`/`paidAt` mechanism, not a schedule-derived balance.
+    private var revolvingBalance: Decimal {
+        loan.principal + revolvingInterestToDate - paidToDate
     }
     private var revolvingEndText: String {
         guard let revolvingResult else { return "—" }
@@ -85,6 +101,14 @@ struct LoanDetailView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Editar") { isPresentingEdit = true }
+            }
+        }
+        .sheet(isPresented: $isPresentingEdit) {
+            LoanEditSheet(loan: loan)
+        }
     }
 
     // MARK: - Revolving header/table
@@ -103,6 +127,7 @@ struct LoanDetailView: View {
             Divider().padding(.vertical, 4)
 
             detailRow("Interés acumulado a la fecha", revolvingInterestToDate.currencyString(currency: loan.currency))
+            detailRow("Fecha del último pago", lastPaymentDateText)
             if let revolvingNext {
                 detailRow("Próximo pago esperado", "\(revolvingNext.payment.currencyString(currency: loan.currency)) · \(revolvingNext.date.date(calendar: .current).formatted(.dateTime.day().month(.abbreviated)))")
             }
@@ -194,6 +219,7 @@ struct LoanDetailView: View {
             Divider().padding(.vertical, 4)
 
             detailRow("Pagado a la fecha", paidToDate.currencyString(currency: loan.currency))
+            detailRow("Fecha del último pago", lastPaymentDateText)
             detailRow("Interés total", totalInterest.currencyString(currency: loan.currency))
             if let currentInstallment {
                 detailRow("Próximo pago", "\(currentInstallment.payment.currencyString(currency: loan.currency)) · \(currentInstallment.date.date(calendar: .current).formatted(.dateTime.day().month(.abbreviated)))")

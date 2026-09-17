@@ -32,42 +32,42 @@ struct LoansView: View {
                     config: PatternConfig(accentColor: .accentColor)
                 )
             } else {
+                // Coordinator (2026-09-16): `List` kept ONLY for its native `.swipeActions`/
+                // `.contextMenu`/`NavigationLink` behavior (verified safe here — unlike
+                // PeriodView's lines, this `List` is the screen's own top-level scroll
+                // container, not nested inside another `ScrollView`, so it doesn't hit the
+                // touch-blocking bug documented in `LineItemRow`). Every row is stripped of
+                // List's own chrome (`listRowBackground`/`listRowInsets`/`listRowSeparator`)
+                // so `LoanRow`'s own card background/radius shows through as an independent
+                // floating card with an ~8pt gap, not one big grouped section.
                 List {
                     Section {
                         ForEach(activeLoans) { loan in
-                            NavigationLink {
-                                LoanDetailView(loan: loan)
-                            } label: {
-                                LoanRow(loan: loan)
-                            }
-                            .swipeActions {
-                                Button(role: .destructive) {
-                                    PeriodCoordinator.deleteLoan(loan, context: context, exchangeRate: rateStore.currentRate ?? 0)
-                                } label: {
-                                    Label("Eliminar", systemImage: "trash")
-                                }
-                                Button {
-                                    editingLoan = loan
-                                } label: {
-                                    Label("Editar", systemImage: "pencil")
-                                }
-                                .tint(.blue)
-                            }
+                            loanRow(for: loan)
                         }
                     }
 
                     if !liquidatedLoans.isEmpty {
-                        DisclosureGroup("Liquidados", isExpanded: $liquidatedExpanded) {
+                        DisclosureGroup(isExpanded: $liquidatedExpanded) {
                             ForEach(liquidatedLoans) { loan in
-                                NavigationLink {
-                                    LoanDetailView(loan: loan)
-                                } label: {
-                                    LoanRow(loan: loan)
-                                }
+                                loanRow(for: loan)
                             }
+                        } label: {
+                            // Coordinator (2026-09-15, mockup round 4): uppercase section
+                            // label to match the caption-style headers used elsewhere.
+                            Text("LIQUIDADOS")
+                                .font(.caption.weight(.semibold))
+                                .tracking(0.5)
+                                .foregroundStyle(.secondary)
                         }
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                        .listRowSeparator(.hidden)
+                        .padding(.horizontal, 16)
                     }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
             }
         }
         .navigationTitle("Préstamos")
@@ -85,6 +85,36 @@ struct LoansView: View {
         }
     }
 
+    @ViewBuilder
+    private func loanRow(for loan: Loan) -> some View {
+        NavigationLink {
+            LoanDetailView(loan: loan)
+        } label: {
+            LoanRow(loan: loan)
+        }
+        .swipeActions {
+            Button(role: .destructive) {
+                PeriodCoordinator.deleteLoan(loan, context: context, exchangeRate: rateStore.currentRate ?? 0)
+            } label: {
+                Label("Eliminar", systemImage: "trash")
+            }
+            Button {
+                editingLoan = loan
+            } label: {
+                Label("Editar", systemImage: "pencil")
+            }
+            .tint(.blue)
+        }
+        // Strip List's own row chrome — `LoanRow`'s own Frost card (background + 20pt
+        // radius) shows through as an independent floating card instead of a row inside one
+        // big grouped section; the 8pt vertical padding is the gap between cards.
+        .listRowInsets(EdgeInsets())
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 4)
+    }
+
     private func endDate(of loan: Loan) -> CivilDate {
         // Revolving loans have no fixed end — sort them after every fixed-term loan by using
         // a far-future date, rather than the meaningless `termMonths` they don't use.
@@ -97,6 +127,7 @@ struct LoansView: View {
 /// PROJECT_LEARNINGS.md as a generalization candidate.
 private struct LoanRow: View {
     let loan: Loan
+    @Environment(\.modelContext) private var context
 
     private var isRevolving: Bool { loan.mode == .revolving }
 
@@ -106,7 +137,6 @@ private struct LoanRow: View {
 
     private var schedule: [LoanInstallment] { LoanEngine.schedule(for: snapshot) }
     private var today: CivilDate { CivilDate.today() }
-    private var lastPast: LoanInstallment? { schedule.last { $0.date <= today } }
     private var nextInstallment: LoanInstallment? { schedule.first { $0.date > today } }
 
     // Revolving: no persisted actual-payment ledger available from this list row (that lives
@@ -118,24 +148,35 @@ private struct LoanRow: View {
         return LoanEngine.revolvingSchedule(principal: loan.principal, apr: loan.apr, expectedPayment: expected, frequency: loan.frequency, start: loan.civilStartDate, actualPayments: [:])
     }
 
-    private var revolvingLastPast: LoanEngine.RevolvingRow? { revolvingResult?.rows.last { $0.date <= today } }
     private var revolvingNext: LoanEngine.RevolvingRow? { revolvingResult?.rows.first { $0.date > today } }
 
+    // TRD "paidAt/progreso real de préstamos" (2026-09-16): same real `paidToDate` +
+    // `principal + accumulatedInterest − paidToDate` formula as `LoanDetailView` — reused via
+    // `PeriodCoordinator.loanPaidToDate`/`LoanEngine.accumulatedInterest`, not a second
+    // schedule-derived version.
+    private var paidToDate: Decimal { PeriodCoordinator.loanPaidToDate(loanID: loan.id, context: context) }
+
     private var currentBalance: Decimal {
-        if isRevolving { return revolvingLastPast?.remainingBalance ?? loan.principal }
-        return lastPast?.remainingBalance ?? loan.principal
+        let interest = isRevolving
+            ? LoanEngine.accumulatedInterest(revolvingRows: revolvingResult?.rows ?? [], through: today)
+            : LoanEngine.accumulatedInterest(schedule: schedule, through: today)
+        return loan.principal + interest - paidToDate
     }
 
     private var paidFraction: Double {
-        guard loan.principal > 0, !isRevolving else { return 0 }
-        let fraction = (loan.principal - currentBalance) / loan.principal
+        guard loan.principal > 0 else { return 0 }
+        let fraction = paidToDate / loan.principal
         return max(0, min(1, Double(truncating: fraction as NSDecimalNumber)))
     }
 
     private var isDebo: Bool { loan.direction == .borrowed }
-    private var tintColor: Color { isDebo ? .orange : .blue }
+    // Coordinator (2026-09-15, mockup round 4): "Me deben" (.lent) is green, "Debo"
+    // (.borrowed) is orange — DESIGN_LIQUID's chip colors, confirmed against the mockup
+    // (previously this used `.blue` for "Me deben", not the documented green).
+    private var tintColor: Color { isDebo ? .orange : .green }
     private var directionText: String { isDebo ? "Debo" : "Me deben" }
     private var directionIcon: String { isDebo ? "arrow.up.forward" : "arrow.down.forward" }
+    private var isLiquidated: Bool { !loan.isActive }
 
     private var endDateText: String {
         LoanEngine.endDate(startDate: loan.civilStartDate, termMonths: loan.termMonths, frequency: loan.frequency)
@@ -163,22 +204,27 @@ private struct LoanRow: View {
                     .font(.body.weight(.semibold))
                 Spacer()
                 // Chip nunca depende solo del color — icono + texto siempre visibles (A11Y).
+                // Liquidado: chip gris "Pagado" en vez del chip de dirección (mockup ronda 4).
                 HStack(spacing: 4) {
-                    Image(systemName: directionIcon)
-                    Text(directionText)
+                    Image(systemName: isLiquidated ? "checkmark.circle.fill" : directionIcon)
+                    Text(isLiquidated ? "Pagado" : directionText)
                 }
                 .font(.caption.weight(.semibold))
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-                .background(Capsule().fill(tintColor.opacity(0.15)))
-                .foregroundStyle(tintColor)
+                .background(Capsule().fill((isLiquidated ? Color.gray : tintColor).opacity(0.15)))
+                .foregroundStyle(isLiquidated ? .gray : tintColor)
             }
 
-            Text("Saldo restante: \(currentBalance.currencyString(currency: loan.currency))")
+            Text("Restante \(isLiquidated ? Decimal(0).currencyString(currency: loan.currency) : currentBalance.currencyString(currency: loan.currency))")
                 .font(.body.weight(.semibold))
                 .monospacedDigit()
 
-            if isRevolving {
+            if isLiquidated {
+                Text("Liquidado —")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else if isRevolving {
                 if let revolvingNext {
                     Text("Próximo pago esperado: \(revolvingNext.payment.currencyString(currency: loan.currency)) · \(revolvingNext.date.date(calendar: .current).formatted(.dateTime.day().month(.abbreviated)))")
                         .font(.subheadline)
@@ -187,6 +233,9 @@ private struct LoanRow: View {
                 Text(revolvingBadgeText)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                ProgressView(value: paidFraction)
+                    .tint(tintColor)
+                    .accessibilityValue("\(Int((paidFraction * 100).rounded())) por ciento pagado")
             } else {
                 if let nextInstallment {
                     Text("Próximo pago: \(nextInstallment.payment.currencyString(currency: loan.currency)) · \(nextInstallment.date.date(calendar: .current).formatted(.dateTime.day().month(.abbreviated)))")
@@ -203,9 +252,14 @@ private struct LoanRow: View {
                     .accessibilityValue("\(Int((paidFraction * 100).rounded())) por ciento pagado")
             }
         }
-        .padding(.vertical, 4)
+        // Coordinator (2026-09-16): same card-per-row pattern as INCOME/EXPENSES in
+        // PeriodView — each loan is its own Frost card (20pt radius, 16pt padding) instead of
+        // a row inside one big List section with `Divider()`-style separators between them.
+        .padding(16)
+        .background(Color("AppBackgroundSecondary"))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(directionText), \(loan.name), saldo restante \(currentBalance.currencyString(currency: loan.currency))\(isRevolving ? ", " + revolvingBadgeText : "")")
+        .accessibilityLabel("\(isLiquidated ? "Pagado" : directionText), \(loan.name), restante \(isLiquidated ? Decimal(0).currencyString(currency: loan.currency) : currentBalance.currencyString(currency: loan.currency))\(isRevolving && !isLiquidated ? ", " + revolvingBadgeText : "")")
     }
 }
 
@@ -215,7 +269,9 @@ private enum LoanFrequencyOption: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 }
 
-private struct LoanEditSheet: View {
+// Coordinator (2026-09-16): widened from `private` to internal so `LoanDetailView`'s new
+// "Editar" toolbar button can reuse this exact form/validation instead of duplicating it.
+struct LoanEditSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Environment(\.dismiss) private var dismiss

@@ -18,39 +18,66 @@ struct RecurringHubView: View {
     private var investmentCount: Int { recurringItems.filter { $0.category == .investment }.count }
 
     var body: some View {
+        // Coordinator (2026-09-15, mockup round 4): grouped into 3 sections whose headers
+        // are the literal strings the user chose — "INCOME"/"EXPENSES"/"OTHERS" — NOT a
+        // semantic recategorization of the 6 rows (explicitly: Servicios/Suscripciones/
+        // Préstamos live under "EXPENSES" even though none of them are income vs. expense
+        // classifications on their own; do not "fix" this grouping to be more logical).
         List {
-            NavigationLink {
-                RecurringListView(kind: .income)
-            } label: {
-                row(title: "Ingresos recurrentes", systemImage: "arrow.down.circle", count: incomeCount)
+            Section {
+                NavigationLink {
+                    RecurringListView(kind: .income)
+                } label: {
+                    row(title: "Ingresos recurrentes", systemImage: "arrow.down.circle", count: incomeCount)
+                }
+                NavigationLink {
+                    RecurringListView(kind: .expense)
+                } label: {
+                    row(title: "Gastos recurrentes", systemImage: "arrow.up.circle", count: expenseCount)
+                }
+            } header: {
+                sectionHeader("INCOME")
             }
-            NavigationLink {
-                RecurringListView(kind: .expense)
-            } label: {
-                row(title: "Gastos recurrentes", systemImage: "arrow.up.circle", count: expenseCount)
+
+            Section {
+                NavigationLink {
+                    ServicesView()
+                } label: {
+                    row(title: "Servicios", systemImage: "house.fill", count: serviceCount)
+                }
+                NavigationLink {
+                    SubscriptionsView()
+                } label: {
+                    row(title: "Suscripciones", systemImage: "repeat", count: subscriptionCount)
+                }
+                NavigationLink {
+                    LoansView()
+                } label: {
+                    row(title: "Préstamos", systemImage: "banknote", count: loanCount)
+                }
+            } header: {
+                sectionHeader("EXPENSES")
             }
-            NavigationLink {
-                ServicesView()
-            } label: {
-                row(title: "Servicios", systemImage: "house.fill", count: serviceCount)
-            }
-            NavigationLink {
-                SubscriptionsView()
-            } label: {
-                row(title: "Suscripciones", systemImage: "repeat", count: subscriptionCount)
-            }
-            NavigationLink {
-                LoansView()
-            } label: {
-                row(title: "Préstamos", systemImage: "banknote", count: loanCount)
-            }
-            NavigationLink {
-                InvestmentsView()
-            } label: {
-                row(title: "Inversiones", systemImage: "chart.line.uptrend.xyaxis", count: investmentCount)
+
+            Section {
+                NavigationLink {
+                    InvestmentsView()
+                } label: {
+                    row(title: "Inversiones", systemImage: "chart.line.uptrend.xyaxis", count: investmentCount)
+                }
+            } header: {
+                sectionHeader("OTHERS")
             }
         }
         .navigationTitle("Recurrentes y pagos")
+    }
+
+    // Same header style already used in Ajustes (SettingsView): caption, uppercase, secondary.
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.caption.weight(.semibold))
+            .tracking(0.5)
+            .foregroundStyle(.secondary)
     }
 
     private func row(title: String, systemImage: String, count: Int) -> some View {

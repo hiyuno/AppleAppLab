@@ -34,6 +34,7 @@
 		5B6A6767102BAD8C2A6CD267 /* SchemaV1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21E8A4D5E23555DBCBD83939 /* SchemaV1.swift */; };
 		5C5EFAB2C3798E7AA7771023 /* LineItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 04F893ACA492FBBF60882B64 /* LineItem.swift */; };
 		5C6212205E36050B55A39B1A /* ExchangeRateService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3695B6D6E219D97D703A990 /* ExchangeRateService.swift */; };
+		5F684574E977BFBE83C6B2A3 /* LoanPaidToDateTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53ED9C880551E04990FC3737 /* LoanPaidToDateTests.swift */; };
 		610C765F9884EDF41E018F6F /* RecurringHubView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 635F6996BBE851528B051E89 /* RecurringHubView.swift */; };
 		621B3C45B180D789A7289426 /* ExchangeRateCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = A4F4F7434766B5EC762084C6 /* ExchangeRateCache.swift */; };
 		62DDD27F2F6B074755A76D2F /* OverviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC882F5DF8F984BA0E4D5504 /* OverviewView.swift */; };
@@ -52,6 +53,7 @@
 		A123F0DB5EE279803445F221 /* ProjectionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 407E30CEC4402B9644F1EEB7 /* ProjectionEngine.swift */; };
 		A14FE770B28993740AF0266A /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58A4DB18C8F47B32200C86BE /* RootView.swift */; };
 		A279DC5E3B2FE0582775AA7B /* SubscriptionImportService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C4756E40F5FBEF48E07F15EE /* SubscriptionImportService.swift */; };
+		A776CA7C336EC9BD6291EEBC /* LineCaptureSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B278D7B02AD3C869F18A0E3 /* LineCaptureSheet.swift */; };
 		AA33E04720F15DD9E7CEC737 /* LoansView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 143019058E3A32124A690623 /* LoansView.swift */; };
 		AC0344FEF46ECB4504AD689F /* ExchangeRateServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 779AF77C5F0B9A84ACF875A0 /* ExchangeRateServiceTests.swift */; };
 		AC6867235EA85294AA6E65E7 /* SchemaV1Tests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9ECA88964595DF093459732 /* SchemaV1Tests.swift */; };
@@ -118,6 +120,7 @@
 		4CAFDD48DAD3790FDECC4CE2 /* Info-iOS-extra.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = "Info-iOS-extra.plist"; sourceTree = "<group>"; };
 		4E3BBE08E44596EC5C77C746 /* SummaryPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryPanel.swift; sourceTree = "<group>"; };
 		5370CF4674A90E65EB76DAB1 /* FintrolApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FintrolApp.swift; sourceTree = "<group>"; };
+		53ED9C880551E04990FC3737 /* LoanPaidToDateTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoanPaidToDateTests.swift; sourceTree = "<group>"; };
 		580436E95AF69CE70C691745 /* PeriodView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodView.swift; sourceTree = "<group>"; };
 		58740E5644A9FC34CC2CB438 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		58A4DB18C8F47B32200C86BE /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
@@ -135,6 +138,7 @@
 		7AC3270B50627B8804936A84 /* Fintrol-macOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Fintrol-macOS.entitlements"; sourceTree = "<group>"; };
 		7BFB8EABB58D0EA220DD5E1B /* JumpSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JumpSheet.swift; sourceTree = "<group>"; };
 		8519B1D9E52BDD8098759799 /* AppMigrationPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMigrationPlan.swift; sourceTree = "<group>"; };
+		8B278D7B02AD3C869F18A0E3 /* LineCaptureSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineCaptureSheet.swift; sourceTree = "<group>"; };
 		8D5362C9AA51785039A2E67E /* SubscriptionImportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionImportServiceTests.swift; sourceTree = "<group>"; };
 		8D63937C11EADCF4F6AF835A /* Subscription.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Subscription.swift; sourceTree = "<group>"; };
 		8F471542AEAB1F58B5658BC0 /* SchemaV2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaV2.swift; sourceTree = "<group>"; };
@@ -196,6 +200,7 @@
 			isa = PBXGroup;
 			children = (
 				7BFB8EABB58D0EA220DD5E1B /* JumpSheet.swift */,
+				8B278D7B02AD3C869F18A0E3 /* LineCaptureSheet.swift */,
 				3F449DFDD65A97258A0E6D17 /* LineItemRow.swift */,
 				D828660E91984A48A0AFD63F /* SobranteBadge.swift */,
 				4E3BBE08E44596EC5C77C746 /* SummaryPanel.swift */,
@@ -254,6 +259,7 @@
 				E8C913669873C7AB638CC20C /* InvestmentsTests.swift */,
 				04F52199E5869BBC23728CF3 /* KeychainStoreTests.swift */,
 				1052E0CFE7E98D118F219221 /* LoanEngineTests.swift */,
+				53ED9C880551E04990FC3737 /* LoanPaidToDateTests.swift */,
 				0B01638C95569D9F3DCD4754 /* PaymentDayStorageTests.swift */,
 				1840D41607A8A2F3A033394E /* PeriodCoordinateTitleTests.swift */,
 				C1BA3D7F2BFABFF684660DB5 /* PeriodCoordinatorTests.swift */,
@@ -558,6 +564,7 @@
 				198F7F0385EB8E68646774F3 /* InvestmentsTests.swift in Sources */,
 				718DBC36253C97CC3ECF33D1 /* KeychainStoreTests.swift in Sources */,
 				32BA93D9CEB76C8673303307 /* LoanEngineTests.swift in Sources */,
+				5F684574E977BFBE83C6B2A3 /* LoanPaidToDateTests.swift in Sources */,
 				AE0C4D87B2095B03DDE3440C /* PaymentDayStorageTests.swift in Sources */,
 				C914807C575A724C2102E4F8 /* PeriodCoordinateTitleTests.swift in Sources */,
 				6BE1FFD342B2A659C5E4ABC2 /* PeriodCoordinatorTests.swift in Sources */,
@@ -591,6 +598,7 @@
 				559708D241BCF6AEB9CEDE8C /* InvestmentsView.swift in Sources */,
 				04E89BD195E2D5B96B9B1EBA /* JumpSheet.swift in Sources */,
 				EBE2712427A60C5AC18B3540 /* KeychainStore.swift in Sources */,
+				A776CA7C336EC9BD6291EEBC /* LineCaptureSheet.swift in Sources */,
 				5C5EFAB2C3798E7AA7771023 /* LineItem.swift in Sources */,
 				3821C728EF4AF6CB6101C4A7 /* LineItemRow.swift in Sources */,
 				FAD945E4E8AD605E08A25C07 /* Loan.swift in Sources */,

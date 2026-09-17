@@ -122,6 +122,20 @@ public enum LoanEngine {
         )
     }
 
+    /// TRD "paidAt/progreso real de préstamos" (2026-09-16): `currentBalance` is now
+    /// `principal + accumulatedInterest − paidToDate` (a real, user-confirmed sum — see
+    /// `PeriodCoordinator.loanPaidToDate`), so `accumulatedInterest` is the interest half of
+    /// that formula, factored out here once so `.fixedTerm` and `.revolving` callers (both
+    /// `LoanDetailView` and `LoansView`'s `LoanRow`) share the same summation instead of each
+    /// re-deriving it.
+    public static func accumulatedInterest(schedule: [LoanInstallment], through date: CivilDate) -> Decimal {
+        schedule.filter { $0.date <= date }.reduce(Decimal(0)) { $0 + $1.interest }
+    }
+
+    public static func accumulatedInterest(revolvingRows: [RevolvingRow], through date: CivilDate) -> Decimal {
+        revolvingRows.filter { $0.date <= date }.reduce(Decimal(0)) { $0 + $1.interest }
+    }
+
     /// `termMonths` implied by an `endDate` the user edited directly (plazo↔fecha fin
     /// linked fields in DESIGN_LIQUID.md) — whole months between `startDate` and `endDate`,
     /// floored at 1.

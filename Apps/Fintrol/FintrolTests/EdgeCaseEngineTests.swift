@@ -17,7 +17,7 @@ struct EdgeCaseEngineTests {
 
     private func makeContext() throws -> ModelContext {
         let schema = Schema(SchemaV1.models)
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let configuration = ModelConfiguration(schema: schema, url: URL.temporaryDirectory.appending(path: UUID().uuidString + ".sqlite"))
         let container = try ModelContainer(for: schema, configurations: [configuration])
         return ModelContext(container)
     }

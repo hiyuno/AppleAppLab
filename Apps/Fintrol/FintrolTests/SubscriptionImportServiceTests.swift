@@ -115,7 +115,7 @@ struct SubscriptionImportServiceTests {
 struct SubscriptionImportPersistenceTests {
     private func makeContext() throws -> ModelContext {
         let schema = Schema(SchemaV2.models)
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let configuration = ModelConfiguration(schema: schema, url: URL.temporaryDirectory.appending(path: UUID().uuidString + ".sqlite"))
         let container = try ModelContainer(for: schema, migrationPlan: AppMigrationPlan.self, configurations: [configuration])
         return ModelContext(container)
     }

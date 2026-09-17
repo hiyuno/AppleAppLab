@@ -98,6 +98,7 @@ Fintrol/
 - `isManuallyEdited: Bool` — **bandera central de la regla "la edición manual gana"**: se pone en `true` en cualquier edición del usuario sobre una línea con `origin != .manual`; el motor de regeneración nunca toca una línea con esta bandera en `true`
 - `exchangeRateSnapshot: Decimal?` — tipo de cambio efectivo usado al calcular esta línea (para que "Mandar" y el histórico no cambien retroactivamente si el rate cacheado cambia después)
 - `isHomeService: Bool` — solo relevante cuando `origin == .subscription`; distingue la línea combinada "Servicios" (hogar) de "Payments" (suscripciones); ambas comparten `origin == .subscription`, no hay un origin `.service` separado
+- `paidAt: CivilDate?` — **decisión del usuario:** se setea al momento en que el usuario marca `isPaid = true` (swipe en `PeriodView`), se limpia a `nil` si se desmarca. No es la fecha programada del pago (esa ya vive en la fecha de la quincena/`Period`) — es la fecha real en que el usuario confirmó el pago. Sigue la convención `CivilDate` (ver "Decisiones de Swift" — política de fechas), no `Date` crudo.
 - `period: Period?` (inverso, opcional)
 
 **`RecurringItem`**
@@ -231,6 +232,21 @@ Fix real de un bug de producción, no estaba en la versión anterior de este TRD
   2. Registrar un pago real de `150` (en vez del esperado `200`) en una quincena ya materializada → `revolvingSchedule` recalcula el saldo de esa quincena en adelante con el pago real, no con `expectedPayment`.
   3. `expectedPayment` ≤ interés mensual del saldo inicial → `neverEnds == true`, proyección acotada a 10 años, no iteración infinita.
   4. Liquidación anticipada: un pago real mayor al saldo restante de ese período → el pago se ajusta al saldo exacto (nunca queda saldo negativo ni un pago "de más" sin explicar).
+
+### Progreso de pago — decisión del usuario: solo avanza por confirmación manual, no por fecha programada
+
+Cambio de comportamiento sobre el diseño anterior: `LoanDetailView.swift:24` calculaba `paidToDate = loan.principal − currentBalance`, con `currentBalance` derivado del schedule **por tiempo transcurrido** — avanzaba solo, sin que el usuario confirmara nada. Se reemplaza por:
+
+- **`paidToDate`** = suma de `amount` de todas las `LineItem` con `sourceLoanID == loan.id && isPaid == true` (materializadas, cualquier quincena, pasada o futura si el usuario la marcó adelantada). Ya no se deriva del schedule por fecha.
+- **`currentBalance`** (para mostrar) = `principal + interésAcumulado − paidToDate`, donde `interésAcumulado` sigue viniendo del schedule del modo correspondiente (`LoanEngine.schedule` en `.fixedTerm`, `LoanEngine.revolvingSchedule` en `.revolving`, evaluado hasta hoy) — lo único que cambia es qué resta: el pago **real confirmado**, no el pago que "debería" haberse hecho a la fecha.
+- **"Fecha del último pago"** = `paidAt` de la `LineItem` con `isPaid == true` de mayor `paidAt` entre las de `sourceLoanID == loan.id`; `"—"` si no hay ninguna marcada.
+- **Barra de progreso (`LoansView`, fila de la lista):** usa el mismo `paidToDate` real, no un valor derivado del schedule — misma fuente que el detalle, sin una segunda fórmula paralela.
+- **Dónde se setea `paidAt`:** en el toggle de "pagado" que ya existe en `PeriodView.swift` para el swipe de la línea (marcar `isPaid = true` en cualquier `LineItem`, no solo las de préstamo) — al pasar a `true` se asigna `paidAt = CivilDate.today(calendar: .current)`; al pasar a `false` se limpia a `nil`. No es un mecanismo nuevo, es un campo adicional en el mismo toggle.
+- **Consistencia con "Inversiones" — señalado, no aplicado:** "aportado a la fecha" en la pantalla de Inversiones tiene exactamente el mismo problema de fondo si se derivara del schedule proyectado en vez de líneas confirmadas; hoy ya está definido como "suma de `LineItem` materializadas" (no por fecha), así que estructuralmente ya sigue el mismo principio — la pregunta abierta es si también debería exigir `isPaid == true` (en vez de contar cualquier línea materializada, editada o no) para ser 100% consistente con esta decisión. **No se aplica ahora** — queda anotado para que el usuario decida si "aportado" debe requerir confirmación manual igual que "pagado" en préstamos, o si para inversiones basta con que la línea exista.
+- **Tests obligatorios (Bertrand):**
+  1. Marcar `isPaid = true` en la línea de un préstamo → la barra avanza y `paidAt` queda registrado con la fecha de hoy.
+  2. Desmarcarla → la barra retrocede y `paidAt` vuelve a `nil`.
+  3. Una línea futura de ese préstamo, aunque su quincena ya haya pasado, **no cuenta** en `paidToDate` mientras no se marque manualmente — el progreso no avanza solo por fecha programada.
 
 ---
 
@@ -402,6 +418,8 @@ Entitlements:
 | 2026-09-15 | El cambio de `.revolving` se versiona como `SchemaV2` (en sitio, sin migración real por ser pre-release) en vez de seguir editando `SchemaV1` | Deja un checkpoint de versión correcto antes de que el proyecto salga de pre-release |
 | 2026-09-15 | Feature "Inversiones" (aportaciones recurrentes): se reutiliza `RecurringItem` con `category = .investment` + `accountName`, origen de línea `.investment`, sin entidad ni motor de reproyección nuevos | Decisión explícita del usuario — estructuralmente idéntico a un recurrente; una entidad `Investment` aparte solo duplicaría `reprojectRecurring` sin beneficio |
 | 2026-09-15 | Campos de "Inversiones" entran como Lightweight dentro de `SchemaV2`, sin `SchemaV3` | Son propiedades nuevas con default sobre una entidad existente — caso trivial de la tabla de migración |
+| 2026-09-16 | `LineItem.paidAt: CivilDate?`; progreso de préstamos (`paidToDate`, `currentBalance`, "fecha del último pago") pasa de derivarse del schedule por fecha programada a derivarse de líneas con `isPaid == true` confirmadas por el usuario | Decisión explícita del usuario — el progreso solo debe avanzar por confirmación manual (swipe "pagado"), nunca solo por haber llegado la fecha |
+| 2026-09-16 | Consistencia de "aportado a la fecha" (Inversiones) con esta misma regla: señalada como pregunta abierta para el usuario, no aplicada todavía | Evita tocar Inversiones sin decisión explícita, aunque el problema de fondo sea el mismo |
 | 2026-09-15 | Materialización perezosa de quincenas — nunca se generan 240 registros de golpe | Requisito explícito del PRD (riesgo de "proyección infinita"); Overview calcula en memoria |
 | 2026-09-15 | Recálculo de encadenado incremental con fixed-point, no recálculo completo | Acota el costo a quincenas materializadas realmente afectadas |
 | 2026-09-15 | Regla "edición manual gana" implementada con bandera explícita `isManuallyEdited` por línea | Evita heurísticas de diff frágiles; mapea 1:1 al criterio de aceptación del PRD |

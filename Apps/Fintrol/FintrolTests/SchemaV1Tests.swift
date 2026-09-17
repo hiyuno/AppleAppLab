@@ -1,4 +1,5 @@
 import Testing
+import Foundation
 import SwiftData
 @testable import Fintrol
 
@@ -13,7 +14,7 @@ struct SchemaV1Tests {
     @Test("ModelContainer opens cleanly with SchemaV1 alone (no migration plan involved)")
     func opensCleanV1Container() throws {
         let schema = Schema(SchemaV1.models)
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let configuration = ModelConfiguration(schema: schema, url: URL.temporaryDirectory.appending(path: UUID().uuidString + ".sqlite"))
         let container = try ModelContainer(for: schema, configurations: [configuration])
         #expect(container.schema.entities.count == SchemaV1.models.count)
     }
@@ -21,7 +22,7 @@ struct SchemaV1Tests {
     @Test("ModelContainer opens cleanly with SchemaV2 through AppMigrationPlan — the app's real launch path")
     func opensCleanV2ContainerThroughMigrationPlan() throws {
         let schema = Schema(SchemaV2.models)
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let configuration = ModelConfiguration(schema: schema, url: URL.temporaryDirectory.appending(path: UUID().uuidString + ".sqlite"))
         let container = try ModelContainer(for: schema, migrationPlan: AppMigrationPlan.self, configurations: [configuration])
         #expect(container.schema.entities.count == SchemaV2.models.count)
     }

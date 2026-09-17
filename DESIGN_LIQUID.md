@@ -122,7 +122,7 @@ Razón del cambio: cinco (ahora seis, contando `pencil`) símbolos posibles por 
 | Sobrante (badge grande) | `.system(size: 44, weight: .bold, design: .default)` con `relativeTo: .largeTitle` | Bold | 0 | Único texto Bold de la app — es el elemento más grande de cada pantalla, `.monospacedDigit()` |
 | Título de pantalla (Quincena: línea 1 "Septiembre 2026") | `.title2` | Semibold | 0 | Botón de navegación (dos líneas + pill debajo, ver "Header de Quincena"), no `.largeTitle` — deja espacio a los bloques |
 | Subtítulo de rango (Quincena: línea 2 "1 – 15" / "16 – 30") | `.subheadline` | Regular | 0 | `.secondary`, `.monospacedDigit()`, último día real del mes vía `PeriodDateEngine` |
-| Header de sección (INCOME / EXPENSES) | `.headline` | Semibold | +0.5 | `ALL CAPS` vía `.textCase(.uppercase)`, nunca string en mayúsculas |
+| Header de sección (INCOME / EXPENSES) | `.caption` | Semibold | +0.5 | `ALL CAPS` vía `.textCase(.uppercase)`, nunca string en mayúsculas; **decisión del usuario: vive fuera de la card**, como encabezado de sección iOS grouped encima del bloque — no como primera fila dentro de él (ver "Bloques INCOME / EXPENSES") |
 | Título de línea (descripción) | `.body` | Regular | 0 | |
 | Monto de línea | `.body` | Semibold | 0 | `.monospacedDigit()`, alineado `.trailing` |
 | Monto convertido / TC (caption bajo línea MXN) | `.caption` | Regular | 0 | `.secondary`, `.monospacedDigit()` |
@@ -176,7 +176,7 @@ Razón del cambio: cinco (ahora seis, contando `pencil`) símbolos posibles por 
 
 **Regla de contenedores anidados:** `r_inner = r_outer − padding`. Card de bloque (r=20, padding=16) → fila de línea interna (r=4, no 12 — corrijo: ver nota).
 
-> **Nota de consistencia:** las filas de línea dentro de un bloque de 20pt con padding de 16pt matemáticamente dan r_inner=4pt. Pero una fila de 44–52pt de alto con r=4pt se ve casi rectangular, lo cual es correcto para una fila de "tabla" (no se quiere que cada fila lea como mini-card). El valor de 12pt de la tabla de arriba aplica solo a la fila cuando está en estado de **edición inline** (se convierte en un campo con su propio fondo elevado) — en reposo, la fila no tiene fondo propio, solo separador, así que el radio no aplica. Ver "Edición de línea" en Componentes del sistema.
+> **Nota de consistencia (parcialmente superada por el rediseño de card-por-línea, ver "Bloques INCOME / EXPENSES"):** las filas de línea dentro de un bloque de 20pt con padding de 16pt matemáticamente dan r_inner=4pt. Pero una fila de 44–52pt de alto con r=4pt se ve casi rectangular, lo cual es correcto para una fila de "tabla" (no se quiere que cada fila lea como mini-card). El valor de 12pt de la tabla de arriba ya no aplica a ningún estado de la fila: editar ya no es un estado in-place con fondo propio elevado — abre el "Sheet de captura/edición de línea" (ver esa sección), así que la fila en reposo nunca cambia de radio ni de fondo por edición. El radio de 20pt de cada card-por-línea (ver "Bloques INCOME / EXPENSES") es el que aplica siempre.
 
 ---
 
@@ -211,8 +211,10 @@ En la práctica, Woz consume esto a través de `PatternConfig` del tema Fintrol 
 | Sidebar (Mac) | Nativo `NavigationSplitView` — Liquid Glass automático del sistema, sin custom |
 | Toolbar (Mac y iPhone) | Nativo, Liquid Glass automático |
 | Botón flotante "+" (captura rápida) | `.buttonStyle(.glassProminent)`, tinte accent |
-| Sheet (editar línea, jump quincena, editar recurrente) | Sistema — Liquid Glass `.clear` con dimming detrás |
+| Sheet (jump quincena, formularios de Recurrentes/Suscripciones/Servicios/Préstamos/Inversiones) | Sistema — Liquid Glass `regular` (no `.clear`, ver nota de Variante abajo) |
+| Sheet de captura/edición de línea (INCOME/EXPENSES) | **Excepción documentada:** fondo Frost del tema, no Liquid Glass — ver "Sheet de captura/edición de línea" más abajo, decisión explícita del usuario sobre esta pantalla en particular |
 | Pantalla de bloqueo Face ID | Fondo `AppBackground` sólido, sin glass — es una superficie de seguridad, no de navegación; ver sección Face ID |
+| Botón de atrás (pantallas de lista del hub) | Nativo de `NavigationStack` — Liquid Glass automático del sistema en iOS 26, igual que el "+"; **decisión del usuario, revierte el `NavCircleButton` que se había formalizado aquí:** no hace falta un componente custom, el back button nativo ya recibe el cristal correcto sin intervención |
 
 **Variante:** Regular en toda la navegación. No hay caso de uso para Clear en Fintrol — no hay media-rich content detrás de las barras (es una app de texto y números), así que Clear no aporta y arriesgaría legibilidad de los montos.
 
@@ -257,7 +259,14 @@ Decisión del usuario, en cuatro pasos: primero "Recurrentes" se dividió en **"
 
 Esto también informa el patrón de acceso rápido que ya existía en `SettingsView` (`Apps/Fintrol/Fintrol/Features/Settings/SettingsView.swift:92`, fila `NavigationLink("Recurrentes")`) — esa fila queda obsoleta como camino alterno mixto: Ajustes no debe ofrecer una segunda entrada a estas listas por fuera del hub; si Woz quiere mantener acceso rápido desde Ajustes, debe ser un solo `NavigationLink("Recurrentes y pagos")` que abre el mismo hub, no filas sueltas por tipo.
 
-- **iPhone:** la tab "Recurrentes y pagos" (icono `arrow.triangle.2.circlepath`) abre un hub — `List` de 6 filas `LabListRow` con chevron, en este orden (ingresos y gastos primero por ser el corazón de la proyección multi-año del PRD; servicios y suscripciones después por ser más operativos; préstamos e inversiones al final por ser los casos de uso menos frecuentes de tocar, solo consulta ocasional del saldo):
+**Actualización del usuario (mockup exportado, no live file de Figma):** las 6 filas se agrupan en **3 secciones con encabezado** (mismo patrón visual de encabezado de sección que INCOME/EXPENSES en Quincena — `.caption` `ALL CAPS`, `.secondary`, fuera de las cards):
+- **"INCOME"** — Ingresos recurrentes, Gastos recurrentes
+- **"EXPENSES"** — Servicios, Suscripciones, Préstamos
+- **"OTHERS"** — Inversiones
+
+**Nota:** decisión explícita del usuario, dejada tal cual aunque los nombres de sección no describen el contenido con precisión — "EXPENSES" agrupa Servicios+Suscripciones+**Préstamos** (que no son necesariamente un gasto: "Me deben" es lo contrario), y "Gastos recurrentes" vive bajo el encabezado "INCOME". No corregir a criterio propio; si Woz o Steve necesitan nombres más descriptivos, es una pregunta para el usuario, no un ajuste de diseño.
+
+- **iPhone:** la tab "Recurrentes y pagos" (icono `arrow.triangle.2.circlepath`) abre un hub — `List` de 6 filas `LabListRow` con chevron, agrupadas en las 3 secciones de arriba. Orden dentro de cada sección (ingresos y gastos primero por ser el corazón de la proyección multi-año del PRD; servicios y suscripciones después por ser más operativos; préstamos e inversiones al final por ser los casos de uso menos frecuentes de tocar, solo consulta ocasional del saldo):
   1. "Ingresos recurrentes" — `systemImage: "arrow.down.circle"`, subtitle con conteo
   2. "Gastos recurrentes" — `systemImage: "arrow.up.circle"`, subtitle con conteo
   3. "Servicios" — `systemImage: "house.fill"`, subtitle con conteo
@@ -290,17 +299,17 @@ Decisión del usuario: el título deja de ser una sola línea compacta ("Sept 20
 
 ```
 Septiembre 2026          ← .title2, semibold — mes completo localizado (Locale.current) + año
-1 – 15                    ← .subheadline, .secondary, .monospacedDigit() — o "16 – 30" con el
-                             último día REAL del mes (28/29/30/31 según PeriodDateEngine, nunca
-                             un "30" genérico)
-[ Hoy ]                    ← pill de estado, debajo de las dos líneas — ver punto 3
+[ 1 – 15 ]                 ← pill que YA ES el indicador de estado — ver punto 3, no hay
+                             badge "Current"/"Proyección" separado
 ```
 
-Ambas líneas viven dentro del mismo botón (todo el bloque de dos líneas es el trigger del jump sheet, no solo la primera línea) y se centran como una unidad en el header, con la pill de estado inmediatamente debajo, separada por 4pt.
+**Decisión del usuario, reemplaza el punto 3 anterior:** se elimina el badge "Current"/"Proyección" como elemento aparte. La segunda línea del header — la que ya muestra el rango de días ("1 – 15" / "16 – 30", con el último día REAL del mes vía `PeriodDateEngine`, nunca un "30" genérico) — pasa a ser ella misma la pill de estado, doblando función: texto de rango + indicador visual de "dónde estoy" en una sola pieza, sin segundo elemento debajo.
+
+Ambas líneas viven dentro del mismo botón (todo el bloque es el trigger del jump sheet, no solo la primera línea) y se centran como una unidad en el header.
 
 **1. Navegación adyacente — chevrons en el toolbar/header**
 
-- iPhone: dentro del header de la pantalla Quincena, un `HStack` con `chevron.left` / `chevron.right` a los lados del bloque de título de dos líneas. Swipe horizontal en el contenido también navega (gesto acelerador, con alternativa tap siempre presente en los chevrons — regla de gestos).
+- iPhone: dentro del header de la pantalla Quincena, un `HStack` con dos botones a los lados del bloque de título de dos líneas — símbolo **`chevron.backward`** / **`chevron.forward`**, `.buttonStyle(.glass)` sin tint (vigente, confirmado en código; sustituye la exploración anterior de `arrow.backward`/`arrow.right`, ver nota en "Íconos SF Symbols detectados" abajo). Swipe horizontal en el contenido también navega (gesto acelerador, con alternativa tap siempre presente en los chevrons — regla de gestos).
 - Mac: mismos chevrons en el toolbar (`.navigation` placement a la izquierda), más atajos de teclado `⌘←` / `⌘→`.
 - El chevron derecho nunca se deshabilita — avanzar siempre materializa la siguiente quincena bajo demanda (ver TRD, materialización perezosa). El chevron izquierdo se deshabilita (estado `.disabled`, opacidad reducida) al llegar a la **primera quincena materializada** — no existe "antes" en Fintrol, coincide con "arranca desde cero en 2026". El jump sheet respeta el mismo límite: el `Picker` de año/mes/quincena no ofrece opciones anteriores a esa primera quincena materializada.
 
@@ -321,10 +330,9 @@ Jump sheet — Quincena
 - Cierre: al navegar, o botón "Cancelar"
 ```
 
-**3. Indicador de "dónde estoy"** — la pill debajo del título de dos líneas distingue tres estados:
-  - Sin pill: quincena pasada o actual ya materializada normalmente.
-  - Pill "Hoy" (accent, pill pequeño): la quincena que contiene la fecha de hoy.
-  - Pill "Proyección" (`.secondary`, pill pequeño): una quincena futura recién materializada por navegación, para que el usuario sepa que estas líneas vinieron de recurrentes/suscripciones y no de captura manual.
+**3. Indicador de "dónde estoy"** — ya no es un badge de texto aparte ("Current"/"Proyección"); es el propio estilo de la pill de rango de días, con dos estados posibles, sin ninguna etiqueta de texto adicional en ningún caso:
+  - **Quincena de HOY:** la pill "1 – 15"/"16 – 30" lleva **fondo verde sólido** (mismo verde del sobrante positivo, `#34C759`) con texto blanco/contrastante **Bold**.
+  - **Pasada o proyectada (futura):** la pill es **transparente** (sin relleno, borde sutil opcional `.secondary` a baja opacidad), texto en `.secondary`/atenuado — un solo tratamiento visual para ambos casos (pasada y futura), no se distinguen entre sí; la distinción que antes hacía "Proyección" queda cubierta por el resto del contexto de pantalla (badges de origen de línea, "Generado por…" al editar), no por el header.
 
 ---
 
@@ -338,13 +346,33 @@ Jump sheet — Quincena
 
 ### Bloques INCOME / EXPENSES — componente custom (no está en el catálogo)
 
-No existe en `PATTERNS.md` un componente de "bloque de tabla financiera con totales al pie" — se construye sobre `LabNestedCard` (da el nested radius automático) con:
+**Decisión del usuario (edición directa en Figma, frame "01 · Quincena", `8:2`): cada línea es ahora su propia card/pill independiente, no una fila dentro de una card contenedora única.** Se abandona el patrón "una `LabNestedCard` con filas separadas por `Divider()`" en favor de "una card por línea, apiladas con gap". El total queda fuera de las cards, directamente sobre el fondo de la app.
 
-- Header de sección: título `ALL CAPS` (`.headline`, tracking +0.5) + botón "+" alineado a la derecha (abre captura rápida inline, ver abajo).
-- Lista de filas (`LineItemRow`, custom) sin fondo propio en reposo, separador `Color(.separator)` entre filas.
-- Fila de total al pie: `.title3` Semibold, `.monospacedDigit()`, separado del último ítem con un `Divider()` más marcado (2pt, `.secondary`).
+- **Header de sección fuera de la card** (sigue igual que antes): `ALL CAPS`, `.caption` Bold, tracking +0.6, `.secondary` 60%, con padding propio de 10pt (ya no es solo texto suelto — vive envuelto en un contenedor con padding, ver tabla de medidas).
+- **Cada línea (`LineItemRow`) es su propia card**: fondo Frost `AppBackground.secondary` (`#2A2A2A`), radio **20pt** (mismo radio que las cards grandes, no el radio interno de 12pt), padding **16pt** en los 4 lados, contenido en `HStack` (`.spaceBetween`) descripción `.leading` + monto `.trailing`, `.body` (17pt) Regular, blanco. Sin separador `Divider()` entre líneas — el separador visual ahora es el espacio, no una línea.
+- **Gap entre cards de línea: 8pt** (`SpacingTokens.itemSpacing`), no los 4pt de densidad de tabla documentados antes — ese valor queda obsoleto para este patrón.
+- **Fila de total: fuera de toda card**, sobre el fondo de la app directamente (sin `LabNestedCard` propio). `.body` (17pt) Bold, blanco, padding `10pt` arriba / `10pt` horizontal / ~1pt abajo, `HStack` `.spaceBetween`. Ya no lleva el `Divider()` de 2pt que la separaba del último ítem — el espacio hace esa función.
+- **El patrón de card-por-línea con TOTAL fuera aplica por igual a INCOME y a EXPENSES** — no es exclusivo de INCOME, EXPENSES migra al mismo tratamiento (cards individuales + total suelto sobre el fondo). Confirmado en Figma: ambos bloques ya tienen sus líneas como cards independientes.
 
-Documentar `LineItemRow` y el bloque contenedor en `PROJECT_LEARNINGS.md` como candidatos a generalizarse a `AppleAppLabUI` (patrón reutilizable: "lista con total al pie").
+**Nueva edición manual del usuario en Figma (misma sesión, frame `8:2`) — decisiones ya cerradas por el usuario:**
+
+- **El CTA de agregar es un ícono, no texto: `plus.circle.fill`, en INCOME y en EXPENSES por igual.** Reemplaza definitivamente la fila suelta "⊕ Agregar ingreso / ⊕ Agregar gasto" (ese texto queda obsoleto). La capa detectada en Figma como `plus.capsule.fill 1` no era un símbolo real (sufijo de auto-dedupe + nombre inexistente en el catálogo) — el símbolo correcto y ya confirmado es **`plus.circle.fill`**.
+- **Posición del CTA — actualización del usuario (nueva captura de Figma), reemplaza la ubicación anterior:** el botón ya **no** vive en el header de sección junto al título. Se mueve a una posición independiente **debajo de la última card de línea**, antes de la fila de TOTAL — botón circular solo, sin texto, alineado a `.leading` (izquierda), mismo tratamiento en ambos bloques (INCOME y EXPENSES). El header de sección queda solo con el texto (`ALL CAPS`, sin ningún control a la derecha). Orden vertical final de cada bloque: header de sección → cards de línea apiladas → **botón "+" circular, solo, alineado a la izquierda** → fila de TOTAL.
+- **Fila de TOTAL: el tamaño de texto bajó de 17pt a 14pt Bold** (blanco) — en ambos bloques (TOTAL INCOME y TOTAL EXPENSES).
+- **Iconografía del header de navegación — superada por una decisión posterior confirmada en código:** en esta sesión de Figma los chevrons `‹`/`›` se habían reemplazado por `arrow.backward`/`arrow.right`; el estado vigente hoy es `chevron.backward`/`chevron.forward` con `.buttonStyle(.glass)` sin tint (ver tabla de íconos abajo y "Navegación adyacente" arriba).
+- **Pill de estado en verde: excepción deliberada, no corregir — superada en su forma pero no en su color.** En esta sesión de Figma era un badge de texto aparte ("Hoy" → "Current"); una decisión posterior (ver "Header de Quincena — dos líneas + pill de estado") eliminó ese badge y trasladó el mismo tratamiento de color a la propia pill de rango de días. El color se mantiene: verde éxito (`#34C759` texto, `rgba(52,199,89,0.43)` fondo o sólido según el estado — ver spec vigente) en vez de acento naranja. El usuario confirmó que el verde aquí se queda aunque rompa la regla general "el verde se reserva para SOBRANTE / el naranja para lo que importa" — sigue siendo la única excepción documentada a esa regla en toda la app; no generalizar el verde a otros estados sin pedir la misma confirmación explícita.
+- **SOBRANTE cambió de layout vertical a horizontal:** antes label arriba / monto abajo (`VStack`, gap 6pt); ahora es una sola fila `HStack` `.spaceBetween` — "SOBRANTE" a la izquierda, monto a la derecha, ambos en verde `#34C759` (antes el label era `.secondary` gris y solo el monto era verde).
+- **Espaciado exterior cambió:** gap entre bloques mayores pasó de 19pt a **24pt**, y el padding lateral de 16pt ahora vive en el wrapper raíz (`px-16` sobre todo el contenido) en vez de aplicarse por-card.
+
+#### Íconos SF Symbols detectados (nombre de capa = nombre del símbolo)
+
+| Capa | Símbolo | Ubicación | Tamaño aprox. | Nota |
+|---|---|---|---|---|
+| `arrow.backward` (`11:112`) | ~~`arrow.backward`~~ **superado** | Header · TitleRow, extremo izquierdo | 23.76×18.92pt | Exploración de Figma en su momento; **vigente hoy: `chevron.backward`**, `.buttonStyle(.glass)` sin tint, confirmado en código |
+| `arrow.right` (`11:121`) | ~~`arrow.right`~~ **superado** | Header · TitleRow, extremo derecho | 23.76×18.92pt | Exploración de Figma en su momento; **vigente hoy: `chevron.forward`**, `.buttonStyle(.glass)` sin tint, confirmado en código |
+| CTA agregar (INCOME y EXPENSES) | **`plus.circle.fill`** ✅ decisión cerrada | **Actualizado:** ya no en el header de sección — vive solo, alineado a la izquierda, debajo de la última card de línea y antes de TOTAL | ~24×24pt (ajustar en Figma; la capa vista `plus.capsule.fill 1` era un símbolo inválido, no usar de referencia de tamaño) | Reemplaza la fila de texto "⊕ Agregar…" en ambos bloques |
+
+Documentar `LineItemRow` (ahora card individual) y el patrón "stack de cards con total suelto encima del fondo" en `PROJECT_LEARNINGS.md` como candidato a generalizarse a `AppleAppLabUI`.
 
 ### Fila de línea (`LineItemRow`) — estados visuales
 
@@ -359,13 +387,13 @@ Documentar `LineItemRow` y el bloque contenedor en `PROJECT_LEARNINGS.md` como c
 | **Inactiva y pagada** | Se combinan: fila a opacidad `0.4`, monto tachado, palomita azul presente pero a la misma opacidad reducida (no se dibuja aparte a opacidad completa) — lee como "esto pasó, pero ahora mismo no cuenta" |
 | Línea en MXN | Bajo el monto principal (que siempre se muestra en su moneda de captura), una segunda línea `.caption` `.secondary` `.monospacedDigit()`: "≈ $842.30 USD · TC 18.42" |
 | Línea en MXN con override manual del tipo de cambio para esa quincena | Igual + badge `.caption2` pill pequeño "manual" en `accentSubtle`/`accentForeground`, junto al TC — señala que ese número no vino de la API |
-| Editando (inline, se abre con tap en la fila) | La fila entera gana fondo `AppBackground.secondary`, radio 12pt (aplica aquí el nested radius de la nota en "Forma"), campos de descripción y monto se vuelven `LabTextField` editables, toggle de moneda USD/MXN aparece a la derecha del monto. Aquí, y solo aquí, puede aparecer el texto de contexto "Generado por: [nombre]" si el origen no es manual — ver "Origen de línea" |
+| Editando | **Ya no es un estado in-place de la fila** — tap en la fila abre el "Sheet de captura/edición de línea" (ver más abajo) precargado con sus valores. La fila en sí no cambia de fondo ni de layout; el sheet es una presentación modal separada. Si el origen no es manual, el sheet puede mostrar contexto "Generado por: [nombre]" — ver "Origen de línea" |
 
-**Fondo en reposo — dark mode:** la fila en reposo (y en cualquiera de los estados de arriba salvo "Editando") **no tiene fondo propio** — es transparente, hereda directamente el material Frost de la card contenedora (bloque INCOME/EXPENSES). Solo el separador `Color(.separator)` entre filas y el fondo `AppBackground.secondary` del estado "Editando" rompen esa transparencia. Esto aplica igual en light y dark: en ningún momento una fila en reposo pinta un rectángulo propio encima del Frost de la card.
+**Fondo en reposo — dark mode:** con editar ahora resuelto por el sheet (ver "Sheet de captura/edición de línea"), la fila nunca cambia de fondo por edición — no hay estado "Editando" in-place que romper. **Nota de conflicto pendiente, no resuelta en esta pasada:** este párrafo originalmente describía filas transparentes sobre una card contenedora única; el rediseño posterior "card-por-línea" (ver "Bloques INCOME / EXPENSES") hace que cada fila SÍ tenga su propio fondo Frost (`AppBackground.secondary`, radio 20pt) siempre, no solo al editar — las dos descripciones son incompatibles y quedan sin reconciliar aquí; Woz/Larry deben tratar "Bloques INCOME / EXPENSES" (más reciente) como la vigente.
 
 ### Swipe actions — iPhone
 
-Con los toggles fuera de la fila, tap sigue siendo "editar inline" (sin cambios). Los dos ejes de swipe reemplazan lo que antes eran controles visibles:
+Con los toggles fuera de la fila, tap sigue abriendo edición — ahora vía el "Sheet de captura/edición de línea" (ver más abajo) en vez de inline. Los dos ejes de swipe reemplazan lo que antes eran controles visibles:
 
 | Dirección | Acción | Icono / tinte | Full swipe | Notas |
 |---|---|---|---|---|
@@ -396,7 +424,7 @@ Ni el swipe leading ni el swipe trailing son detectables por VoiceOver o Switch 
 .accessibilityAction(named: line.isPaid ? Text("Desmarcar pagado") : Text("Marcar pagado")) {
     togglePaid(line)
 }
-.accessibilityAction(named: Text("Editar")) { beginInlineEdit(line) }
+.accessibilityAction(named: Text("Editar")) { presentEditSheet(line) }
 // Solo líneas .manual:
 .accessibilityAction(named: Text("Eliminar")) { requestDelete(line) }
 ```
@@ -405,14 +433,48 @@ Ni el swipe leading ni el swipe trailing son detectables por VoiceOver o Switch 
 - Con los iconos de origen fuera de la fila (ver "Origen de línea"), el origen se anuncia también por voz: el `accessibilityLabel` antepone el origen cuando no es `.manual` — ej. "Recurrente, Gimnasio, 45 dólares" / "Suscripción, Netflix, 15 dólares" / "Servicio, Luz, 82 dólares" / "Préstamo, pago Upstart uno, 629 dólares" / "Inversión, aportación GBM, 200 dólares" / "Traído de la quincena anterior, Latest Month, 1,240 dólares". Es el único lugar donde el origen sigue siendo perceptible sin entrar a editar la línea.
 - Esto aplica igual en Mac (VoiceOver de macOS) y es lo que hace que Switch Control pueda operar la fila sin depender del gesto de swipe en absoluto — el menú contextual también sirve a este propósito para usuarios de mouse, pero las `accessibilityActions` son la vía que no depende de ningún gesto ni de un dispositivo señalador funcional.
 
-### Captura rápida de un gasto/ingreso
+### Sheet de captura/edición de línea
 
-Fila especial al final de cada bloque (INCOME/EXPENSES), siempre visible, estilo `.secondary`, ícono `plus.circle` + texto "Agregar ingreso"/"Agregar gasto":
+**Decisión del usuario, reemplaza el patrón anterior de fila inline.** Tocar el CTA `plus.circle.fill` (ver "Bloques INCOME / EXPENSES" arriba — vive solo, alineado a la izquierda, debajo de la última card de línea y antes de TOTAL; ya no existe la fila suelta "Agregar ingreso/gasto" ni el ícono en el header de sección) **ya no transforma nada in-place**: abre un **bottom sheet nativo** (`.sheet` + `.presentationDetents`), esquinas superiores redondeadas, grabber, fondo Frost oscuro con el resto de la pantalla atenuado detrás — mismo patrón estándar de iOS, adaptado al tema oscuro Fintrol en vez del blanco/claro de la referencia visual del usuario. **El mismo componente sirve para crear y para editar**: tocar una línea existente en Quincena abre este sheet precargado con sus valores, en vez del modo "edición inline" documentado antes (ver correcciones abajo).
 
-- Tap/click → la fila se transforma in-place en modo edición inline (mismo patrón que editar una línea existente) con foco automático en el campo de descripción.
-- Teclado (iPhone): toolbar con "Siguiente" entre descripción → monto → "Listo" que confirma y crea la línea, y deja la fila de captura lista para el siguiente ingreso sin cerrar el teclado (flujo de captura consecutiva, como llenar una hoja de cálculo).
-- Moneda por defecto: USD; toggle USD/MXN visible junto al campo de monto durante la captura.
-- Haptic `.success` al confirmar cada línea (iPhone únicamente).
+**Layout del sheet** (de arriba a abajo):
+
+```
+━━━                                    ← grabber, .presentationDragIndicator(.visible)
+
+Agregar ingreso / Agregar gasto /       ← .title3, semibold, centrado, padding top 8pt
+Editar línea                              tras el grabber ("Editar línea" en modo edición)
+
+Descripción                             ← LabTextField, ancho completo, foco inicial aquí
+[________________________]
+
+Monto                    [ USD ▾ ]      ← HStack: LabTextField numérico (.decimalPad) flexible
+[________________]                        + selector de moneda USD/MXN compacto, ancho fijo
+
+Escribe una descripción y un monto      ← .caption, .red — SOLO si el usuario intentó
+mayor a 0                                 confirmar con datos inválidos; oculto en reposo
+
+                                         ← Spacer — "espacio de sobra" pedido por el usuario,
+                                           el sheet no se siente apretado como la fila inline
+
+[     Cancelar     ] [     Listo      ] ← dos botones, ancho completo cada uno (ver Bug)
+```
+
+- **`presentationDetents`:** `[.medium, .large]`, default `.medium` — coincide con la referencia visual del usuario ("cubre la mitad inferior"), arrastrable a `.large` si Dynamic Type grande necesita más espacio vertical. No se usa una altura fija en puntos (`.height(...)`) porque el contenido debe poder crecer con Dynamic Type sin recortarse.
+- **`presentationCornerRadius`:** 20pt, Continuous Corners (mismo radio que las cards grandes de la app).
+- **`presentationDragIndicator`:** `.visible` — el grabber estándar de iOS.
+- **Fondo — Frost, no Liquid Glass ni blanco:** `AppBackground.secondary` (`#2A2A2A`) con el material Frost del tema (blur 0.5, transparencia 0.5) vía `PatternConfig`, **no** `.regularMaterial`/`glassEffect()` del sistema — es la excepción ya señalada en "Componentes de navegación — Liquid Glass". El resto de la pantalla detrás del sheet se atenúa con el dimming estándar del sistema (`.presentationBackground` no reemplaza el scrim, solo el material del propio sheet).
+- **Descripción:** `LabTextField`, ancho completo, `.textInputAutocapitalization(.sentences)`. Recibe el foco automáticamente al aparecer el sheet (`@FocusState`, sin necesidad de que el usuario toque el campo).
+- **Monto + selector de moneda:** en la misma fila — `LabTextField` numérico (`.decimalPad`) que toma el espacio flexible, selector USD/MXN compacto (pill, ancho fijo ~70pt) a la derecha. Moneda por defecto USD en captura nueva; en edición, precarga la moneda real de la línea.
+- **Texto de ayuda:** `.caption`, `.red`, aparece solo cuando el usuario intenta confirmar con descripción vacía o monto ≤ 0 — "Escribe una descripción y un monto mayor a 0". No se muestra en reposo antes del primer intento de confirmar (no se anticipa el error).
+- **Botones de acción — bug corregido:** en la versión anterior "Cancelar" se truncaba a 3 líneas por falta de ancho. En el sheet nuevo, cada botón usa `.frame(maxWidth: .infinity)` — nunca un ancho fijo insuficiente. A tamaños de Dynamic Type estándar/grandes, los dos botones van lado a lado en un `HStack` con `spacing: 12`, cada uno ocupando 50% menos el gap; a tamaños de accesibilidad (`dynamicTypeSize >= .accessibility1`) se apilan verticalmente, cada uno a ancho completo — mismo patrón `ViewThatFits`/chequeo de `dynamicTypeSize` ya usado en otras partes de este documento para adaptar layout, nunca truncan en ningún tamaño.
+  - "Cancelar": `.buttonStyle(.glass)`, descarta cambios, cierra el sheet.
+  - "Listo": `.buttonStyle(.glassProminent)`, tinte accent, **deshabilitado** (`opacity` reducida + `disabled(true)`) mientras la descripción esté vacía o el monto sea ≤ 0; confirma, crea/actualiza la línea y cierra el sheet.
+- **Teclado (iPhone):** toolbar con "Siguiente" entre Descripción → Monto → "Listo" en el teclado numérico confirma igual que tocar el botón "Listo" del sheet.
+- **Haptic:** `.success` al confirmar (crear o guardar edición), `.error` si se intenta confirmar con datos inválidos (además del texto de ayuda — nunca solo un haptic sin texto).
+- **Accesibilidad:** el sheet se anuncia a VoiceOver al aparecer (`accessibilityAddTraits(.isModal)` / el propio `.sheet` ya lo hace vía UIKit, pero se verifica explícitamente con Sarah en revisión); el foco inicial en "Descripción" es también el primer elemento que VoiceOver enfoca al abrir, sin que el usuario tenga que explorar el sheet para encontrar dónde empezar a escribir.
+
+**Corrección de referencias previas en este documento:** el patrón "modo edición inline" (fila con fondo propio, campos editables in-place) descrito antes para tap-to-edit y para el botón "Editar" del menú contextual/swipe **queda reemplazado por este sheet** en todos los casos — ver "Fila de línea", "Swipe actions" y "Accesibilidad obligatoria" arriba, actualizados en consecuencia.
 
 ### Badge de sobrante
 
@@ -425,11 +487,13 @@ $1,240.50                 ← .monospacedDigit(), bold, relativeTo: .largeTitle,
 + signo explícito antes del monto cuando es negativo: "−$320.00" en rojo
 ```
 
-Fondo del badge: tinte muy sutil del color de estado (`.green.opacity(0.12)` / `.yellow.opacity(0.12)` / `.red.opacity(0.12)`), no color sólido — el texto lleva el color completo, el fondo solo lo insinúa. Transición de color animada al recalcular (ver Animaciones).
+**Actualización del usuario (mockup exportado, no live file de Figma):** el fondo del badge de SOBRANTE pasa de tinte sutil a **color sólido** del estado (verde/amarillo/rojo), con texto en color contrastante (blanco o negro según el fondo) en vez del texto llevando el color completo sobre fondo tenue. Mismo criterio para los tres estados del semáforo — no solo el verde. La card "Next Month" del panel de resumen (ver "Panel de resumen" abajo) recibe el mismo tratamiento: fondo sólido del color de su propio estado de semáforo (no siempre verde — depende del sobrante proyectado de esa quincena), texto contrastante. ~~Fondo del badge: tinte muy sutil del color de estado (`.green.opacity(0.12)` / `.yellow.opacity(0.12)` / `.red.opacity(0.12)`)~~ — superado por la decisión anterior. Transición de color animada al recalcular (ver Animaciones).
 
 ### Panel de resumen (USD/Peso, Mandar, Next Month)
 
-- **iPhone:** card independiente debajo del badge de sobrante, mismo ancho, `LabNestedCard` con 3 filas: "Mandar: $X USD", "Tipo de cambio: 18.42 (editar)", "Next Month: $Y" (solo lectura, `.secondary`). "Next Month" siempre muestra el mismo número que el usuario verá al avanzar con el chevron: si la siguiente quincena ya está materializada (con o sin ediciones manuales), es su sobrante real ya calculado; si no está materializada, es la proyección en memoria de `ProjectionEngine`. No hay distinción visual entre ambos casos — es un solo campo, un solo comportamiento.
+**Decisión cerrada del usuario (edición en Figma, frame `8:2`):** la card Resumen se simplifica — pierde la fila "Tipo de cambio"; ese control **vive solo en Ajustes → Preferencias** (ver "Tipo de cambio" en Ajustes más abajo), no se duplica aquí. "Mandar" deja de estar dentro de la card: sale como texto suelto sobre el fondo, entre SOBRANTE y la card Resumen.
+
+- **iPhone:** "Mandar: $X USD" es una fila suelta sobre el fondo de la app (sin card propia, sin fondo, padding vertical ~6pt, `.body` 17pt — label `.secondary`, valor blanco), inmediatamente debajo del badge de sobrante. Debajo de esa fila, una card independiente (`LabNestedCard`, mismo ancho) contiene **solo** "Next Month: $Y". "Next Month" siempre muestra el mismo número que el usuario verá al avanzar con el chevron: si la siguiente quincena ya está materializada (con o sin ediciones manuales), es su sobrante real ya calculado; si no está materializada, es la proyección en memoria de `ProjectionEngine`. No hay distinción visual entre ambos casos — es un solo campo, un solo comportamiento. **Actualización del usuario (mockup exportado):** esta card deja de ser neutral (`#2A2A2A`, label `.secondary` / valor blanco Semibold) — pasa a llevar **fondo sólido del color de semáforo** correspondiente al sobrante proyectado de esa quincena (verde/amarillo/rojo, mismo criterio que el badge de SOBRANTE, ver "Badge de sobrante" arriba), con texto contrastante. Es la única card de esta pantalla que lleva color de estado además del badge de SOBRANTE mismo.
 - **Mac:** dado que "en Mac la quincena cabe sin scroll y el resumen puede ir a un lado" (requisito del usuario), el panel vive en una tercera zona fija a la derecha del detail (no una columna `NavigationSplitView` adicional — un `HStack` dentro del detail: bloques INCOME/EXPENSES a la izquierda en `ScrollView` si excede alto de ventana, panel de resumen a la derecha en ancho fijo ~280pt, sin scroll propio). Ver "Consideraciones de plataforma".
 
 ### Listas (Ingresos recurrentes, Gastos recurrentes, Servicios, Suscripciones)
@@ -464,7 +528,7 @@ Las cuatro comparten el mismo patrón — `LabList` con `LabListRow` — pero ca
 | Cambio de color del sobrante al editar una línea | Color anterior → nuevo color (verde/amarillo/rojo) | `.smooth` | 0.3s | Cross-fade de color sin movimiento — se conserva, es el único cambio permitido igual con RM activo | Es la señal más importante de la pantalla; debe notarse pero no distraer |
 | Confirmar captura rápida (nueva línea aparece en la lista) | Fila entra con `opacity 0→1` + `offset y: 8→0` | `.spring(duration: 0.3, bounce: 0.15)` | 0.3s | Solo fade, sin offset | Continuidad — la fila "llega" desde donde estaba el campo de captura |
 | Swipe to delete confirmado | Fila colapsa altura a 0 + fade | `.easeIn` | 0.2s | Fade sin colapso animado (salto directo) | Feedback rápido, no narrativo |
-| Entrar en modo edición inline | Fondo de fila fade-in + campos aparecen | `.snappy` | 0.2s | Igual, ya es corto | Feedback inmediato de foco |
+| Abrir sheet de captura/edición de línea | Sistema (`.sheet` con `.presentationDetents`) | Sistema | Sistema | Sistema ya respeta RM | No custom — mismo criterio que el jump sheet |
 | Navegar entre quincenas (chevron / swipe) | Contenido sale lateral + nuevo contenido entra lateral | `.easeOut` | 0.25s | Cross-fade simple, sin movimiento lateral | Transición direccional ligera, refuerza "estoy avanzando/retrocediendo" |
 | Jump sheet abre/cierra | Sistema (`.sheet`/`.popover`) | Sistema | Sistema | Sistema ya respeta RM | No custom |
 | Marcar/desmarcar pagado (swipe trailing) | Palomita aparece/desaparece con `.symbolEffect(.bounce)` | — | Sistema | Símbolo cambia sin bounce (`.contentTransition(.opacity)`) | Confirmación ligera, no bloqueante |
@@ -514,6 +578,10 @@ Pantalla "Ajustes generales" — `Form` nativo con dos `Section` (iPhone) / mism
 ### Pie de pantalla
 
 Fuera de ambos `Section`, como `Section` final sin header: "Fintrol — versión 1.0 (build X)", `.caption`, `.secondary`, centrado.
+
+### Import/export — no usa el patrón de captura corta (revisado)
+
+`SettingsView.swift` ya implementa "Importar suscripciones y servicios…", "Exportar respaldo completo (JSON)" e "Importar respaldo completo…" con `.fileImporter`/`.fileExporter`/`.alert`/`.confirmationDialog` nativos — flujos de selección de archivo del sistema, no el campo corto de texto+monto que motivó el cambio a sheet. El bug de "Cancelar" truncado y el rediseño a bottom sheet **no aplican aquí**; no requieren cambio.
 
 ### macOS — Settings scene
 
@@ -572,7 +640,7 @@ Fecha fin: ago 2030                                             ← .caption, .s
 - **Préstamo en modo "Hasta liquidar"** — la fila cambia dos elementos respecto al modo Plazo fijo:
   - Donde iba "Fecha fin: ago 2030" aparece un badge pill `.caption2` `.secondary` con texto **"Sin plazo"**, seguido en la misma línea de "· termina aprox. mar 2029" (`.caption`, `.secondary`) — la estimación recalculada con el ritmo de pago real hasta la fecha; si aún no hay ningún pago real registrado, el texto es "termina aprox. según pago esperado" en vez de una fecha, para no aparentar precisión que no existe todavía.
   - El progreso (barra + porcentaje) se calcula igual (saldo pagado / monto original) — no depende de tener plazo, así que no cambia de comportamiento.
-- Orden de lista: activos primero (por fecha de fin más próxima; los "Hasta liquidar" ordenan por su fecha estimada más próxima), luego préstamos ya liquidados (`isActive == false`) en una sección aparte "Liquidados", colapsada por defecto.
+- Orden de lista: activos primero (por fecha de fin más próxima; los "Hasta liquidar" ordenan por su fecha estimada más próxima), luego préstamos ya liquidados (`isActive == false`) en una sección aparte **"LIQUIDADOS"** (encabezado `ALL CAPS`, mismo tratamiento de encabezado de sección que INCOME/EXPENSES), colapsada por defecto. **Actualización del usuario (mockup exportado):** en esta sección, el chip de dirección ("Debo"/"Me deben") se reemplaza por un chip **"Pagado"** (`.secondary`, sin tinte naranja/azul — ya no aplica una dirección activa) cuando el saldo restante es `$0.00`; la fila sigue mostrando "Restante $0.00" y la barra de progreso al 100%.
 - Tap/click → push a Detalle. Swipe/botón "+" en toolbar → Formulario de alta.
 
 ### 2. Formulario crear/editar
@@ -832,6 +900,11 @@ Fintrol no tiene una feature de búsqueda en v1 — el volumen de datos de un pr
 | 2026-09-15 | La fila en reposo no tiene fondo propio en ningún estado (salvo "Editando") — es transparente, hereda el Frost de la card contenedora, en light y dark | Evita un rectángulo visual redundante encima del material de la card; consistente con la regla de capas ya fijada (Frost solo en la card, no en cada fila) |
 | 2026-09-15 | Nueva feature v1 "Inversiones": sexta fila del hub "Recurrentes y pagos", icono `chart.line.uptrend.xyaxis` | Decisión del usuario — registro de aportaciones periódicas a cuentas de inversión, deliberadamente más chico que "control de inversiones" (Fase 3 del PRD): sin rendimientos ni valor de portafolio |
 | 2026-09-15 | Inversiones no tiene campo de rendimiento ni valor actual en el Formulario ni en el Detalle | Ausencia deliberada — marca el límite de alcance de v1; ver "Sin definir aún" para el hueco de etapa 2 |
+| 2026-09-15 | Captura/edición de línea deja de ser inline; el "+" y el tap en una línea abren un bottom sheet (`.presentationDetents([.medium, .large])`, fondo Frost del tema, no Liquid Glass) con Descripción, Monto+moneda y botones "Cancelar"/"Listo" a ancho completo | Decisión del usuario — corrige de paso el bug de "Cancelar" truncado a 3 líneas por falta de ancho en el patrón anterior |
+| 2026-09-15 | El sheet de captura/edición es la única excepción documentada a "los sheets usan Liquid Glass" — usa Frost porque el usuario lo pidió explícitamente para esta pantalla | El resto de sheets (jump quincena, formularios de Recurrentes/Préstamos/Inversiones) sigue Liquid Glass regular, sin cambio |
+| 2026-09-15 | Import/export en Ajustes revisado — usa `.fileImporter`/`.fileExporter`/`.alert` nativos, no el patrón de captura corta; no requiere el cambio a sheet | Evita aplicar un rediseño donde no aplica el problema que lo motivó |
+| 2026-09-16 | **Revertido el mismo día:** se evaluó formalizar un `NavCircleButton` custom (círculo 29×29pt) para el back de las 6 listas del hub; el usuario decidió no hacerlo — el back nativo de `NavigationStack` ya recibe Liquid Glass correcto en iOS 26 sin componente custom | Ver "Componentes de navegación — Liquid Glass" — es la entrada vigente, no esta |
+| 2026-09-16 | El CTA "+" de INCOME/EXPENSES se mueve del header de sección a una posición sola, alineada a la izquierda, debajo de la última card de línea y antes de TOTAL | Decisión del usuario (nueva captura de Figma) — el header de sección queda solo con el texto, sin control a la derecha |
 
 ---
 

@@ -27,6 +27,13 @@ public final class LineItem {
     /// "Servicios" line (home services) from the combined "Payments" line (subscriptions)
     /// for icon purposes; both keep `origin == .subscription` per DESIGN_LIQUID.md.
     public var isHomeService: Bool = false
+    /// Added post-v1 (pre-release, SchemaV2 in place — no migration): TRD "paidAt/progreso
+    /// real de préstamos", 2026-09-16 — the real date the user confirmed `isPaid = true` via
+    /// the swipe toggle (`PeriodView`), not the scheduled/period date. `nil` while
+    /// `isPaid == false`. Stored as a raw `Date` (SwiftData/CloudKit need it, same convention
+    /// as `Loan.startDate`/`RecurringItem.startDate`); `paidAt` below normalizes it to
+    /// `CivilDate` for all Core/Engine logic.
+    public var paidAtDate: Date?
 
     public var period: Period?
 
@@ -45,6 +52,7 @@ public final class LineItem {
         isManuallyEdited: Bool = false,
         exchangeRateSnapshot: Decimal? = nil,
         isHomeService: Bool = false,
+        paidAtDate: Date? = nil,
         period: Period? = nil
     ) {
         self.id = id
@@ -61,6 +69,7 @@ public final class LineItem {
         self.isManuallyEdited = isManuallyEdited
         self.exchangeRateSnapshot = exchangeRateSnapshot
         self.isHomeService = isHomeService
+        self.paidAtDate = paidAtDate
         self.period = period
     }
 
@@ -77,5 +86,10 @@ public final class LineItem {
     public var origin: LineOrigin {
         get { LineOrigin(rawValue: originRaw) ?? .manual }
         set { originRaw = newValue.rawValue }
+    }
+
+    public var paidAt: CivilDate? {
+        get { paidAtDate.map { CivilDate(from: $0, calendar: .current) } }
+        set { paidAtDate = newValue?.date(calendar: .current) }
     }
 }

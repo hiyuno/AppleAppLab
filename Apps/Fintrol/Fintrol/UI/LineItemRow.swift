@@ -11,30 +11,23 @@ import AppKit
 struct LineItemRow: View {
     @Bindable var line: LineItem
     let exchangeRate: Decimal?
-    let isEditing: Bool
-    /// True while this row is a freshly-created draft from "Agregar ingreso/gasto" that
-    /// hasn't been confirmed yet — gates the empty-line validation and shows "Cancelar".
-    let isDraft: Bool
+    /// Coordinator (2026-09-15, DESIGN_LIQUID.md § "Sheet de captura/edición de línea"): tap
+    /// no longer transforms the row in place — it opens the capture/edit sheet, owned by the
+    /// parent (`PeriodView`). This closure just requests that.
     let onStartEditing: () -> Void
-    let onCommit: () -> Void
     let onDelete: (() -> Void)?
-    /// Only used while `isDraft` — discards the draft line entirely (Bertrand's ghost-row fix).
-    let onDiscardDraft: (() -> Void)?
+    /// The one direct in-place mutation left on the row itself (contextMenu's "Cambiar a
+    /// MXN/USD" — everything else routes through `LineCaptureSheet` now): persists + runs
+    /// `recomputeForward`, same as the sheet's save does.
+    let onQuickCommit: () -> Void
     /// User's change (replaces the old per-row "Pagado" toggle): swipe-leading toggles
     /// `isActive` and must run `recomputeForward` (it affects every total), so the parent
-    /// owns persistence + recompute exactly like `onCommit` does for an inline edit.
+    /// owns persistence + recompute exactly like the sheet's `onSave` does for an edit.
     let onToggleActive: () -> Void
     /// Swipe-trailing's first action: toggles `isPaid`, a purely visual flag — no recompute.
     let onTogglePaid: () -> Void
 
-    @State private var amountText: String = ""
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    /// A draft with an empty description or a non-positive amount must not be saveable —
-    /// this is exactly the ghost-line bug Bertrand reproduced.
-    private var isValidForSave: Bool {
-        PeriodCoordinator.isValidManualLine(title: line.title, amount: line.amount)
-    }
 
     /// Three distinct origin icons per Jonny (DESIGN_LIQUID.md): recurring, subscription and
     /// service are visually distinguishable at a glance, all overridden to `pencil` once the
@@ -63,14 +56,6 @@ struct LineItemRow: View {
         }
     }
 
-    private var isTitleEditable: Bool {
-        line.origin != .carryOver
-    }
-
-    private var carryOverEditHint: String? {
-        line.origin == .carryOver ? "No se puede editar porque es arrastrado del mes anterior" : nil
-    }
-
     private var convertedCaption: String? {
         guard line.currency == .mxn, let exchangeRate, exchangeRate > 0 else { return nil }
         let usd = CurrencyConversion.toUSD(amount: line.amount, currency: .mxn, rate: exchangeRate)
@@ -78,14 +63,11 @@ struct LineItemRow: View {
     }
 
     var body: some View {
-        Group {
-            if isEditing {
-                editingRow
-            } else {
-                displayRow
-            }
-        }
-        .padding(.vertical, 6)
+        // Spacing between line cards is now the block's own `spacing: 8` (PeriodView) — this
+        // row no longer adds its own vertical padding around it. There is no more in-place
+        // "editing" visual state — tap opens the capture/edit sheet instead (see
+        // `LineCaptureSheet`, owned by `PeriodView`).
+        displayRow
     }
 
     /// FALLBACK from the approved plan: a `List` (the only way to get native
@@ -187,18 +169,22 @@ struct LineItemRow: View {
                     .opacity(dragTranslation < -8 ? 1 : 0)
                 }
             }
-            .padding(.horizontal, 12)
 
             rowContent
-                // Coordinator (2026-09-15): a flat `Color("AppBackground")` here fought the
-                // card's own `.ultraThinMaterial.opacity(0.5)` (`PeriodView.lineBlock`) —
-                // in dark mode it rendered as a visibly lighter gray box per row instead of
-                // blending into the card. Same Frost fill as the card, so the row still
-                // occludes the swipe-hint strip behind it at rest without a mismatched tint.
-                .background(.ultraThinMaterial.opacity(0.5))
                 .offset(x: dragTranslation)
         }
-        .clipped()
+        // DESIGN_LIQUID.md § "Bloques INCOME/EXPENSES" (Figma, updated 2026-09-15): each line
+        // is now its own card — `AppBackgroundSecondary` (#2A2A2A dark / Frost-equivalent
+        // light), 20pt continuous radius, 16pt padding on all sides. Supersedes the earlier
+        // "no background of its own" rule from the same day (the block containing card was
+        // removed entirely, so each line needs to carry its own surface now).
+        .padding(16)
+        .background(Color("AppBackgroundSecondary"))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        // "La tarjeta inactiva se atenúa completa" — opacity now dims the whole card
+        // (background included), not just the text content.
+        .opacity(line.isActive ? 1 : 0.4)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: line.isActive)
         .gesture(swipeGesture)
         .accessibilityElement(children: .combine)
         .accessibilityValue(accessibilityStateValue)
@@ -217,7 +203,7 @@ struct LineItemRow: View {
                 let newCurrency: Currency = line.currency == .usd ? .mxn : .usd
                 line.currency = newCurrency
                 line.isManuallyEdited = line.origin != .manual ? true : line.isManuallyEdited
-                onCommit()
+                onQuickCommit()
                 #if os(iOS)
                 UIAccessibility.post(notification: .announcement, argument: "Moneda cambiada a \(newCurrency == .usd ? "USD" : "MXN")")
                 #endif
@@ -263,14 +249,10 @@ struct LineItemRow: View {
                     .accessibilityHidden(true)
             }
         }
-        .opacity(line.isActive ? 1 : 0.4)
-        .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: line.isActive)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            // While a swipe is mid-drag/revealed, a tap should dismiss it, not open edit.
-            guard dragTranslation == 0 else { return }
-            onStartEditing()
-        }
+        // Coordinator (2026-09-16): plain tap no longer opens the capture/edit sheet — the
+        // only way in is long-press → `.contextMenu` → "Editar" (still wired to
+        // `onStartEditing()` there). Swipes (activar/desactivar, pagado, Eliminar) are
+        // untouched — this was the row's own tap gesture only.
     }
 
     /// DESIGN_LIQUID.md: "inactiva" / "pagada" / "inactiva, pagada" / nothing — always in this
@@ -285,73 +267,4 @@ struct LineItemRow: View {
         return parts.joined(separator: ", ")
     }
 
-    private var editingRow: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                if isTitleEditable {
-                    TextField("Descripción", text: $line.title)
-                        .textFieldStyle(.roundedBorder)
-                } else {
-                    Text(line.title)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            HStack(spacing: 8) {
-                // Starts blank (placeholder "0.00") instead of pre-filled with "0" — a
-                // pre-filled numeric TextField concatenates on the first keystroke instead
-                // of replacing (typing "5" after "0.00" produced "0.005000").
-                TextField("0.00", text: $amountText)
-                    #if os(iOS)
-                    .keyboardType(.decimalPad)
-                    #endif
-                    .textFieldStyle(.roundedBorder)
-                    .disabled(line.origin == .carryOver)
-                    .accessibilityHint(carryOverEditHint ?? "")
-                    .onAppear {
-                        amountText = line.amount == 0 ? "" : line.amount.twoDecimalString
-                    }
-                    .onChange(of: amountText) { _, newValue in
-                        line.amount = Decimal(string: newValue, locale: Locale(identifier: "en_US_POSIX")) ?? 0
-                    }
-
-                Picker("Moneda", selection: $line.currency) {
-                    Text("USD").tag(Currency.usd)
-                    Text("MXN").tag(Currency.mxn)
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 140)
-                .disabled(line.origin == .carryOver)
-                .accessibilityHint(line.origin == .carryOver ? "No se puede cambiar porque es arrastrado del mes anterior" : "")
-
-                if isDraft {
-                    Button("Cancelar") {
-                        onDiscardDraft?()
-                    }
-                    .buttonStyle(.bordered)
-                }
-
-                Button("Listo") {
-                    if isDraft {
-                        guard isValidForSave else { return }
-                        onCommit()
-                    } else {
-                        if line.origin != .manual { line.isManuallyEdited = true }
-                        onCommit()
-                    }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(isDraft && !isValidForSave)
-            }
-            if isDraft && !isValidForSave {
-                Text("Escribe una descripción y un monto mayor a 0.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(10)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color("AppBackgroundSecondary"))
-        )
-    }
 }

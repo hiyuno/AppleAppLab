@@ -6,7 +6,6 @@ struct SobranteBadge: View {
     let sobrante: Decimal
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     private var status: SobranteStatus { SobranteStatus(sobrante: sobrante) }
 
@@ -18,9 +17,11 @@ struct SobranteBadge: View {
         }
     }
 
+    // Coordinator (2026-09-15, mockup round 4): the badge is now a SOLID color pill (fully
+    // filled `.green`/`.yellow`/`.red`, not a tinted-translucent one) with contrasting text —
+    // white on green/red, black on yellow (unreadable white-on-yellow stays forbidden).
     private var textColor: Color {
-        // Yellow badge always uses black text (DESIGN_LIQUID.md — never white on yellow).
-        status == .adjusted ? .black : color
+        status == .adjusted ? .black : .white
     }
 
     private var statusText: String {
@@ -36,11 +37,16 @@ struct SobranteBadge: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        // Coordinator (2026-09-15, Figma tSUzh4zfCpDPYT5A88otst node 8:2): single horizontal
+        // row instead of label-above-amount — label and amount both take the status color now
+        // (previously the label stayed `.secondary` regardless of status).
+        HStack(alignment: .firstTextBaseline) {
             Text("SOBRANTE")
                 .font(.caption2)
                 .tracking(1.2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(textColor)
+
+            Spacer()
 
             // HIG #2: `.largeTitle` scales with Dynamic Type — a fixed `.system(size: 44)`
             // does not, and there is no `relativeTo:` overload for `.system(size:)`.
@@ -54,9 +60,9 @@ struct SobranteBadge: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                // A11Y #12 (Reduce Transparency): swap the tinted-translucent fill for a
-                // more opaque one so the color/text contrast doesn't depend on what's behind it.
-                .fill(color.opacity(reduceTransparency ? 0.24 : 0.12))
+                // Solid fill now (mockup round 4, supersedes the earlier tinted-translucent
+                // pill) — Reduce Transparency has nothing left to compensate for.
+                .fill(color)
         )
         .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
         .animation(animation, value: sobrante)

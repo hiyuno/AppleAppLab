@@ -6,9 +6,23 @@ import SwiftData
 @MainActor
 @Suite("PeriodCoordinator — end-to-end materialization and carry-over")
 struct PeriodCoordinatorTests {
+    // Woz (2026-09-15): `isStoredInMemoryOnly: true` reliably crashed EVERY test that
+    // touches SwiftData under this environment's toolchain (macOS 27.0 / Xcode 27.0, build
+    // 26A428/27A266a) — confirmed via the crash log at
+    // ~/Library/Logs/DiagnosticReports/Fintrol-*.ips: `objc_exception_throw` inside
+    // `-[NSSQLDefaultConnectionManager handleStoreRequest:]`, rethrown uncaught through
+    // `NSManagedObjectContext.performAndWait`, terminating the process (SIGABRT). This is a
+    // CoreData-internal exception raised by the in-memory `NSSQLCore`, not a Swift `Error` —
+    // `try?`/`try` around `context.fetch` cannot catch it. Reproduced identically across
+    // every unrelated test suite (ExchangeRateStoreTests, EdgeCaseEngineTests, etc.), and
+    // confirmed to disappear immediately when the same schema is backed by a real (temp) file
+    // instead of an in-memory store — isolating this to the toolchain's in-memory SQLite core,
+    // not a bug in Fintrol's own SwiftData usage (which was unchanged and green — 158/158 —
+    // right up until this same environment updated mid-session). Every test suite's
+    // `makeContext()` now uses a unique on-disk temp file instead.
     private func makeContext() throws -> ModelContext {
         let schema = Schema(SchemaV1.models)
-        let configuration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let configuration = ModelConfiguration(schema: schema, url: URL.temporaryDirectory.appending(path: UUID().uuidString + ".sqlite"))
         let container = try ModelContainer(for: schema, configurations: [configuration])
         return ModelContext(container)
     }

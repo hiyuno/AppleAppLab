@@ -12,15 +12,19 @@ struct PeriodView: View {
 
     @State private var coordinate = PeriodDateEngine.coordinate(containing: CivilDate.today())
     @State private var period: Period?
-    @State private var editingLineID: UUID?
-    /// Tracks a line created via "Agregar ingreso/gasto" that hasn't been confirmed yet
-    /// (Bertrand's ghost-row bug fix — see `LineItemRow.isDraft`).
-    @State private var draftLineID: UUID?
+    /// Coordinator (2026-09-15, DESIGN_LIQUID.md § "Sheet de captura/edición de línea"):
+    /// replaces `editingLineID`/`draftLineID` + the inline-editing row entirely. `nil` while
+    /// closed; a non-nil `line` means editing that existing `LineItem`; a nil `line` with a
+    /// `kind` means creating a new one (no draft `LineItem` exists until "Listo" is tapped —
+    /// this removes the old ghost-row problem at the source instead of working around it).
+    @State private var captureTarget: CaptureTarget?
+    private struct CaptureTarget: Identifiable {
+        let id = UUID()
+        let line: LineItem?
+        let kind: LineKind
+    }
     @State private var showJumpSheet = false
-    @State private var showRateEditor = false
-    @State private var manualRateText = ""
     @State private var isLoading = true
-    @State private var rateEditorErrorMessage: String?
 
     // HIG_REVIEW #5 (Larry): the leading/trailing swipe gestures on a line have no visual
     // hint before the first drag — shown exactly once, ever, then persisted dismissed so it
@@ -33,6 +37,7 @@ struct PeriodView: View {
     private var isLargeAccessibilitySize: Bool { dynamicTypeSize >= .accessibility1 }
 
     private var todayCoordinate: PeriodCoordinate { PeriodDateEngine.coordinate(containing: CivilDate.today()) }
+    private var isTodayCoordinate: Bool { coordinate == todayCoordinate }
 
     private var effectiveRate: Decimal {
         period?.manualExchangeRateOverride ?? rateStore.currentRate ?? 0
@@ -98,8 +103,10 @@ struct PeriodView: View {
                 loadPeriod()
             }
         }
-        .sheet(isPresented: $showRateEditor) {
-            rateEditorSheet
+        .sheet(item: $captureTarget) { target in
+            LineCaptureSheet(editingLine: target.line, kind: target.kind) { title, amount, currency in
+                saveLine(target.line, kind: target.kind, title: title, amount: amount, currency: currency)
+            }
         }
     }
 
@@ -182,8 +189,15 @@ struct PeriodView: View {
                 coordinate = coordinate.previous
                 loadPeriod()
             } label: {
-                Image(systemName: "chevron.left")
+                // Coordinator (2026-09-16): system Liquid Glass paints the button now — plain
+                // `chevron.backward` (no `.circle.fill`), no manual tint. `.glass` (not
+                // `.glassProminent`): this side has no "active" accent state, and the
+                // historical-limit disabled look comes from native `.disabled(true)`, not a
+                // hand-picked gray.
+                Image(systemName: "chevron.backward")
+                    .frame(width: 29, height: 29)
             }
+            .buttonStyle(.glass)
             .accessibilityLabel("Quincena anterior")
             .disabled(coordinate <= earliestCoordinate)
 
@@ -197,29 +211,27 @@ struct PeriodView: View {
                         Text(coordinate.monthYearTitle)
                             .font(.title2.weight(.semibold))
                             .foregroundStyle(.primary)
+                        // Coordinator (2026-09-16, DESIGN_LIQUID.md, Jonny): the separate
+                        // "Current"/"Proyección" badge is gone — this day-range pill is now
+                        // the ONLY indicator. Today's period → solid green pill, white bold
+                        // text (same green as the positive sobrante). Anything else (past OR
+                        // future, no distinction) → transparent background, subtle border,
+                        // `.secondary` text, no extra label.
                         Text(coordinate.dayRangeTitle)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                            .font(.subheadline.weight(isTodayCoordinate ? .bold : .regular))
+                            .foregroundStyle(isTodayCoordinate ? .white : .secondary)
+                            .padding(.horizontal, 10).padding(.vertical, 3)
+                            .background(
+                                Capsule().fill(isTodayCoordinate ? Color.green : Color.clear)
+                            )
+                            .overlay(
+                                Capsule().strokeBorder(isTodayCoordinate ? Color.clear : Color.secondary.opacity(0.3))
+                            )
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Fecha: \(coordinate.accessibleTitle)")
+                .accessibilityLabel("Fecha: \(coordinate.accessibleTitle)\(isTodayCoordinate ? ", quincena actual" : "")")
                 .accessibilityHint("Toca para saltar a otra quincena")
-
-                if coordinate == todayCoordinate {
-                    Text("Hoy")
-                        .font(.caption2.weight(.semibold))
-                        .padding(.horizontal, 8).padding(.vertical, 2)
-                        .background(Capsule().fill(Color.accentColor.opacity(0.2)))
-                        .accessibilityHidden(true)
-                } else if coordinate > todayCoordinate {
-                    Text("Proyección")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 8).padding(.vertical, 2)
-                        .background(Capsule().fill(.secondary.opacity(0.15)))
-                        .accessibilityHidden(true)
-                }
             }
 
             Spacer()
@@ -228,8 +240,13 @@ struct PeriodView: View {
                 coordinate = coordinate.next
                 loadPeriod()
             } label: {
-                Image(systemName: "chevron.right")
+                // Plain `chevron.forward` — system Liquid Glass paints the button.
+                // Coordinator (2026-09-16): neutral `.glass` like "atrás" and "+" — the user
+                // wants no solid accent fill here, `.glassProminent` was reverted.
+                Image(systemName: "chevron.forward")
+                    .frame(width: 29, height: 29)
             }
+            .buttonStyle(.glass)
             .accessibilityLabel("Quincena siguiente")
         }
         .padding(.horizontal, 4)
@@ -245,138 +262,90 @@ struct PeriodView: View {
             .filter { $0.kind == kind }
             .sorted { $0.sortOrder < $1.sortOrder }
 
-        return VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(title)
-                    .font(.headline)
-                    .tracking(0.5)
-                    .textCase(.uppercase)
-                Spacer()
+        // Coordinator (2026-09-15): "INCOME"/"EXPENSES" move out of the card entirely — a
+        // grouped-list-style section header sitting above it (iOS grouped table convention:
+        // caption/footnote, uppercase, secondary, left-aligned with the card's own padding,
+        // ~8pt gap), not a title inside the card. The card itself now starts directly with
+        // the rows. `accessibilityHidden` stays on the header text — the card's own
+        // `.accessibilityLabel` below still announces "Ingresos"/"Gastos" for VoiceOver, so
+        // this is not a regression, just moved with the rest of the visual.
+        return VStack(alignment: .leading, spacing: 8) {
+            // Coordinator (2026-09-16, DESIGN_LIQUID.md § Bloques INCOME/EXPENSES, Jonny):
+            // the "+" moves OFF the section header (title-only now, no trailing icon) to its
+            // own left-aligned spot below the last line card, above TOTAL INCOME/EXPENSES —
+            // see `card(title:kind:lines:)` below for where it actually sits.
+            Text(title)
+                .font(.caption.weight(.semibold))
+                .tracking(0.5)
+                .textCase(.uppercase)
+                .foregroundStyle(.secondary)
+                .accessibilityHidden(true)
+                .padding(.horizontal, 16)
+
+            card(title: title, kind: kind, lines: lines)
+        }
+    }
+
+    // DESIGN_LIQUID.md § "Bloques INCOME/EXPENSES" (Figma, updated 2026-09-15 — supersedes
+    // the single-card-with-dividers layout): each line is its own card now (see
+    // `LineItemRow`), stacked with an 8pt gap, no `Divider()` between them — the gap itself
+    // is the separator. "⊕ Agregar ingreso/gasto" sits below the last card as plain
+    // `.secondary` text directly on the background (no card of its own); tapping it turns the
+    // capture into a new card of the same style via the normal editing-row path. TOTAL
+    // INCOME/EXPENSES sits below that, also directly on the background, no card.
+    private func card(title: String, kind: LineKind, lines: [LineItem]) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ForEach(lines) { line in
+                LineItemRow(
+                    line: line,
+                    exchangeRate: effectiveRate,
+                    onStartEditing: { captureTarget = CaptureTarget(line: line, kind: kind) },
+                    onDelete: line.origin == .manual ? { deleteLine(line) } : nil,
+                    onQuickCommit: { commitQuickEdit() },
+                    onToggleActive: { toggleActive(line) },
+                    onTogglePaid: { togglePaid(line) }
+                )
             }
-            .accessibilityHidden(true) // the block's own accessibilityLabel below covers this
 
-            VStack(spacing: 0) {
-                // FALLBACK (documented in the approved plan): a `List` here — the only way to
-                // get native `.swipeActions` — was tried first but blocks touches to
-                // `captureRow` below it even at zero rows/`.fixedSize(vertical:)` (confirmed
-                // empirically in the simulator: "Agregar ingreso" stopped responding at all).
-                // `LineItemRow` implements its own leading/trailing swipe via `DragGesture`
-                // instead (see that file) — full-swipe-only (no partial reveal-then-tap
-                // state): leading commits Activar/Desactivar, trailing commits Marcar/
-                // Desmarcar pagado. Eliminar/Editar stay reachable via `.contextMenu` (long
-                // press) and `accessibilityActions`, both already gesture-independent.
-                ForEach(lines) { line in
-                    LineItemRow(
-                        line: line,
-                        exchangeRate: effectiveRate,
-                        isEditing: editingLineID == line.id,
-                        isDraft: draftLineID == line.id,
-                        onStartEditing: { editingLineID = line.id },
-                        onCommit: { commitEdit() },
-                        onDelete: line.origin == .manual ? { deleteLine(line) } : nil,
-                        onDiscardDraft: draftLineID == line.id ? { discardDraft() } : nil,
-                        onToggleActive: { toggleActive(line) },
-                        onTogglePaid: { togglePaid(line) }
-                    )
-                    if line.id != lines.last?.id {
-                        Divider()
-                    }
-                }
-
-                captureRow(kind: kind)
+            // Coordinator (2026-09-16): the "+" lives here now — its own left-aligned spot
+            // below the last line card, above TOTAL INCOME/EXPENSES, not in the section
+            // header anymore. Small circular button, same treatment in both blocks.
+            Button {
+                captureTarget = CaptureTarget(line: nil, kind: kind)
+            } label: {
+                // Icon unchanged from before this move (`plus.capsule.fill`, confirmed
+                // present in this SDK) — only its position changed this pass.
+                Image(systemName: "plus.capsule.fill")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
             }
-
-            Divider().frame(height: 2).overlay(Color.secondary)
+            .buttonStyle(.plain)
+            .padding(.horizontal, 16)
+            .accessibilityLabel(kind == .income ? "Agregar ingreso" : "Agregar gasto")
 
             HStack {
                 Text(kind == .income ? "TOTAL INCOME" : "TOTAL EXPENSES")
-                    .font(.title3.weight(.semibold))
+                    .font(.system(size: 14, weight: .bold))
                 Spacer()
                 Text(total(for: kind).currencyString())
-                    .font(.title3.weight(.semibold))
+                    .font(.system(size: 14, weight: .bold))
                     .monospacedDigit()
             }
+            .padding(.top, 10)
+            .padding(.horizontal, 10)
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(.ultraThinMaterial.opacity(0.5))
-        )
         .accessibilityElement(children: .contain)
         .accessibilityLabel(kind == .income ? "Ingresos" : "Gastos")
     }
 
-    private func captureRow(kind: LineKind) -> some View {
-        Button {
-            addLine(kind: kind)
-        } label: {
-            HStack {
-                Image(systemName: "plus.circle")
-                Text(kind == .income ? "Agregar ingreso" : "Agregar gasto")
-                Spacer()
-            }
-            .foregroundStyle(.secondary)
-            .padding(.vertical, 8)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(kind == .income ? "Agregar ingreso" : "Agregar gasto")
-    }
-
+    // Coordinator (2026-09-15, Figma tSUzh4zfCpDPYT5A88otst node 8:2): the "Tipo de cambio"
+    // row + "Editar" button are removed from the Quincena's Resumen entirely — the manual
+    // override stays reachable from Ajustes → Preferencias → Tipo de cambio
+    // (`ExchangeRateSettingsView`), which already has it. The per-quincena-only override this
+    // sheet used to write (`period.manualExchangeRateOverride`) has no UI trigger left as a
+    // result — accepted by the coordinator's instruction, not an oversight.
     private var summaryPanel: some View {
-        SummaryPanel(
-            mandar: mandar,
-            exchangeRate: rateStore.currentRate == nil ? period?.manualExchangeRateOverride : effectiveRate,
-            isRateStale: rateStore.isUsingCache,
-            nextMonth: nextMonth,
-            onEditRate: {
-                manualRateText = effectiveRate > 0 ? effectiveRate.twoDecimalString : ""
-                rateEditorErrorMessage = nil
-                showRateEditor = true
-            }
-        )
-    }
-
-    private var rateEditorSheet: some View {
-        NavigationStack {
-            Form {
-                LabTextField(placeholder: "Tipo de cambio USD→MXN", text: $manualRateText, config: PatternConfig(accentColor: .accentColor))
-                    #if os(iOS)
-                    .keyboardType(.decimalPad)
-                    #endif
-                Text("Este override aplica solo a esta quincena.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                if let rateEditorErrorMessage {
-                    Text(rateEditorErrorMessage)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                }
-            }
-            .navigationTitle("Tipo de cambio")
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancelar") { showRateEditor = false }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Guardar") {
-                        // M-01: same plausibility rule as the global override in Ajustes —
-                        // this per-quincena field feeds the exact same Sobrante calculation.
-                        guard let value = Decimal(string: manualRateText, locale: Locale(identifier: "en_US_POSIX")),
-                              ExchangeRateParser.plausibleRange.contains(value) else {
-                            rateEditorErrorMessage = "El tipo de cambio debe estar entre \(ExchangeRateParser.plausibleRange.lowerBound) y \(ExchangeRateParser.plausibleRange.upperBound)."
-                            return
-                        }
-                        period?.manualExchangeRateOverride = value
-                        commitEdit()
-                        rateEditorErrorMessage = nil
-                        showRateEditor = false
-                    }
-                }
-            }
-        }
+        SummaryPanel(mandar: mandar, nextMonth: nextMonth)
     }
 
     private var loadingSkeleton: some View {
@@ -409,34 +378,35 @@ struct PeriodView: View {
         try? context.save()
     }
 
-    private func addLine(kind: LineKind) {
+    /// `LineCaptureSheet`'s `onSave` — `existingLine == nil` creates a brand-new manual
+    /// `LineItem` (no draft ever touches the store until this point, which is what actually
+    /// eliminates the old ghost-row bug instead of just papering over it with a discard path);
+    /// non-nil edits that line in place. Either way, ends with the same persist +
+    /// `recomputeForward` sequence as every other edit.
+    private func saveLine(_ existingLine: LineItem?, kind: LineKind, title: String, amount: Decimal, currency: Currency) {
         guard let period else { return }
-        let nextOrder = ((period.lineItems ?? []).map(\.sortOrder).max() ?? -1) + 1
-        let line = LineItem(kind: kind, title: "", amount: 0, currency: .usd, sortOrder: nextOrder, origin: .manual, period: period)
-        context.insert(line)
-        period.lineItems?.append(line)
-        editingLineID = line.id
-        draftLineID = line.id
+        if let existingLine {
+            existingLine.title = title
+            existingLine.amount = amount
+            existingLine.currency = currency
+            if existingLine.origin != .manual { existingLine.isManuallyEdited = true }
+        } else {
+            let nextOrder = ((period.lineItems ?? []).map(\.sortOrder).max() ?? -1) + 1
+            let line = LineItem(kind: kind, title: title, amount: amount, currency: currency, sortOrder: nextOrder, origin: .manual, period: period)
+            context.insert(line)
+            period.lineItems?.append(line)
+        }
+        try? context.save()
+        PeriodCoordinator.recomputeForward(after: period, context: context, exchangeRate: effectiveRate)
+        try? context.save()
     }
 
     private func deleteLine(_ line: LineItem) {
         guard let period else { return }
         period.lineItems?.removeAll { $0.id == line.id }
         context.delete(line)
-        commitEdit()
-    }
-
-    /// Discards a not-yet-confirmed draft line entirely — the capture row returns to its
-    /// initial state without leaving a $0.00, no-description ghost row behind.
-    private func discardDraft() {
-        defer {
-            editingLineID = nil
-            draftLineID = nil
-        }
-        guard let draftLineID, let period,
-              let line = (period.lineItems ?? []).first(where: { $0.id == draftLineID }) else { return }
-        period.lineItems?.removeAll { $0.id == draftLineID }
-        context.delete(line)
+        try? context.save()
+        PeriodCoordinator.recomputeForward(after: period, context: context, exchangeRate: effectiveRate)
         try? context.save()
     }
 
@@ -457,15 +427,16 @@ struct PeriodView: View {
     /// manual edit so a later `reproject*` doesn't reset it (same reasoning as `toggleActive`).
     private func togglePaid(_ line: LineItem) {
         line.isPaid.toggle()
+        // TRD "paidAt/progreso real de préstamos" (2026-09-16): the real confirmation date,
+        // set only by this manual toggle — never derived from the period's own date.
+        line.paidAt = line.isPaid ? CivilDate.today(calendar: .current) : nil
         if line.origin != .manual { line.isManuallyEdited = true }
         try? context.save()
     }
 
-    private func commitEdit() {
-        if editingLineID == draftLineID {
-            draftLineID = nil
-        }
-        editingLineID = nil
+    /// The one direct in-place row mutation left (`LineItemRow`'s contextMenu "Cambiar a
+    /// MXN/USD") — same persist + `recomputeForward` sequence as everything else.
+    private func commitQuickEdit() {
         try? context.save()
         if let period {
             PeriodCoordinator.recomputeForward(after: period, context: context, exchangeRate: effectiveRate)
