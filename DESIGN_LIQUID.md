@@ -311,7 +311,7 @@ Ambas líneas viven dentro del mismo botón (todo el bloque es el trigger del ju
 
 - iPhone: dentro del header de la pantalla Quincena, un `HStack` con dos botones a los lados del bloque de título de dos líneas — símbolo **`chevron.backward`** / **`chevron.forward`**, `.buttonStyle(.glass)` sin tint (vigente, confirmado en código; sustituye la exploración anterior de `arrow.backward`/`arrow.right`, ver nota en "Íconos SF Symbols detectados" abajo). Swipe horizontal en el contenido también navega (gesto acelerador, con alternativa tap siempre presente en los chevrons — regla de gestos).
 - Mac: mismos chevrons en el toolbar (`.navigation` placement a la izquierda), más atajos de teclado `⌘←` / `⌘→`.
-- El chevron derecho nunca se deshabilita — avanzar siempre materializa la siguiente quincena bajo demanda (ver TRD, materialización perezosa). El chevron izquierdo se deshabilita (estado `.disabled`, opacidad reducida) al llegar a la **primera quincena materializada** — no existe "antes" en Fintrol, coincide con "arranca desde cero en 2026". El jump sheet respeta el mismo límite: el `Picker` de año/mes/quincena no ofrece opciones anteriores a esa primera quincena materializada.
+- El chevron derecho nunca se deshabilita — avanzar siempre materializa la siguiente quincena bajo demanda (ver TRD, materialización perezosa). El chevron izquierdo se deshabilita (estado `.disabled`, opacidad reducida) al llegar al límite hacia atrás — que ahora es el **más cercano a hoy** entre dos topes: la **primera quincena materializada** (no existe "antes" real en los datos, coincide con "arranca desde cero en 2026") y **"Historial visible"** (Ajustes → Preferencias, default 1 mes atrás desde la quincena actual, configurable 1–24 meses — ver "Ajustes generales"). El jump sheet respeta el mismo límite combinado: el `Picker` de año/mes/quincena no ofrece opciones anteriores a ese punto de corte.
 
 **2. Salto de año/quincena — botón de título abre un jump sheet**
 
@@ -382,9 +382,11 @@ Documentar `LineItemRow` (ahora card individual) y el patrón "stack de cards co
 |---|---|
 | Reposo, cualquier origen (`.manual`/`.recurring`/`.subscription`/`.loan`/`.investment`/`.carryOver`), activa | Descripción `.leading` + monto `.trailing`, sin icono de origen ni controles visibles en la fila — todas las filas se ven igual en reposo independientemente de su origen o de si fueron editadas a mano; ver "Origen de línea" arriba |
 | Reposo, origen carry-over ("Latest Month") | Sin marca visual distinta al resto; título no editable, solo el monto es de solo lectura (es el resultado calculado de la quincena anterior — si el usuario necesita cambiarlo debe editar la línea origen en la quincena previa) |
-| **Pagada** | Palomita discreta (`checkmark.circle.fill`, 14pt, tinte `.blue`) a la derecha del monto (o del nombre si la fila es muy angosta en iPhone) — no afecta números, no cambia opacidad de nada más en la fila |
+| **Pagada — bloqueada** | **Fondo de la card cambia de Frost gris a verde tenue** (ver token exacto abajo). Palomita discreta (`checkmark.circle.fill`, 14pt, tinte `.blue`, sin cambios) sigue visible a la derecha del monto — el color no es el único vector, la palomita se conserva aunque el fondo ya lo comunique (regla de accesibilidad: nunca solo por color). No afecta números. La línea queda **bloqueada**: la única acción disponible es "Desmarcar pagado" — ver "Swipe actions" y "Menú contextual" abajo para el detalle de qué desaparece |
 | **Inactiva** (excluida de la suma) | Opacidad de toda la fila reducida a `0.4`; monto con `.strikethrough()`; el motor de totales la omite del cálculo del bloque |
-| **Inactiva y pagada** | Se combinan: fila a opacidad `0.4`, monto tachado, palomita azul presente pero a la misma opacidad reducida (no se dibuja aparte a opacidad completa) — lee como "esto pasó, pero ahora mismo no cuenta" |
+| **Inactiva y pagada** | Se combinan: fondo verde tenue (igual que "Pagada — bloqueada") + opacidad de toda la fila reducida a `0.4` (el verde también queda atenuado, no se dibuja aparte a opacidad completa), monto tachado, palomita azul presente a la misma opacidad reducida — lee como "esto pasó, pero ahora mismo no cuenta". También bloqueada — solo "Desmarcar pagado" disponible (desmarcar revela de nuevo las acciones normales de una línea inactiva) |
+
+**Token del fondo verde de "Pagada":** `Color.green.opacity(0.16)` superpuesto sobre el fondo Frost de la card (`AppBackground.secondary`, `#2A2A2A`) — no reemplaza el material, se mezcla encima. Deliberadamente más sutil que el verde sólido del badge de SOBRANTE (que es 100% opaco con texto contrastante) — aquí es un tinte, nunca relleno neón. Mismo radio 20pt Continuous Corners que cualquier card-por-línea, sin cambio de forma. Es una segunda excepción documentada al uso de verde en la app (la primera es la pill "Hoy" del header de Quincena, ver "Decisiones registradas") — ambas están confirmadas explícitamente por el usuario, no se generaliza verde a ningún otro estado sin la misma confirmación.
 | Línea en MXN | Bajo el monto principal (que siempre se muestra en su moneda de captura), una segunda línea `.caption` `.secondary` `.monospacedDigit()`: "≈ $842.30 USD · TC 18.42" |
 | Línea en MXN con override manual del tipo de cambio para esa quincena | Igual + badge `.caption2` pill pequeño "manual" en `accentSubtle`/`accentForeground`, junto al TC — señala que ese número no vino de la API |
 | Editando | **Ya no es un estado in-place de la fila** — tap en la fila abre el "Sheet de captura/edición de línea" (ver más abajo) precargado con sus valores. La fila en sí no cambia de fondo ni de layout; el sheet es una presentación modal separada. Si el origen no es manual, el sheet puede mostrar contexto "Generado por: [nombre]" — ver "Origen de línea" |
@@ -393,20 +395,25 @@ Documentar `LineItemRow` (ahora card individual) y el patrón "stack de cards co
 
 ### Swipe actions — iPhone
 
-Con los toggles fuera de la fila, tap sigue abriendo edición — ahora vía el "Sheet de captura/edición de línea" (ver más abajo) en vez de inline. Los dos ejes de swipe reemplazan lo que antes eran controles visibles:
+Con los toggles fuera de la fila, tap sigue abriendo edición — ahora vía el "Sheet de captura/edición de línea" (ver más abajo) en vez de inline, **salvo que la línea esté pagada** (ver bloqueo abajo). Los dos ejes de swipe reemplazan lo que antes eran controles visibles:
 
 | Dirección | Acción | Icono / tinte | Full swipe | Notas |
 |---|---|---|---|---|
-| **Leading** (izquierda→derecha) | Activar / Desactivar (según estado actual) | Inactivo→Activo: `arrow.uturn.backward.circle.fill`, tinte `.blue` · Activo→Inactivo: `minus.circle.fill`, tinte `.gray` (`systemGray`) | Sí, permitido — dispara la acción sin confirmación | Nunca verde/rojo — esos dos colores son exclusivos del semáforo del sobrante en esta app; gris y azul se usan aquí porque no son ninguno de los tres estados reservados |
-| **Trailing** (derecha→izquierda), 1ª acción | Marcar / Desmarcar pagado | `checkmark.circle.fill` (marcar) / `circle` outline (desmarcar), tinte `.blue` | Sí — full swipe marca/desmarca directo | Mismo azul que "Activar" a propósito: ambas son acciones de estado, no destructivas ni de alerta |
-| **Trailing, 2ª acción** (revelada al deslizar más) — solo líneas `.manual` | Eliminar | `trash`, `role: .destructive` (rojo de sistema) | No — requiere tap explícito en la acción, nunca full swipe | El rojo aquí es la convención universal de "eliminar" de iOS/macOS, no una señal financiera — no compite con el semáforo porque no vive en el mismo contexto visual (aparece solo al deslizar más allá de "Pagado", nunca junto al sobrante) |
-| **Trailing, 2ª acción** — líneas de origen `.recurring`/`.subscription`/`.loan`/`.carryOver` | Editar | `pencil`, tinte `.gray` (`systemGray`) | No | Reemplaza a "Eliminar" en líneas generadas — no tiene sentido borrar algo que se regenerará al volver a esa quincena; es un atajo redundante con el tap en la fila, para paridad de gesto con las líneas manuales |
+| **Leading** (izquierda→derecha) | Activar / Desactivar (según estado actual) | Inactivo→Activo: `arrow.uturn.backward.circle.fill`, tinte `.blue` · Activo→Inactivo: `minus.circle.fill`, tinte `.gray` (`systemGray`) | Sí, permitido — dispara la acción sin confirmación | Nunca verde/rojo — esos dos colores son exclusivos del semáforo del sobrante en esta app; gris y azul se usan aquí porque no son ninguno de los tres estados reservados. **No disponible si `isPaid == true`** — el swipe leading en una línea pagada no revela nada (`.swipeActions` vacío en ese borde) |
+| **Trailing** (derecha→izquierda), 1ª acción | Marcar / Desmarcar pagado | `checkmark.circle.fill` (marcar) / `circle` outline (desmarcar), tinte `.blue` | Sí — full swipe marca/desmarca directo | Mismo azul que "Activar" a propósito: ambas son acciones de estado, no destructivas ni de alerta. **Es la única acción que sigue disponible en una línea pagada** — desmarcarla es también lo que la desbloquea |
+| **Trailing, 2ª acción** (revelada al deslizar más) — solo líneas `.manual`, **y solo si `isPaid == false`** | Eliminar | `trash`, `role: .destructive` (rojo de sistema) | No — requiere tap explícito en la acción, nunca full swipe | El rojo aquí es la convención universal de "eliminar" de iOS/macOS, no una señal financiera. **Ausente mientras la línea está pagada** — el swipe trailing en una línea pagada revela solo "Desmarcar pagado", sin segunda acción |
+| **Trailing, 2ª acción** — líneas de origen `.recurring`/`.subscription`/`.loan`/`.carryOver`, **y solo si `isPaid == false`** | Editar | `pencil`, tinte `.gray` (`systemGray`) | No | Reemplaza a "Eliminar" en líneas generadas. **Ausente mientras la línea está pagada**, misma razón que arriba |
+
+**Línea bloqueada por `isPaid == true` — comportamiento recomendado, decisión cerrada:** las acciones que no aplican simplemente **no aparecen** — no hay toast, alert ni mensaje explicando "Quita 'pagado' para editar". Es el patrón estándar de iOS: `.swipeActions`/`.contextMenu` condicionales que solo listan las acciones válidas para el estado actual, igual que Mail o Reminders no muestran un swipe action que no aplica y no explican por qué. Tap en una línea pagada tampoco abre el sheet de edición — no pasa nada visible (sin haptic de error, sin mensaje; el usuario ya tiene la señal visual clara del fondo verde + la palomita de que la línea está en un estado distinto).
 
 ### Menú contextual (long-press / botón "···", iPhone y Mac)
 
-Mismas acciones que el swipe, para descubribilidad y para Mac (donde el swipe de trackpad puede no ser obvio para todos los usuarios):
+Mismas acciones que el swipe, para descubribilidad y para Mac (donde el swipe de trackpad puede no ser obvio para todos los usuarios). Igual que el swipe, el menú es condicional al estado:
 
-`.contextMenu`: "Activar"/"Desactivar", "Marcar pagado"/"Desmarcar pagado", "Cambiar a MXN/USD", "Editar", "Eliminar" (solo líneas `.manual`) — accesible también por tap en "···" al final de la fila.
+- **Línea no pagada:** `.contextMenu`: "Activar"/"Desactivar", "Marcar pagado", "Cambiar a MXN/USD", "Editar", "Eliminar" (solo líneas `.manual`).
+- **Línea pagada:** `.contextMenu` con **una sola opción**: "Desmarcar pagado". El resto no se lista — mismo criterio que el swipe, sin mensaje explicativo.
+
+Accesible también por tap en "···" al final de la fila.
 
 ### macOS — swipe y contexto
 
@@ -418,15 +425,19 @@ Mismas acciones que el swipe, para descubribilidad y para Mac (donde el swipe de
 Ni el swipe leading ni el swipe trailing son detectables por VoiceOver o Switch Control solo con `.swipeActions` — es una decisión de la skill de Jonny, no opcional, exponer las mismas acciones como `accessibilityActions` explícitas en cada fila:
 
 ```swift
-.accessibilityAction(named: line.isActive ? Text("Desactivar") : Text("Activar")) {
-    toggleActive(line)
-}
 .accessibilityAction(named: line.isPaid ? Text("Desmarcar pagado") : Text("Marcar pagado")) {
     togglePaid(line)
 }
-.accessibilityAction(named: Text("Editar")) { presentEditSheet(line) }
-// Solo líneas .manual:
-.accessibilityAction(named: Text("Eliminar")) { requestDelete(line) }
+// El resto de acciones solo se expone si la línea NO está pagada — refleja
+// exactamente lo que el swipe/contextMenu ya no ofrecen cuando isPaid == true:
+if !line.isPaid {
+    .accessibilityAction(named: line.isActive ? Text("Desactivar") : Text("Activar")) {
+        toggleActive(line)
+    }
+    .accessibilityAction(named: Text("Editar")) { presentEditSheet(line) }
+    // Solo líneas .manual:
+    .accessibilityAction(named: Text("Eliminar")) { requestDelete(line) }
+}
 ```
 
 - `accessibilityValue` de la fila concatena los dos estados cuando aplican, siempre en el mismo orden, nunca solo por color/icono: `"inactiva"` / `"pagada"` / `"inactiva, pagada"` / nada si la línea está activa y no pagada. Ejemplo completo de `accessibilityLabel` + `accessibilityValue`: "Renta, 1,900 dólares" + "inactiva, pagada".
@@ -566,6 +577,9 @@ Pantalla "Ajustes generales" — `Form` nativo con dos `Section` (iPhone) / mism
 | Tipo de cambio | `NavigationLink` a subpantalla "Tipo de cambio" | Fila muestra "18.42 · hace 2 h" (`.monospacedDigit()`, `.secondary`) como value; la subpantalla trae: toggle "Automático" (default on, consulta Frankfurter), y si se apaga, `LabTextField` numérico para override manual global con validación en rango **1–100** (fuera de rango: borde rojo + texto inline de error, no permite guardar) |
 | Apariencia | `Picker` `.pickerStyle(.menu)`, opciones "Sistema" / "Claro" / "Oscuro" | Default "Sistema"; cambia `preferredColorScheme` de la app |
 | Estado de iCloud | Texto informativo, sin control | "Sincronizado" / "Sin conexión" / "Sincronizando…" (`.caption`, `.secondary`, con `SFSymbol` `icloud`/`icloud.slash` a la izquierda) — no editable, es puramente diagnóstico |
+| Historial visible | `Stepper` con valor en el label: "Historial visible: 1 mes" (pluraliza a "meses" cuando > 1) | Rango 1–24, default 1. Debajo, texto de ayuda `.caption` `.secondary` fijo: "Cuánto puedes retroceder desde la quincena actual". Define cuántos meses atrás desde la quincena de hoy se puede navegar con el chevron izquierdo/jump sheet — ver "Navegación adyacente" arriba, que se actualiza con este límite |
+
+**Nota de reconciliación con "Navegación adyacente":** el chevron izquierdo/jump sheet ya se deshabilitaban al llegar a la primera quincena materializada (no existe "antes" real en los datos). Este control añade un segundo límite, configurable por el usuario, que puede ser más restrictivo: el punto de corte efectivo es el que esté **más cerca de hoy** entre "primera quincena materializada" y "hoy − N meses" (N = este valor). Con el default de 1 mes, un usuario con años de historial materializado solo puede retroceder un mes salvo que suba el valor.
 
 ### Grupo "Seguridad"
 
@@ -905,6 +919,10 @@ Fintrol no tiene una feature de búsqueda en v1 — el volumen de datos de un pr
 | 2026-09-15 | Import/export en Ajustes revisado — usa `.fileImporter`/`.fileExporter`/`.alert` nativos, no el patrón de captura corta; no requiere el cambio a sheet | Evita aplicar un rediseño donde no aplica el problema que lo motivó |
 | 2026-09-16 | **Revertido el mismo día:** se evaluó formalizar un `NavCircleButton` custom (círculo 29×29pt) para el back de las 6 listas del hub; el usuario decidió no hacerlo — el back nativo de `NavigationStack` ya recibe Liquid Glass correcto en iOS 26 sin componente custom | Ver "Componentes de navegación — Liquid Glass" — es la entrada vigente, no esta |
 | 2026-09-16 | El CTA "+" de INCOME/EXPENSES se mueve del header de sección a una posición sola, alineada a la izquierda, debajo de la última card de línea y antes de TOTAL | Decisión del usuario (nueva captura de Figma) — el header de sección queda solo con el texto, sin control a la derecha |
+| 2026-09-16 | Badge "Current"/"Proyección" eliminado del header de Quincena; su función pasa a la propia pill de rango de días (verde sólido si es hoy, transparente si no) | Decisión del usuario — un elemento menos, misma información, sin distinguir pasada de proyectada en el header |
+| 2026-09-16 | Nueva fila "Historial visible" en Ajustes → Preferencias (`Stepper`, 1–24 meses, default 1) limita cuánto se puede retroceder desde la quincena actual | Decisión del usuario — se combina con el límite existente de "primera quincena materializada": aplica el que esté más cerca de hoy |
+| 2026-09-16 | Línea con `isPaid == true` queda bloqueada (solo "Desmarcar pagado" disponible) y su card cambia a fondo verde tenue (`Color.green.opacity(0.16)` sobre Frost) | Decisión del usuario — tercera excepción documentada al uso de verde en la app (junto a SOBRANTE y la pill "Hoy"), siempre más sutil que el verde sólido del semáforo |
+| 2026-09-16 | Acciones ausentes/deshabilitadas sin toast ni mensaje cuando la línea está bloqueada por `isPaid` | Recomendación de Jonny adoptada — patrón estándar iOS (Mail, Reminders): las acciones que no aplican simplemente no aparecen en swipe/menú/accessibilityActions |
 
 ---
 

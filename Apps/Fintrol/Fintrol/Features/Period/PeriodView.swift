@@ -31,6 +31,12 @@ struct PeriodView: View {
     // never nags a returning user.
     @AppStorage("fintrol.hasSeenSwipeHint") private var hasSeenSwipeHint = false
 
+    // TRD "Límite de navegación hacia atrás" (2026-09-16): Ajustes → Preferencias → "Historial
+    // visible" — the `@AppStorage` read stays here (Core/ never touches it directly, only
+    // receives the resolved `Int` as a parameter, same separation as every other
+    // preference-driven Core call).
+    @AppStorage("fintrol.historyMonthsBack") private var historyMonthsBack = 1
+
     // A11Y #11: at accessibility Dynamic Type sizes, the badge/panel need to stack instead
     // of sitting side by side (macOS) so nothing gets clipped or squeezed unreadably.
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -44,7 +50,7 @@ struct PeriodView: View {
     }
 
     private var earliestCoordinate: PeriodCoordinate {
-        PeriodCoordinator.earliestMaterializedCoordinate(context: context) ?? coordinate
+        PeriodCoordinator.navigableLowerBound(context: context, monthsBack: historyMonthsBack)
     }
 
     private var recurringSnapshots: [RecurringItemSnapshot] {
@@ -386,6 +392,10 @@ struct PeriodView: View {
     private func saveLine(_ existingLine: LineItem?, kind: LineKind, title: String, amount: Decimal, currency: Currency) {
         guard let period else { return }
         if let existingLine {
+            // "Bloqueo de líneas pagadas" (2026-09-16): a confirmed-paid line is frozen —
+            // the sheet shouldn't reach this path for one (UI hides the entry point), but
+            // guard here too since `saveLine` is the actual mutation point.
+            guard PeriodCoordinator.canModify(line: existingLine) else { return }
             existingLine.title = title
             existingLine.amount = amount
             existingLine.currency = currency
@@ -403,6 +413,7 @@ struct PeriodView: View {
 
     private func deleteLine(_ line: LineItem) {
         guard let period else { return }
+        guard PeriodCoordinator.canModify(line: line) else { return }
         period.lineItems?.removeAll { $0.id == line.id }
         context.delete(line)
         try? context.save()
@@ -414,6 +425,7 @@ struct PeriodView: View {
     /// needs the same persist-then-`recomputeForward` sequence as any other edit. Counts as a
     /// manual edit on non-manual lines so `reproject*` never silently reactivates it later.
     private func toggleActive(_ line: LineItem) {
+        guard PeriodCoordinator.canModify(line: line) else { return }
         line.isActive.toggle()
         if line.origin != .manual { line.isManuallyEdited = true }
         try? context.save()

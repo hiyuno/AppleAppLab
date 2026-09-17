@@ -87,7 +87,7 @@ struct LineItemRow: View {
     /// first threshold already means.
     private let swipeSecondActionThreshold: CGFloat = 176
 
-    private var isPastSecondTrailingThreshold: Bool { dragTranslation <= -swipeSecondActionThreshold }
+    private var isPastSecondTrailingThreshold: Bool { !line.isPaid && dragTranslation <= -swipeSecondActionThreshold }
 
     #if os(iOS)
     private func hapticImpact() {
@@ -107,7 +107,21 @@ struct LineItemRow: View {
             .onEnded { value in
                 let translation = value.translation.width
                 let settle = { withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { dragTranslation = 0 } }
-                if translation >= swipeCommitThreshold {
+                // "Bloqueo de líneas pagadas" (2026-09-16): once isPaid == true, swipe-leading
+                // (activar/desactivar) is a no-op, and swipe-trailing never advances past the
+                // first stage — "Desmarcar pagado" is the only action left, however far the
+                // user drags.
+                if line.isPaid {
+                    if translation <= -swipeCommitThreshold {
+                        settle()
+                        onTogglePaid()
+                        #if os(iOS)
+                        hapticImpact()
+                        #endif
+                    } else {
+                        settle()
+                    }
+                } else if translation >= swipeCommitThreshold {
                     settle()
                     onToggleActive()
                     #if os(iOS)
@@ -141,13 +155,17 @@ struct LineItemRow: View {
             // `.swipeActions` would have shown (DESIGN_LIQUID.md colors: never green/red,
             // those are reserved for the sobrante semaphore).
             HStack {
-                Label(
-                    line.isActive ? "Desactivar" : "Activar",
-                    systemImage: line.isActive ? "minus.circle.fill" : "arrow.uturn.backward.circle.fill"
-                )
-                .labelStyle(.iconOnly)
-                .foregroundStyle(line.isActive ? .gray : .blue)
-                .opacity(dragTranslation > 8 ? 1 : 0)
+                // Bloqueada: swipe-leading (activar/desactivar) no hace nada — el hint no se
+                // muestra aunque haya arrastre, para no prometer una acción que no ocurrirá.
+                if !line.isPaid {
+                    Label(
+                        line.isActive ? "Desactivar" : "Activar",
+                        systemImage: line.isActive ? "minus.circle.fill" : "arrow.uturn.backward.circle.fill"
+                    )
+                    .labelStyle(.iconOnly)
+                    .foregroundStyle(line.isActive ? .gray : .blue)
+                    .opacity(dragTranslation > 8 ? 1 : 0)
+                }
                 Spacer()
                 if isPastSecondTrailingThreshold {
                     // Second stage of the same trailing gesture, per Larry's ruling: Eliminar
@@ -179,7 +197,17 @@ struct LineItemRow: View {
         // "no background of its own" rule from the same day (the block containing card was
         // removed entirely, so each line needs to carry its own surface now).
         .padding(16)
-        .background(Color("AppBackgroundSecondary"))
+        // "Bloqueo de líneas pagadas" (2026-09-16): tercera excepción documentada al verde
+        // (junto a SOBRANTE y la píldora "Hoy") — un tinte verde translúcido sobre el Frost de
+        // la card, no un reemplazo, para que siga leyéndose como la misma familia de tarjetas.
+        .background(
+            ZStack {
+                Color("AppBackgroundSecondary")
+                if line.isPaid {
+                    Color.green.opacity(0.16)
+                }
+            }
+        )
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         // "La tarjeta inactiva se atenúa completa" — opacity now dims the whole card
         // (background included), not just the text content.
@@ -189,31 +217,40 @@ struct LineItemRow: View {
         .accessibilityElement(children: .combine)
         .accessibilityValue(accessibilityStateValue)
         .accessibilityActions {
-            Button("Editar") { onStartEditing() }
-            Button(line.isActive ? "Desactivar" : "Activar") { onToggleActive() }
+            // Bloqueada: el resto de acciones (Editar, Activar/Desactivar, Eliminar) refleja
+            // exactamente lo que el swipe/contextMenu ya no ofrecen cuando isPaid == true —
+            // solo queda desmarcar pagado, la única salida del bloqueo.
             Button(line.isPaid ? "Desmarcar pagado" : "Marcar pagado") { onTogglePaid() }
-            if line.origin == .manual, let onDelete {
-                Button("Eliminar", role: .destructive) { onDelete() }
+            if !line.isPaid {
+                Button("Editar") { onStartEditing() }
+                Button(line.isActive ? "Desactivar" : "Activar") { onToggleActive() }
+                if line.origin == .manual, let onDelete {
+                    Button("Eliminar", role: .destructive) { onDelete() }
+                }
             }
         }
         .contextMenu {
-            Button(line.isActive ? "Desactivar" : "Activar", systemImage: line.isActive ? "minus.circle.fill" : "arrow.uturn.backward.circle.fill", action: onToggleActive)
-            Button(line.isPaid ? "Desmarcar pagado" : "Marcar pagado", systemImage: line.isPaid ? "checkmark.circle.fill" : "circle", action: onTogglePaid)
-            Button(line.currency == .usd ? "Cambiar a MXN" : "Cambiar a USD") {
-                let newCurrency: Currency = line.currency == .usd ? .mxn : .usd
-                line.currency = newCurrency
-                line.isManuallyEdited = line.origin != .manual ? true : line.isManuallyEdited
-                onQuickCommit()
-                #if os(iOS)
-                UIAccessibility.post(notification: .announcement, argument: "Moneda cambiada a \(newCurrency == .usd ? "USD" : "MXN")")
-                #endif
-            }
-            Button("Editar", systemImage: "pencil", action: onStartEditing)
-            if line.origin == .manual, let onDelete {
-                Button("Eliminar", systemImage: "trash", role: .destructive, action: onDelete)
-                    #if os(macOS)
-                    .keyboardShortcut(.delete, modifiers: [.command, .shift])
+            if line.isPaid {
+                Button("Desmarcar pagado", systemImage: "checkmark.circle.fill", action: onTogglePaid)
+            } else {
+                Button(line.isActive ? "Desactivar" : "Activar", systemImage: line.isActive ? "minus.circle.fill" : "arrow.uturn.backward.circle.fill", action: onToggleActive)
+                Button("Marcar pagado", systemImage: "circle", action: onTogglePaid)
+                Button(line.currency == .usd ? "Cambiar a MXN" : "Cambiar a USD") {
+                    let newCurrency: Currency = line.currency == .usd ? .mxn : .usd
+                    line.currency = newCurrency
+                    line.isManuallyEdited = line.origin != .manual ? true : line.isManuallyEdited
+                    onQuickCommit()
+                    #if os(iOS)
+                    UIAccessibility.post(notification: .announcement, argument: "Moneda cambiada a \(newCurrency == .usd ? "USD" : "MXN")")
                     #endif
+                }
+                Button("Editar", systemImage: "pencil", action: onStartEditing)
+                if line.origin == .manual, let onDelete {
+                    Button("Eliminar", systemImage: "trash", role: .destructive, action: onDelete)
+                        #if os(macOS)
+                        .keyboardShortcut(.delete, modifiers: [.command, .shift])
+                        #endif
+                }
             }
         }
     }

@@ -11,6 +11,7 @@
 		04E89BD195E2D5B96B9B1EBA /* JumpSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BFB8EABB58D0EA220DD5E1B /* JumpSheet.swift */; };
 		080E0B3657C80B186399DC31 /* SobranteBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = D828660E91984A48A0AFD63F /* SobranteBadge.swift */; };
 		0845A3EF90E938463D2E6980 /* RecurringItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8E470E33169582D672183B5 /* RecurringItem.swift */; };
+		089377E161915040D4024841 /* NavigationLimitTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B90A8790443D51F53C2149D0 /* NavigationLimitTests.swift */; };
 		0A79791F1C12E3459E19A4FB /* FintrolApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5370CF4674A90E65EB76DAB1 /* FintrolApp.swift */; };
 		0E3F33440DFA5A4295EAF1DC /* CivilDate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0DDDEDDF7E3C201E0A27E4A4 /* CivilDate.swift */; };
 		11CAAE09334C0636C967AD7E /* LockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5964AF2F1983AC124D8E9127 /* LockView.swift */; };
@@ -70,6 +71,7 @@
 		D55D7CF646FB4D3629D72B95 /* Info-iOS-extra.plist in Resources */ = {isa = PBXBuildFile; fileRef = 4CAFDD48DAD3790FDECC4CE2 /* Info-iOS-extra.plist */; };
 		D593E02A9A32E17E8AD4FD83 /* Validation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 109B691C8E0D1BE788716349 /* Validation.swift */; };
 		DA895DF4DF376F7336EFECA2 /* LoanEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 36C4060BA9B266F4E1B06095 /* LoanEngine.swift */; };
+		DD51AB2258E0FD260A11F9F2 /* LineLockTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE84483DD9D732BB31D63568 /* LineLockTests.swift */; };
 		E05AECF96F4CD97019E569E5 /* RecurringListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16B86BB729B340F616B8DE0F /* RecurringListView.swift */; };
 		E7E9696786C9041A81FBEB97 /* SubscriptionImportServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D5362C9AA51785039A2E67E /* SubscriptionImportServiceTests.swift */; };
 		EBE2712427A60C5AC18B3540 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58740E5644A9FC34CC2CB438 /* KeychainStore.swift */; };
@@ -149,6 +151,7 @@
 		A8B79E3AFB7125A791C562A7 /* BackupServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupServiceTests.swift; sourceTree = "<group>"; };
 		A9ECA88964595DF093459732 /* SchemaV1Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SchemaV1Tests.swift; sourceTree = "<group>"; };
 		AEB3FA02D477577967741806 /* ProjectionEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectionEngineTests.swift; sourceTree = "<group>"; };
+		B90A8790443D51F53C2149D0 /* NavigationLimitTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NavigationLimitTests.swift; sourceTree = "<group>"; };
 		BF0962B22E9720DCB4EAEDDF /* SobranteStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SobranteStatus.swift; sourceTree = "<group>"; };
 		BF15AFC381821B8160A698FF /* PeriodCoordinate+Title.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PeriodCoordinate+Title.swift"; sourceTree = "<group>"; };
 		C13995C039B33A6DAF2F9748 /* ProjectionRegressionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectionRegressionTests.swift; sourceTree = "<group>"; };
@@ -163,6 +166,7 @@
 		DE8F546B2B544310D95425C3 /* Fintrol-iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "Fintrol-iOS.entitlements"; sourceTree = "<group>"; };
 		E8C913669873C7AB638CC20C /* InvestmentsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvestmentsTests.swift; sourceTree = "<group>"; };
 		EC882F5DF8F984BA0E4D5504 /* OverviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverviewView.swift; sourceTree = "<group>"; };
+		EE84483DD9D732BB31D63568 /* LineLockTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineLockTests.swift; sourceTree = "<group>"; };
 		F3695B6D6E219D97D703A990 /* ExchangeRateService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExchangeRateService.swift; sourceTree = "<group>"; };
 		FBB24923FD71AE593BED955C /* PeriodDateEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeriodDateEngine.swift; sourceTree = "<group>"; };
 		FDDE37C3F087B192719019B7 /* Period.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Period.swift; sourceTree = "<group>"; };
@@ -258,8 +262,10 @@
 				0F8AA61D2957368739F96A86 /* ExchangeRateStoreTests.swift */,
 				E8C913669873C7AB638CC20C /* InvestmentsTests.swift */,
 				04F52199E5869BBC23728CF3 /* KeychainStoreTests.swift */,
+				EE84483DD9D732BB31D63568 /* LineLockTests.swift */,
 				1052E0CFE7E98D118F219221 /* LoanEngineTests.swift */,
 				53ED9C880551E04990FC3737 /* LoanPaidToDateTests.swift */,
+				B90A8790443D51F53C2149D0 /* NavigationLimitTests.swift */,
 				0B01638C95569D9F3DCD4754 /* PaymentDayStorageTests.swift */,
 				1840D41607A8A2F3A033394E /* PeriodCoordinateTitleTests.swift */,
 				C1BA3D7F2BFABFF684660DB5 /* PeriodCoordinatorTests.swift */,
@@ -563,8 +569,10 @@
 				D1E5038035AA4733865101FE /* ExchangeRateStoreTests.swift in Sources */,
 				198F7F0385EB8E68646774F3 /* InvestmentsTests.swift in Sources */,
 				718DBC36253C97CC3ECF33D1 /* KeychainStoreTests.swift in Sources */,
+				DD51AB2258E0FD260A11F9F2 /* LineLockTests.swift in Sources */,
 				32BA93D9CEB76C8673303307 /* LoanEngineTests.swift in Sources */,
 				5F684574E977BFBE83C6B2A3 /* LoanPaidToDateTests.swift in Sources */,
+				089377E161915040D4024841 /* NavigationLimitTests.swift in Sources */,
 				AE0C4D87B2095B03DDE3440C /* PaymentDayStorageTests.swift in Sources */,
 				C914807C575A724C2102E4F8 /* PeriodCoordinateTitleTests.swift in Sources */,
 				6BE1FFD342B2A659C5E4ABC2 /* PeriodCoordinatorTests.swift in Sources */,

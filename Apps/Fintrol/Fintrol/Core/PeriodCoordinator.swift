@@ -28,6 +28,21 @@ public enum PeriodCoordinator {
         return all.map(\.coordinate).min()
     }
 
+    /// TRD "Límite de navegación hacia atrás" (2026-09-16): the actual, combined floor the
+    /// "atrás" chevron/jump sheet must respect — whichever of the two bounds is **closer to
+    /// today** (i.e. more restrictive) wins: "Historial visible" (`monthsBack`, an Ajustes
+    /// preference — passed in here as a plain `Int`, this function never reads `@AppStorage`
+    /// itself, same separation as the rest of `Core/`) and the pre-existing "first
+    /// materialized quincena" floor (there is no data before it, so the setting can never see
+    /// further back than that regardless of how large `monthsBack` is). `PeriodCoordinate` is
+    /// `Comparable` in chronological order, so the later (closer-to-today) of the two is
+    /// simply `max`.
+    public static func navigableLowerBound(context: ModelContext, monthsBack: Int) -> PeriodCoordinate {
+        let historyLimit = PeriodDateEngine.monthsAgoCoordinate(from: CivilDate.today(calendar: .current), months: monthsBack)
+        guard let materializedFloor = earliestMaterializedCoordinate(context: context) else { return historyLimit }
+        return max(historyLimit, materializedFloor)
+    }
+
     // MARK: - Materialization (lazy, iterative — never recurses per-quincena)
 
     /// Materializes `coordinate` if needed, along with any intermediate quincenas between
@@ -709,6 +724,17 @@ public enum PeriodCoordinator {
     /// an empty draft never leaves a $0.00, no-description ghost row behind.
     public static func isValidManualLine(title: String, amount: Decimal) -> Bool {
         !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && amount > 0
+    }
+
+    // MARK: - Línea bloqueada al pagar (TRD/DESIGN_LIQUID.md "bloqueo de líneas pagadas", 2026-09-16)
+
+    /// Pure gate: once a line is confirmed paid (`isPaid == true`) it's frozen — no edit,
+    /// delete, or activate/deactivate. `togglePaid` itself is the sole exempt action (it's how
+    /// the user unlocks the line again), so it must never call this guard. Both `PeriodView`'s
+    /// mutation methods and `LineItemRow`'s UI (swipe/contextMenu/accessibilityActions) read
+    /// this single source of truth rather than re-checking `line.isPaid` ad hoc.
+    public static func canModify(line: LineItem) -> Bool {
+        !line.isPaid
     }
 
     // MARK: - Loan progress (TRD "paidAt/progreso real", 2026-09-16)

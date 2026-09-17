@@ -66,7 +66,8 @@ enum FintrolTab: String, CaseIterable, Identifiable {
         switch self {
         case .period: "calendar"
         case .recurringHub: "arrow.triangle.2.circlepath"
-        case .overview: "chart.bar.fill"
+        // Coordinator (2026-09-16): tab 3 (Overview) icon change, "menucard" SF Symbol.
+        case .overview: "menucard"
         case .settings: "gearshape.fill"
         }
     }

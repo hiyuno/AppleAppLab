@@ -29,4 +29,15 @@ public enum PeriodDateEngine {
     public static func date(forDayOfMonth day: Int, in coordinate: PeriodCoordinate) -> CivilDate {
         CivilDate(year: coordinate.year, month: coordinate.month, day: day).clampedToValidDay
     }
+
+    /// TRD "Límite de navegación hacia atrás" (2026-09-16): `months` civil months before
+    /// `date` (same month arithmetic `LoanEngine` already uses for terms — `CivilDate.
+    /// addingMonths`), always resolved to that month's `.first` half — "Historial visible"
+    /// is a whole-month setting, never a partial quincena. Pure, no `ModelContext`; combining
+    /// this with the first-materialized-period floor is `PeriodCoordinator.
+    /// navigableLowerBound(context:monthsBack:)`.
+    public static func monthsAgoCoordinate(from date: CivilDate, months: Int) -> PeriodCoordinate {
+        let target = date.addingMonths(-months)
+        return PeriodCoordinate(year: target.year, month: target.month, half: .first)
+    }
 }

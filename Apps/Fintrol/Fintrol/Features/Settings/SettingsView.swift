@@ -57,6 +57,20 @@ struct SettingsView: View {
                 }
                 .pickerStyle(.menu)
 
+                // TRD "Límite de navegación hacia atrás" (2026-09-16): Ajustes →
+                // Preferencias → "Historial visible" — combines with the (non-configurable)
+                // first-materialized-quincena floor in `PeriodCoordinator.
+                // navigableLowerBound`; whichever bound is closer to today wins.
+                VStack(alignment: .leading, spacing: 4) {
+                    Stepper(
+                        "Historial visible: \(historyMonthsBack) \(historyMonthsBack == 1 ? "mes" : "meses")",
+                        value: $historyMonthsBack, in: 1...24
+                    )
+                    Text("Cuánto puedes retroceder desde la quincena actual.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 HStack {
                     Image(systemName: iCloudStatusIcon)
                         .foregroundStyle(.secondary)
@@ -239,6 +253,7 @@ struct SettingsView: View {
     }
 
     @AppStorage("fintrol.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
+    @AppStorage("fintrol.historyMonthsBack") private var historyMonthsBack = 1
 
     private var exchangeRateSummary: String {
         guard let rate = rateStore.currentRate else { return "—" }
