@@ -122,6 +122,14 @@ else
   echo "  ↩ Xcode < 27 o no instalado — skills de Apple y MCP de Xcode omitidos"
 fi
 
+# --- asc (App Store Connect CLI) — opcional; acelera /app-store-ready, Phil, Craig, Frederick, Kara. Nunca requisito ---
+if command -v asc >/dev/null 2>&1; then
+  echo "  ✓ asc $(asc version 2>/dev/null | head -1) detectado — /app-store-ready usará App Store Connect desde la terminal"
+  echo "    → skills del proveedor para agentes (25): asc install-skills"
+else
+  echo "  ↩ asc no instalado (opcional): brew install asc — Research/asc-cli/00-index.md"
+fi
+
 # --- Memoria evolutiva ---
 curl -fsSL "$RAW/KNOWN_ISSUES.md" -o ".appleapplab/KNOWN_ISSUES.md"
 echo "  ✓ Snapshot global actualizado en .appleapplab/KNOWN_ISSUES.md"

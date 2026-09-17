@@ -32,7 +32,7 @@ Rutina del equipo, no un agente. Cuando se lanza, Steve orquesta a Phil (líder)
 |---------|----------|
 | `/app-store-ready` | Auditoría completa: cuenta, build, proyecto, guidelines, App Store Connect, revisión cruzada, veredicto, plan, opciones |
 | `/app-store-ready quick` | Solo Fase 2 — checks técnicos automatizables sobre el proyecto (Info.plist, Privacy Manifest, entitlements, iconos, archive). Sin App Store Connect ni cuenta. Útil antes de cada TestFlight |
-| `/app-store-ready rejected` | Toma el mensaje de App Review pegado por el usuario como entrada, mapea cada punto a la guideline y a un hallazgo, y arma el plan para el resubmit. Si es el segundo rechazo por una razón distinta, Phil redacta la respuesta pidiendo **todas** las razones de una vez y propone **pedir una llamada** con App Review; si el fix es de un bug crítico en producción, propone **expedited review** |
+| `/app-store-ready rejected` | Toma el mensaje de App Review pegado por el usuario como entrada (con `asc`: `asc review status --app <id> --output json` lo trae directo), mapea cada punto a la guideline y a un hallazgo, y arma el plan para el resubmit. Si es el segundo rechazo por una razón distinta, Phil redacta la respuesta pidiendo **todas** las razones de una vez y propone **pedir una llamada** con App Review; si el fix es de un bug crítico en producción, propone **expedited review** |
 | `/app-store-ready go <n>` | Aprueba e implementa la etapa `n` del plan existente |
 
 Plataforma (iOS / macOS / ambas) se detecta del `project.yml` o del `TRD.md`. Mac App Store tiene requisitos propios (sandbox obligatorio) que se activan solos.
@@ -93,11 +93,25 @@ Los requisitos cambian según lo que la app **es**. Steve fija esto antes de que
 
 Steve anuncia el perfil antes de empezar: *"App iOS, suscripción, cuentas con Google Sign-In, sin UGC, venta en UE. Se activan: 3.1.2, 4.8, 5.1.1(v), DSA, Privacy Manifest."*
 
+### Sonda `asc` — ¿App Store Connect desde la terminal?
+
+```bash
+which asc && asc version && asc auth status --validate --output json && asc system-status --output json
+```
+
+| Resultado | Consecuencia |
+|-----------|--------------|
+| `asc` instalado y autenticado | Las Fases 1, 4 y 9 corren con `asc` (`validate --deep`, `metadata apply --dry-run`, `screenshots plan/apply`, `review doctor`, `publish`). Phil muestra cada `--dry-run` antes de cualquier `--confirm` |
+| `asc` instalado, sin credenciales | Ivan guía `asc auth login` (keychain; el `.p8` nunca al repo). Mientras tanto, flujo manual |
+| Sin `asc` | **Flujo manual — sigue siendo válido.** Phil sugiere una vez `brew install asc` y no insiste |
+
+Referencia completa comando → agente: `Research/asc-cli/00-index.md`.
+
 ---
 
-## Fase 1 — Cuenta y contratos (Phil, manual)
+## Fase 1 — Cuenta y contratos (Phil)
 
-Nada de esto se automatiza — Phil entrega el checklist y el usuario confirma cada punto:
+Con `asc`: `asc auth status --validate` confirma la key y el acceso; `asc validate --app <id> --deep --output json` reporta agreements pendientes, App Privacy sin publicar y campos de review vacíos; `asc bundle-ids list` cruza identificadores y capabilities con los entitlements. Lo que `asc` no ve (tax/banking, DSA trader status, roles) sigue en el checklist. Sin `asc`, todo es checklist — Phil lo entrega y el usuario confirma cada punto:
 
 - [ ] Apple Developer Program **activo** (individual u organización). Organización requiere D-U-N-S y autoridad legal
 - [ ] App Store Connect → Agreements: **Paid Apps Agreement** firmado si hay IAP o precio; **tax forms** y **banking** completos — sin esto los productos IAP no se pueden enviar
@@ -269,7 +283,21 @@ Salida de la fase: tabla por guideline con estado y evidencia.
 
 ## Fase 4 — App Store Connect (Phil)
 
-Lo que tiene que existir en ASC para poder enviar. Phil verifica lo que hay y produce lo que falta (`APPSTORE.md`):
+Lo que tiene que existir en ASC para poder enviar. Phil verifica lo que hay y produce lo que falta (`APPSTORE.md`).
+
+**Con `asc`, esta fase es reproducible:**
+
+```bash
+asc metadata init --dir ./metadata --version <x.y.z> --locale <locale>        # metadata como archivos en el repo, desde APPSTORE.md
+asc metadata apply --app <id> --version <x.y.z> --dir ./metadata --dry-run     # diff antes de tocar ASC; Phil lo muestra
+asc metadata keywords audit --app <id> --version <x.y.z> --blocked-terms-file ./blocked-terms.txt
+asc screenshots plan --app <id> --version <x.y.z> --review-output-dir ./screenshots/review
+asc screenshots apply --app <id> --version <x.y.z> --review-output-dir ./screenshots/review --confirm
+asc validate --app <id> --version <x.y.z> --deep --output json                  # placeholders (TODO/TBD/Lorem), App Privacy, agreements, IAP adjunto, campos de review
+asc review doctor --app <id> --output json                                      # qué falta antes de enviar
+```
+
+`asc validate` marca como bloqueante cualquier `TODO`, `TBD`, `FIXME` o `Lorem ipsum` en nombre, subtítulo, descripción, keywords, promo o What's New. `TBD` es correcto en `app-web-intake.md`; **nunca** en lo que se envía. Sin `asc`, la misma lista se verifica a mano en App Store Connect:
 
 ### App record y versión
 - [ ] App creada con el bundle ID exacto, plataforma(s), SKU, idioma primario
@@ -515,9 +543,10 @@ Steve (lee la etapa n; cruza con otros planes activos)
 Cuando el veredicto llega a **LISTA**:
 
 ```
-Phil (checklist de submit de APPSTORE.md, punto por punto, con el usuario)
+Phil (checklist de submit de APPSTORE.md, punto por punto, con el usuario; con asc: `asc validate --deep` y `asc review doctor` en verde)
 → Usuario confirma explícitamente "envíalo"
 → Phil: Submit for Review · phased release · anota fecha y build en el historial
+   con asc: `asc publish appstore --app <id> --ipa <ruta> --version <x.y.z> --submit --confirm` — el `--confirm` se escribe SOLO después del "envíalo"; nunca en un dry-run previo · luego `asc status --app <id> --watch`
 → Mientras está en review: Phil monitorea; si llega un rechazo → `/app-store-ready rejected` con el mensaje pegado
 → Si hay razón legítima (bug crítico en producción, evento con fecha, campaña de marketing): Phil propone expedited review — no hace falta justificarla
 → Segundo rechazo por razón distinta: Phil pide todas las razones de una vez y propone una llamada con App Review (cola aparte)

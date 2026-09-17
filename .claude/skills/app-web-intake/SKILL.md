@@ -146,6 +146,10 @@ El archivo viaja **dentro del repo de la app** en la raíz; web-lab lo lee desde
 
 ---
 
+## Con `asc` — campos que se derivan directo de App Store Connect
+
+Si `asc` está autenticado (`Research/asc-cli/00-index.md`), varios campos post-lanzamiento dejan de ser manuales: `asc apps list --output json` da el App Store ID (→ URL), `asc localizations list --app <id> --type app-info` trae la **descripción y el subtítulo verbatim** por idioma, y `asc status --app <id>` el estado de la versión publicada. Rating e install count siguen viniendo de App Store Connect Analytics: se copian **tal cual**, nunca redondeados. `update` los re-deriva.
+
 ## Tono
 
 - Inglés en el archivo; el idioma del usuario en la conversación.

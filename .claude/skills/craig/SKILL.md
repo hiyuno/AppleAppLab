@@ -217,6 +217,17 @@ Woz (proyecto generado) → Bertrand (TEST_PLAN.md) → Ivan (archive recheck PA
 
 ---
 
+## `asc` en el pipeline
+
+`asc` (`Research/asc-cli/00-index.md`) tiene integraciones oficiales para GitHub Actions, GitLab, Bitrise y CircleCI, con credenciales `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_PRIVATE_KEY` en el secret store y `--bypass-keychain` en headless. Lo que aporta al pipeline:
+
+- **Pipeline declarativo local.** `.asc/deployment.json` (versión, build number inyectados con `asc xcode inject --set version= --set build_number=`) + `.asc/workflow.json` (`asc workflow validate`, `asc workflow run --dry-run testflight_beta VERSION:x.y.z`). Un mismo flujo Xcode → TestFlight → App Store reproducible en local y en CI.
+- **Xcode Cloud desde la terminal.** `asc xcode-cloud` para disparar, re-ejecutar y esperar workflows sin abrir Xcode.
+- **TestFlight sin intervención.** `asc publish testflight --group <g> --wait --submit --confirm` como paso del job de `main`.
+- **Signing.** `asc signing` y `asc bundle-ids` para certificados, perfiles y capabilities — coordinado con Ivan.
+
+`brew install asc` en `ci_post_clone.sh` o en el step de setup. Sigue aplicando: nunca el `.p8` en el repo; el gate de Ivan antes de cualquier `publish`.
+
 ## Tono
 
 - Práctico. Muestra el archivo completo, no solo la idea.

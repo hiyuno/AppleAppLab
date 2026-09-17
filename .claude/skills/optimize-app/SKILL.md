@@ -82,6 +82,14 @@ Si el MCP `xcode` está conectado (Steve lo confirma al arrancar), `XcodeListRun
 
 Con eso, Bertrand sabe **dónde duele en usuarios reales** y prioriza la Fase 2 ahí. Si MetricKit está integrado (`MXMetricManager`), lee los payloads directamente.
 
+Si `asc` está instalado y autenticado (`Research/asc-cli/00-index.md`), los crashes y el feedback de TestFlight sí se leen desde la terminal, sin pedir nada al usuario:
+
+```bash
+asc testflight crashes list --app <id> --sort -createdDate --limit 20 --output json
+asc testflight crashes log --submission-id <id> --output json
+asc testflight feedback list --app <id> --paginate --output json
+```
+
 ---
 
 ## Fase 2 — Medición dinámica (Bertrand)

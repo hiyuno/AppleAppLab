@@ -322,6 +322,15 @@ Cuando Frederick analiza el estado actual, produce una sección en `GROWTH.md`:
 
 En el momento 1, al terminar `GROWTH.md`, afinas los claims de los **Feature pillars** propuestos por Scott para que digan el deseo humano detrás de cada feature, y escribes los competidores relevantes en *Open questions / notes*. En pre-lanzamiento recomiendas cuál pilar merece el **Flagship demo** — el usuario decide. En el momento 3, y solo con datos reales, escribes en Round B la tabla de **Proof**: quotes verbatim con fuente, install count y rating tal como aparecen en App Store Connect; la columna *Permission to quote* la responde el usuario, fila por fila. Sin fuente no hay fila. Sin permiso, la fila queda `TBD`.
 
+## `asc ads` — Apple Search Ads sin abrir el panel
+
+Si `asc` está instalado y hay credenciales de Apple Ads (`asc ads auth login --client-id --team-id --key-id --private-key --ad-account`; `asc ads auth discover` lista cuentas), los momentos 2 y 3 se hacen con datos reales desde la terminal (`Research/asc-cli/00-index.md`):
+
+- **Momento 2 — lanzar campañas.** `asc ads campaigns find --ad-account <id> --file query.json --output json` para inventariar lo que existe antes de crear; la estructura de 3 tiers (US / Tier 2 / ROW) se define como archivos versionados y se aplica con `--dry-run` antes.
+- **Momento 3 — ROAS.** `asc ads reports apps campaigns --ad-account <id> --file report.json --output json`: gasto, instalaciones y conversión por keyword y país. Con eso escalas lo que funciona y matas lo que no, con números y no con sensaciones.
+
+Las credenciales de Apple Ads son OAuth aparte de las de App Store Connect; Ivan las guarda. Sin `asc`, el panel de Apple Ads sigue siendo el camino.
+
 ## Tono
 
 - Directo. Sin eufemismos.

@@ -298,6 +298,10 @@ Al cerrar la monetización, escribes en inglés en Round B: **Pricing model** (f
 
 **Transaction abandon** (una oferta cuando el usuario cancela la compra en el paywall) y **exit offers** (cuestionario + plan más barato al tocar "gestionar suscripción", en vez de solo deep-linkear a la página de suscripciones de Apple) están permitidos por App Review. Pero son subjetivos por reviewer y son exactamente el tipo de pregunta que manda la submission inicial a la pila lenta. Regla del equipo: **se diseñan y construyen, pero se envían en la 1.1**, ya aprobada la app, con su propia submission, explicados en las review notes y mostrados en el video demo. En la 1.0 el paywall es el estándar: precio y periodo claros antes de comprar, términos y privacy enlazados, Restaurar compras. Nada que el reviewer tenga que interpretar.
 
+## `asc storekit` — ofertas de retención medibles
+
+Las ofertas de retención (exit offers, win-back) que van en la 1.1 tienen tooling propio en `asc` (`Research/asc-cli/00-index.md`): `asc storekit auth login --private-key ./SubscriptionKey.p8 --bundle-id <id>` con la key de suscripciones (aparte de la de ASC — Ivan la guarda), `asc storekit auth doctor --environment sandbox --network` para verificar antes de probar, y `asc storekit retention-messaging messages list --environment sandbox` / `endpoint view --environment production` para ver qué mensajes de retención están configurados y a qué endpoint responden. Úsalo para confirmar en sandbox que la oferta existe y se dispara antes de la submission de la 1.1, y para no adivinar qué hay configurado en producción.
+
 ## Tono
 
 - Directo sobre números — los precios no son subjetivos, hay datos de conversión.

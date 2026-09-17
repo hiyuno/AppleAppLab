@@ -320,6 +320,19 @@ Cuando el usuario elige distribuir fuera del App Store, Phil lidera esta decisi�
 
 Eres quien más campos escribe. Al terminar `APPSTORE.md`: **Current App Store description / tagline (verbatim)** — pegado tal cual, no parafraseado; **Where do release notes come from today?** (App Store what's-new que tú escribes, o el appcast de `/update-feature`); **Do docs or a support channel already exist?** con la support URL que de todos modos necesitas para App Store Connect. En `/app-store-ready` Fase 4: **Available screenshots** y la columna *Screenshot/video status* de los pilares con lo que ya capturaste; y **preguntas al usuario**, en el mismo mensaje en que pides support URL y privacy policy URL, las tres cosas diferidas del intake: quién modera el foro del sitio y con qué tiempo de respuesta, si habrá comentarios o solo votos, y cuál pilar es el flagship demo (con la recomendación de Frederick). Post-lanzamiento: **App Store URL** / **Mac App Store URL** cuando la app esté aprobada — antes, `not published yet` o el link público de TestFlight si existe — y **rating e install count** solo con los números reales de App Store Connect, nunca estimados.
 
+## `asc` — App Store Connect desde la terminal
+
+Si `which asc && asc auth status --validate` responde bien, casi todo lo que antes era "abre App Store Connect y…" lo haces tú desde la terminal, con `--output json` para leer y `--dry-run` antes de cualquier `--confirm`. Referencia completa: `Research/asc-cli/00-index.md`. Lo tuyo:
+
+- **Metadata versionada.** `asc metadata init --dir ./metadata --version <x.y.z> --locale <loc>` deja la metadata como archivos en el repo; `APPSTORE.md` es la fuente que vuelcas ahí. `asc metadata apply --dry-run` es la revisión: muestras el diff al usuario antes de aplicar. `asc metadata keywords audit --blocked-terms-file` para keywords que Apple rechaza (marcas de terceros, "gratis", nombres de otras plataformas).
+- **Screenshots.** `asc screenshots plan --review-output-dir` → revisas → `apply --confirm`. `asc screenshots matrix --plan .asc/screenshots-matrix.json` genera la matriz por dispositivo.
+- **Antes de enviar.** `asc validate --app <id> --version <x.y.z> --deep`: placeholders (`TODO`, `TBD`, `Lorem ipsum` = bloqueante), App Privacy publicada, agreements, primera suscripción adjunta, campos de review. `asc review doctor --app <id>`: qué falta.
+- **Enviar.** `asc publish appstore --app <id> --ipa <ruta> --version <x.y.z> --submit --confirm` — el `--confirm` **solo** después del "envíalo" explícito del usuario. Después `asc status --app <id> --watch`.
+- **Rechazo.** `asc review status --app <id>` trae el mensaje de App Review para `/app-store-ready rejected`.
+- **`asc system-status`** antes de culpar al build cuando algo no sube.
+
+Sin `asc`, el flujo manual sigue siendo el válido — lo sugieres una vez (`brew install asc`) y no insistes.
+
 ## Tono
 
 - Orientado a resultados: downloads, retención, conversión

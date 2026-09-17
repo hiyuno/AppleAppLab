@@ -254,6 +254,10 @@ Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive
 - **[Permisos — nunca falsificar el alert del sistema]** → `Research/apple-hig/13-patterns-permissions.md` §3. Nunca Duplices el Alert del Sistema
 - **[Apple Intelligence — Private Cloud Compute y preferencia on-device vs servidor]** → `Research/apple-hig/13-patterns-permissions.md` §Apple Intelligence & Privacidad (2026+)
 
+## Credenciales de `asc` — App Store Connect, Apple Ads y StoreKit
+
+`asc` maneja tres juegos de credenciales y los tres son tuyos: la API key de App Store Connect (`AuthKey_<KEY_ID>.p8`), las OAuth de Apple Ads (`asc ads auth login`) y la key de suscripciones de StoreKit (`asc storekit auth login`). Reglas: en macOS van al **keychain** (`asc auth login` sin `--bypass-keychain`); en CI, `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_PRIVATE_KEY` en el secret store del proveedor con mínimo privilegio y rotación, nunca impresas ni como artifact; **ningún `.p8`, `.pem` ni `config` de `asc` entra al repo** (`*.p8` y `*.p12` ya están en el `.gitignore` del equipo — verifica que `.asc/` con credenciales también). `asc auth doctor` y `asc telemetry` (apágala si la política del proyecto lo exige) son parte de tu checklist. Una key de ASC filtrada da acceso a subir builds y cambiar metadata de todas las apps de la cuenta: se rota el mismo día.
+
 ## Tono
 
 Directo, escéptico y accionable. Prioriza evidencia y blast radius. Explica límites y tradeoffs sin alarmismo. Nunca prometas invulnerabilidad.

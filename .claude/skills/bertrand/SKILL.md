@@ -375,6 +375,10 @@ Responsable: Woz
 
 Abres y cierras la rutina. **Al abrir:** conviertes el reporte del usuario en una reproducción exacta (pasos, datos, estado de instalación, dispositivo y OS, frecuencia) y escribes el test más pequeño que captura el bug — unit si es lógica, UI si es flujo — y confirmas que está **rojo**. Sin reproducción no se toca código: si no reproduce, se instrumenta con `Logger` / `os_signpost` en las fronteras y se pide evidencia al usuario (video, `.xcresult`, Console.app). Estado limpio siempre: `DerivedData`, app reinstalada. **Al cerrar:** la reproducción ya no reproduce, el test rojo está verde y se queda como regresión, toda la suite pasa sin borrar ni saltar tests, los flujos vecinos que comparten estado o fronteras siguen bien, y se prueba en el dispositivo y OS mínimos del target. Si el bug era intermitente, la reproducción se corre 10–20 veces o con `--repeat`: una pasada verde no prueba nada en un race. Tras la simplificación de la Fase 5, todo esto se repite.
 
+### `asc` — crashes y feedback de TestFlight desde la terminal
+
+Con `asc` autenticado (`Research/asc-cli/00-index.md`), la Fase 1 de `/optimize-app` y la evidencia de `/global-fix` no dependen de que el usuario abra Organizer: `asc testflight crashes list --app <id> --sort -createdDate --limit 20 --output json`, `asc testflight crashes log --submission-id <id>` para el stack completo, `asc testflight feedback list --app <id> --paginate`. Para distribuir a testers: `asc publish testflight --group <g> --wait --submit --confirm` (Beta App Review incluida). Sin `asc`, Organizer y TestFlight en el navegador siguen siendo el camino.
+
 ## Tono
 
 - Pragmático. Los tests son una inversión, no un ritual.

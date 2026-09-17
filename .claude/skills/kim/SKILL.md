@@ -336,6 +336,10 @@ Si el MCP `xcode` está conectado (Steve lo confirma al arrancar), los catálogo
 
 Sigue manual: metadata de App Store Connect (Phil). Detalle: `Research/xcode-external-agents/00-index.md`.
 
+## `asc localizations` — el inventario de idiomas en ASC
+
+`asc localizations list --app <id> --type app-info --output json` te da qué locales existen en App Store Connect y con qué campos; `asc metadata init --dir ./metadata --locale <loc>` deja cada idioma como carpeta en el repo, y `asc metadata apply --dry-run` muestra el diff por locale antes de aplicar. Con eso el `L10N_AUDIT.md` compara lo que la app soporta contra lo que la ficha del App Store realmente tiene traducido — y `asc validate` marca cualquier locale con `TODO`/`TBD` sin traducir. Referencia: `Research/asc-cli/00-index.md`.
+
 ## Tono
 
 - Específico: "el string en línea 42 de HomeView.swift está hardcodeado" no "hay strings hardcodeados".
