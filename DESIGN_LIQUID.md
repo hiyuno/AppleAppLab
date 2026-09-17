@@ -131,6 +131,28 @@ Razón del cambio: cinco (ahora seis, contando `pencil`) símbolos posibles por 
 | Badge de categoría / origen | `.caption2` | Regular | +1.2 | `ALL CAPS` |
 | Label de botón | `.headline` | Semibold | 0 | |
 
+### Text Styles de Figma (librería reutilizable — página "Tokens", `tSUzh4zfCpDPYT5A88otst`)
+
+Se formalizaron como **Text Styles reales de Figma** (no cajas de muestra sueltas) para que cualquier frame nuevo los aplique por nombre — nomenclatura pedida por el usuario (`h1`/`h2`/`h3`/`p normal`/`p big`/`p small`), verificada contra el código real de `Apps/Fintrol/Fintrol/` (`grep -rn ".font(" `) antes de mapear, no inventada:
+
+| Nombre en Figma | Dynamic Type de Apple (HIG) | Tamaño/Peso | Uso real confirmado en código |
+|---|---|---|---|
+| `h1` | `largeTitle` | 34pt Bold | `SobranteBadge`, montos hero de `LoanDetailView`/`InvestmentsView` (`.largeTitle.weight(.bold)`, 4 ocurrencias) |
+| `h2` | `title2` | 22pt Semibold | Título de pantalla, ej. header de Quincena (`.title2.weight(.semibold)`, 2 ocurrencias) |
+| `h3` | `title3` | 20pt Semibold | `LoanDetailView` (`.title3.weight(.semibold)`, 1 ocurrencia) |
+| `h4` | `headline` | 17pt Semibold | Encabezados de card/label de botón (`.headline`, 3 ocurrencias) |
+| `p big` | `body` | 17pt Regular | Texto de línea/fila principal — INCOME/EXPENSES, "Mandar", etc. (`.body`, 5 + 11 con peso Semibold) — el párrafo más grande realmente usado hoy |
+| `p normal` | `subheadline` | 15pt Regular | Texto secundario/metadata — frecuencia, día de pago (`.subheadline`, 6 ocurrencias) |
+| `p small` | `caption` (caption1) | 12pt Regular | El texto pequeño más usado en la app — labels, captions (`.caption`, 31 + 5 con peso Semibold). **Nuevo uso confirmado:** también reemplaza al `.system(size: 14, weight: .bold)` de los encabezados de sección INCOME/EXPENSES — ver nota de migración abajo |
+| `p tiny` | `caption2` | 11pt Regular | Badges de categoría/origen (`.caption2`, 5 ocurrencias) |
+
+**Decisiones cerradas por el usuario (ya no son preguntas abiertas):**
+1. "p big" se queda en `body` 17pt, sin cambio — no se reserva un tamaño nuevo.
+2. `h4`/`p big` comparten tamaño (17pt) a propósito, distinguidos solo por peso (`headline` Semibold vs `body` Regular) — confirmado, es el comportamiento esperado (igual que `headline`/`body` en HIG). Antes era el par `h3`/`p big`; con la corrección de jerarquía de abajo, el par pasó a ser `h4`/`p big`.
+3. **El `.system(size: 14, weight: .bold)` de los encabezados de sección migra a `p small` (`.caption.weight(.bold)`, 12pt) — pendiente de coordinar con Woz el cambio de código en `PeriodView.swift` (filas INCOME/EXPENSES)** para que deje de ser un tamaño fijo sin `relativeTo:` y pase a escalar con Dynamic Type como el resto de la librería.
+4. Se agregaron `h3` (`title3`, 20pt Semibold) y `p tiny` (`caption2`, 11pt Regular) — librería final de **8 Text Styles**, ya construidos en Figma (página Tokens, frame `1:49`) igual que los anteriores.
+5. **Corrección de jerarquía (bug detectado por el usuario):** los nombres `h3`/`h4` estaban invertidos — `h4` (20pt) era más grande que `h3` (17pt), al revés de `h1 > h2 > h3 > h4`. Se intercambiaron los **nombres** (no los tamaños) en Figma y en esta tabla: `title3` (20pt) ahora es `h3`, `headline` (17pt) ahora es `h4`. Verificar que ningún frame ya construido en Figma referenciaba el nombre viejo antes del swap.
+
 ### Reglas de la app
 
 - Ningún tamaño hardcodeado salvo el badge de sobrante (usa `relativeTo:` para escalar con Dynamic Type de todos modos).
@@ -372,6 +394,19 @@ Jump sheet — Quincena
 | `arrow.right` (`11:121`) | ~~`arrow.right`~~ **superado** | Header · TitleRow, extremo derecho | 23.76×18.92pt | Exploración de Figma en su momento; **vigente hoy: `chevron.forward`**, `.buttonStyle(.glass)` sin tint, confirmado en código |
 | CTA agregar (INCOME y EXPENSES) | **`plus.circle.fill`** ✅ decisión cerrada | **Actualizado:** ya no en el header de sección — vive solo, alineado a la izquierda, debajo de la última card de línea y antes de TOTAL | ~24×24pt (ajustar en Figma; la capa vista `plus.capsule.fill 1` era un símbolo inválido, no usar de referencia de tamaño) | Reemplaza la fila de texto "⊕ Agregar…" en ambos bloques |
 
+**⚠️ Nueva exploración de Figma (lectura más reciente, frame `8:2`) — diverge de lo "confirmado en código" arriba, NO reemplazarlo sin que el usuario lo confirme:**
+
+| Capa vista en Figma | Símbolo | Ubicación en esta exploración | Tamaño | Nota |
+|---|---|---|---|---|
+| `chevron.backward.circle.fill` (`38:62`) | ✅ válido | Header · TitleRow, extremo izquierdo | 24.94×24.6pt | Círculo relleno gris translúcido — visualmente el mismo tratamiento que `NavCircleButton` (ver "Componentes de navegación"), pero aquí para navegar quincena anterior/siguiente, no para volver al hub. Contradice el estado "confirmado en código" (`chevron.backward` plano, `.buttonStyle(.glass)`, sin círculo). Pendiente de que el usuario diga cuál es la dirección real: ¿se unifica el prev/next de Quincena con el mismo componente `NavCircleButton`, o son dos cosas distintas que casualmente se ven igual? |
+| `chevron.right.circle.fill 1` (`38:73`) | ✅ válido (el símbolo es `chevron.right.circle.fill`; el " 1" es de nuevo el sufijo de auto-dedupe de Figma, no parte del nombre) | Header · TitleRow, extremo derecho | 24.94×24.6pt | Mismo comentario que arriba |
+| `plus` (`57:66` en INCOME, `57:75` en EXPENSES) | ✅ válido, delgado, sin fondo de círculo/cápsula | De vuelta en el header de sección (derecha de "INCOME"/"EXPENSES"), ~19.8×19.8pt | Contradice el estado "confirmado en código" (CTA suelto debajo de la última card). Ya no es `plus.circle.fill` con relleno — es el símbolo `plus` desnudo. También el texto del header subió de 13pt a 16pt Bold en esta exploración. Pendiente de confirmación del usuario antes de mover el CTA de vuelta al header. |
+
+**Otros cambios detectados en esta misma lectura, sin resolver:**
+- Una de las dos cards "WALO $2,750.00" en INCOME tiene fondo `#023c2f` (verde oscuro) mientras la otra sigue en `#2A2A2A` neutral — no hay explicación visible (¿estado "pagada"? ¿resaltado accidental de una copia duplicada?). No asumir semántica; preguntar antes de documentar como estado nuevo.
+- Pill de rango de días ("1 – 15"): valores exactos en esta lectura — fondo `rgba(52,199,89,0.5)`, texto `#34C759`, radio `50px` (no `999px`), texto 12pt Semibold. Cercano pero no idéntico a lo ya documentado en "Header de Quincena" — actualizar ahí si el usuario confirma estos como los valores finales.
+- Tab bar: los 4 íconos ya son SF Symbols reales y sus nombres de capa coinciden con el símbolo: `calendar`, `arrow.trianglehead.2.clockwise.rotate.90` (reemplaza al glifo `↻`), `menucard` (✅ coincide con lo ya esperado para la tab 3), `gearshape`. Gap entre íconos: 30pt (antes documentado 18pt).
+
 Documentar `LineItemRow` (ahora card individual) y el patrón "stack de cards con total suelto encima del fondo" en `PROJECT_LEARNINGS.md` como candidato a generalizarse a `AppleAppLabUI`.
 
 ### Fila de línea (`LineItemRow`) — estados visuales
@@ -498,13 +533,19 @@ $1,240.50                 ← .monospacedDigit(), bold, relativeTo: .largeTitle,
 + signo explícito antes del monto cuando es negativo: "−$320.00" en rojo
 ```
 
-**Actualización del usuario (mockup exportado, no live file de Figma):** el fondo del badge de SOBRANTE pasa de tinte sutil a **color sólido** del estado (verde/amarillo/rojo), con texto en color contrastante (blanco o negro según el fondo) en vez del texto llevando el color completo sobre fondo tenue. Mismo criterio para los tres estados del semáforo — no solo el verde. La card "Next Month" del panel de resumen (ver "Panel de resumen" abajo) recibe el mismo tratamiento: fondo sólido del color de su propio estado de semáforo (no siempre verde — depende del sobrante proyectado de esa quincena), texto contrastante. ~~Fondo del badge: tinte muy sutil del color de estado (`.green.opacity(0.12)` / `.yellow.opacity(0.12)` / `.red.opacity(0.12)`)~~ — superado por la decisión anterior. Transición de color animada al recalcular (ver Animaciones).
+**Actualización del usuario (mockup exportado, no live file de Figma):** el fondo del badge de SOBRANTE pasa de tinte sutil a **color sólido** del estado (verde/amarillo/rojo). Mismo criterio para los tres estados del semáforo — no solo el verde. La card "Next Month" del panel de resumen (ver "Panel de resumen" abajo) recibe el mismo tratamiento: fondo sólido del color de su propio estado de semáforo (no siempre verde — depende del sobrante proyectado de esa quincena). ~~Fondo del badge: tinte muy sutil del color de estado (`.green.opacity(0.12)` / `.yellow.opacity(0.12)` / `.red.opacity(0.12)`)~~ — superado por la decisión anterior. Transición de color animada al recalcular (ver Animaciones).
+
+**Corrección de valores exactos (lectura más reciente de Figma, frame `8:2`) — el texto NO es blanco/negro contrastante, es un par monocromático de verdes:**
+- Fondo sólido (estado verde): `#006338` (verde oscuro, no el `#34C759`/success genérico del token de sistema).
+- Texto sobre ese fondo: `#01F98E` (verde menta brillante) — **no blanco**, corregir la asunción anterior de "texto contrastante blanco o negro".
+- Label: cambia de `ALL CAPS` (`.caption2`/12pt tracking +1.2) a **Title Case "Sobrante"**, 17pt Semibold — ya no es un `.caption` en mayúsculas. Falta confirmar con el usuario si esto aplica también al label de "Next Month" (que ya era Title Case) o si es exclusivo del badge de SOBRANTE.
+- Pendiente de definir: los valores exactos de `#006338`/`#01F98E` para los estados amarillo/rojo del semáforo — solo se vio el estado verde en esta sesión de Figma.
 
 ### Panel de resumen (USD/Peso, Mandar, Next Month)
 
 **Decisión cerrada del usuario (edición en Figma, frame `8:2`):** la card Resumen se simplifica — pierde la fila "Tipo de cambio"; ese control **vive solo en Ajustes → Preferencias** (ver "Tipo de cambio" en Ajustes más abajo), no se duplica aquí. "Mandar" deja de estar dentro de la card: sale como texto suelto sobre el fondo, entre SOBRANTE y la card Resumen.
 
-- **iPhone:** "Mandar: $X USD" es una fila suelta sobre el fondo de la app (sin card propia, sin fondo, padding vertical ~6pt, `.body` 17pt — label `.secondary`, valor blanco), inmediatamente debajo del badge de sobrante. Debajo de esa fila, una card independiente (`LabNestedCard`, mismo ancho) contiene **solo** "Next Month: $Y". "Next Month" siempre muestra el mismo número que el usuario verá al avanzar con el chevron: si la siguiente quincena ya está materializada (con o sin ediciones manuales), es su sobrante real ya calculado; si no está materializada, es la proyección en memoria de `ProjectionEngine`. No hay distinción visual entre ambos casos — es un solo campo, un solo comportamiento. **Actualización del usuario (mockup exportado):** esta card deja de ser neutral (`#2A2A2A`, label `.secondary` / valor blanco Semibold) — pasa a llevar **fondo sólido del color de semáforo** correspondiente al sobrante proyectado de esa quincena (verde/amarillo/rojo, mismo criterio que el badge de SOBRANTE, ver "Badge de sobrante" arriba), con texto contrastante. Es la única card de esta pantalla que lleva color de estado además del badge de SOBRANTE mismo.
+- **iPhone:** "Mandar: $X USD" es una fila suelta sobre el fondo de la app (sin card propia, sin fondo, padding vertical ~6pt, `.body` 17pt — label `.secondary`, valor blanco), inmediatamente debajo del badge de sobrante. Debajo de esa fila, una card independiente (`LabNestedCard`, mismo ancho) contiene **solo** "Next Month: $Y". "Next Month" siempre muestra el mismo número que el usuario verá al avanzar con el chevron: si la siguiente quincena ya está materializada (con o sin ediciones manuales), es su sobrante real ya calculado; si no está materializada, es la proyección en memoria de `ProjectionEngine`. No hay distinción visual entre ambos casos — es un solo campo, un solo comportamiento. **Actualización del usuario (mockup exportado):** esta card deja de ser neutral (`#2A2A2A`, label `.secondary` / valor blanco Semibold) — pasa a llevar **fondo sólido del color de semáforo** correspondiente al sobrante proyectado de esa quincena (mismo criterio que el badge de SOBRANTE, ver "Badge de sobrante" arriba: fondo `#006338` / texto `#01F98E` en el estado verde, ambos textos del row en ese mismo verde menta, no solo el valor). Es la única card de esta pantalla que lleva color de estado además del badge de SOBRANTE mismo.
 - **Mac:** dado que "en Mac la quincena cabe sin scroll y el resumen puede ir a un lado" (requisito del usuario), el panel vive en una tercera zona fija a la derecha del detail (no una columna `NavigationSplitView` adicional — un `HStack` dentro del detail: bloques INCOME/EXPENSES a la izquierda en `ScrollView` si excede alto de ventana, panel de resumen a la derecha en ancho fijo ~280pt, sin scroll propio). Ver "Consideraciones de plataforma".
 
 ### Listas (Ingresos recurrentes, Gastos recurrentes, Servicios, Suscripciones)

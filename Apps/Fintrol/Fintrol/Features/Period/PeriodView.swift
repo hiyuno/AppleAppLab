@@ -40,6 +40,7 @@ struct PeriodView: View {
     // A11Y #11: at accessibility Dynamic Type sizes, the badge/panel need to stack instead
     // of sitting side by side (macOS) so nothing gets clipped or squeezed unreadably.
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var isLargeAccessibilitySize: Bool { dynamicTypeSize >= .accessibility1 }
 
     private var todayCoordinate: PeriodCoordinate { PeriodDateEngine.coordinate(containing: CivilDate.today()) }
@@ -104,9 +105,11 @@ struct PeriodView: View {
             JumpSheet(current: coordinate, earliest: earliestCoordinate) { destination in
                 coordinate = destination
                 loadPeriod()
+                HapticFeedback.lightImpact(reduceMotion: reduceMotion)
             } onToday: {
                 coordinate = todayCoordinate
                 loadPeriod()
+                HapticFeedback.lightImpact(reduceMotion: reduceMotion)
             }
         }
         .sheet(item: $captureTarget) { target in
@@ -185,7 +188,9 @@ struct PeriodView: View {
             .accessibilityLabel("Cerrar aviso")
         }
         .padding(12)
-        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.accentColor.opacity(0.1)))
+        // Larry (2026-09-17): a dismissible inline tip banner (12pt padding), not a card in
+        // its own right — the 12pt internal-element token, not the 20pt card radius.
+        .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.accentColor.opacity(0.1)))
         .accessibilityElement(children: .combine)
     }
 
@@ -194,6 +199,10 @@ struct PeriodView: View {
             Button {
                 coordinate = coordinate.previous
                 loadPeriod()
+                // Coordinator (2026-09-17): light haptic on a real period change — this
+                // action only runs when the button isn't `.disabled`, so the historical-limit
+                // case (no-op tap) never fires it.
+                HapticFeedback.lightImpact(reduceMotion: reduceMotion)
             } label: {
                 // Coordinator (2026-09-16): system Liquid Glass paints the button now — plain
                 // `chevron.backward` (no `.circle.fill`), no manual tint. `.glass` (not
@@ -245,6 +254,7 @@ struct PeriodView: View {
             Button {
                 coordinate = coordinate.next
                 loadPeriod()
+                HapticFeedback.lightImpact(reduceMotion: reduceMotion)
             } label: {
                 // Plain `chevron.forward` — system Liquid Glass paints the button.
                 // Coordinator (2026-09-16): neutral `.glass` like "atrás" and "+" — the user
@@ -275,18 +285,43 @@ struct PeriodView: View {
         // the rows. `accessibilityHidden` stays on the header text — the card's own
         // `.accessibilityLabel` below still announces "Ingresos"/"Gastos" for VoiceOver, so
         // this is not a regression, just moved with the rest of the visual.
-        return VStack(alignment: .leading, spacing: 8) {
-            // Coordinator (2026-09-16, DESIGN_LIQUID.md § Bloques INCOME/EXPENSES, Jonny):
-            // the "+" moves OFF the section header (title-only now, no trailing icon) to its
-            // own left-aligned spot below the last line card, above TOTAL INCOME/EXPENSES —
-            // see `card(title:kind:lines:)` below for where it actually sits.
-            Text(title)
-                .font(.caption.weight(.semibold))
-                .tracking(0.5)
-                .textCase(.uppercase)
-                .foregroundStyle(.secondary)
-                .accessibilityHidden(true)
-                .padding(.horizontal, 16)
+        // Coordinator (2026-09-17): header-to-first-card gap standardized to 12pt to match
+        // the last-card-to-TOTAL gap below (`card(...)`'s TOTAL row top padding) — both were
+        // previously different (8pt here vs. 18pt there).
+        return VStack(alignment: .leading, spacing: 12) {
+            // Coordinator (2026-09-16, user's Figma review): "+" reverts to the section
+            // header, trailing "INCOME"/"EXPENSES" — the below-the-cards spot from the
+            // previous pass is reverted per explicit instruction.
+            HStack {
+                Text(title)
+                    // Coordinator (2026-09-17): no longer distinct from "TOTAL INCOME"/"TOTAL
+                    // EXPENSES" — both are now `p small` (`.caption` Bold, 12pt), the same
+                    // token.
+                    .font(.caption.weight(.bold))
+                    .tracking(0.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(.secondary)
+                    .accessibilityHidden(true)
+
+                Spacer()
+
+                Button {
+                    captureTarget = CaptureTarget(line: nil, kind: kind)
+                } label: {
+                    // Coordinator (2026-09-16): exact Figma layer name — plain `plus`, no
+                    // capsule/circle, ~20pt (Figma: 19.8×19.82pt).
+                    Image(systemName: "plus")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(kind == .income ? "Agregar ingreso" : "Agregar gasto")
+            }
+            // Coordinator (2026-09-17): flush with the line cards' own left edge (no extra
+            // indent) — this header's own `.padding(.horizontal, 16)` was on top of the
+            // screen's outer 16pt padding, pushing it 16pt further right than the cards below
+            // it (which only inherit the outer padding). Removed; "TOTAL INCOME"/"TOTAL
+            // EXPENSES" below is the only element that keeps a small indent now.
 
             card(title: title, kind: kind, lines: lines)
         }
@@ -313,32 +348,23 @@ struct PeriodView: View {
                 )
             }
 
-            // Coordinator (2026-09-16): the "+" lives here now — its own left-aligned spot
-            // below the last line card, above TOTAL INCOME/EXPENSES, not in the section
-            // header anymore. Small circular button, same treatment in both blocks.
-            Button {
-                captureTarget = CaptureTarget(line: nil, kind: kind)
-            } label: {
-                // Icon unchanged from before this move (`plus.capsule.fill`, confirmed
-                // present in this SDK) — only its position changed this pass.
-                Image(systemName: "plus.capsule.fill")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-            }
-            .buttonStyle(.plain)
-            .padding(.horizontal, 16)
-            .accessibilityLabel(kind == .income ? "Agregar ingreso" : "Agregar gasto")
-
             HStack {
+                // `p small` (`.caption` Bold, 12pt) — same token as the section header above.
                 Text(kind == .income ? "TOTAL INCOME" : "TOTAL EXPENSES")
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.caption.weight(.bold))
                 Spacer()
                 Text(total(for: kind).currencyString())
-                    .font(.system(size: 14, weight: .bold))
+                    .font(.caption.weight(.bold))
                     .monospacedDigit()
             }
-            .padding(.top, 10)
-            .padding(.horizontal, 10)
+            // Coordinator (2026-09-17): the enclosing VStack's own `spacing: 8` (unchanged —
+            // also governs the gap between line cards, not touched) already contributes 8pt
+            // here; this top padding supplies the remaining 4pt so the total gap between the
+            // last card and this row is 12pt, matching the header-to-first-card gap above.
+            .padding(.top, 4)
+            // Coordinator (2026-09-17): the only element on this screen that keeps a small
+            // indent past the cards' left edge — the header above is now flush (no indent).
+            .padding(.horizontal, 8)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(kind == .income ? "Ingresos" : "Gastos")
@@ -359,7 +385,9 @@ struct PeriodView: View {
             ForEach(0..<2, id: \.self) { _ in
                 VStack(alignment: .leading, spacing: 8) {
                     ForEach(0..<3, id: \.self) { _ in
-                        RoundedRectangle(cornerRadius: 8).fill(.quaternary).frame(height: 44)
+                        // Larry (2026-09-17): missing `style:` defaulted to `.circular`, not
+                        // the app's squircle — 12pt is the internal-element token.
+                        RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.quaternary).frame(height: 44)
                     }
                 }
                 .padding()

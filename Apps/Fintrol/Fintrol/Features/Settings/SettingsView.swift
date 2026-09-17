@@ -149,6 +149,25 @@ struct SettingsView: View {
                     Spacer()
                 }
             }
+
+            // Coordinator (2026-09-17): dev-only, same convention as the debug store-delete
+            // path in `FintrolApp.swift` — wrapping the full section (not just a call site) in
+            // `#if DEBUG` so it's compiled out of Release/TestFlight/App Store entirely, never
+            // just hidden at runtime. iOS-only per spec (no haptics API on macOS).
+            #if os(iOS) && DEBUG
+            Section("Developer Tools") {
+                NavigationLink {
+                    DeveloperVibrationsView()
+                } label: {
+                    Text("Vibrations")
+                }
+                NavigationLink {
+                    DeveloperCardsView()
+                } label: {
+                    Text("Cards")
+                }
+            }
+            #endif
         }
         .navigationTitle("Ajustes")
         .fileImporter(isPresented: $isPresentingSubscriptionImporter, allowedContentTypes: [.json]) { result in

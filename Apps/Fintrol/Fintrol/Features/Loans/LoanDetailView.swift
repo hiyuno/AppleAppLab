@@ -312,8 +312,9 @@ struct LoanDetailView: View {
         .padding(.vertical, 8)
         .padding(.horizontal, isCurrent ? 8 : 0)
         .background(
+            // Larry (2026-09-17): internal-element token (12pt), was 8pt.
             isCurrent
-                ? RoundedRectangle(cornerRadius: 8, style: .continuous).fill(Color.accentColor.opacity(0.12))
+                ? RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.accentColor.opacity(0.12))
                 : nil
         )
         .accessibilityElement(children: .combine)

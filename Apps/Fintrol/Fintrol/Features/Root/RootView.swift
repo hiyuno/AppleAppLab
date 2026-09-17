@@ -129,6 +129,7 @@ private struct PrivacySnapshotOverlay: View {
 #if os(iOS)
 private struct iOSRootView: View {
     @State private var selection: FintrolTab = .period
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         TabView(selection: $selection) {
@@ -144,6 +145,11 @@ private struct iOSRootView: View {
                 }
                 .tag(tab)
             }
+        }
+        // Coordinator (2026-09-17): light haptic on every tab switch — shared helper with
+        // `LineItemRow.hapticImpact()` (`HapticFeedback`), same Reduce Motion gate.
+        .onChange(of: selection) {
+            HapticFeedback.lightImpact(reduceMotion: reduceMotion)
         }
     }
 

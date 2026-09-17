@@ -18,16 +18,25 @@ struct SummaryPanel: View {
     // on the yellow variant.
     private var nextMonthStatus: SobranteStatus { SobranteStatus(sobrante: nextMonth) }
 
+    // Coordinator (2026-09-16): same exact Figma hex as `SobranteBadge`'s positive state —
+    // neither background nor text is pure white/green. Adjusted/negative unchanged.
+    private static let positiveBackground = Color(red: 0x00 / 255.0, green: 0x63 / 255.0, blue: 0x38 / 255.0) // #006338
+    private static let positiveText = Color(red: 0x01 / 255.0, green: 0xF9 / 255.0, blue: 0x8E / 255.0) // #01F98E
+
     private var nextMonthColor: Color {
         switch nextMonthStatus {
-        case .positive: .green
+        case .positive: Self.positiveBackground
         case .adjusted: .yellow
         case .negative: .red
         }
     }
 
     private var nextMonthTextColor: Color {
-        nextMonthStatus == .adjusted ? .black : .white
+        switch nextMonthStatus {
+        case .positive: Self.positiveText
+        case .adjusted: .black
+        case .negative: .white
+        }
     }
 
     var body: some View {
@@ -35,9 +44,15 @@ struct SummaryPanel: View {
             row(title: "Mandar", value: mandar.currencyString() + " USD")
                 .padding(.horizontal, 16)
 
-            HStack {
+            HStack(alignment: .center) {
+                // Coordinator (2026-09-16): unified with `SobranteBadge`'s "Sobrante" label —
+                // same 17pt Semibold token, was `.subheadline` here (visibly different
+                // size/weight side-by-side).
+                // Coordinator (2026-09-17): 8-style library — that token is `h3` (`.headline`),
+                // mirrors the same fix in `SobranteBadge`. The amount stays `p big` (`.body` +
+                // Semibold) per the coordinator's explicit mapping for this element.
                 Text("Next Month")
-                    .font(.subheadline)
+                    .font(.headline)
                     .foregroundStyle(nextMonthTextColor.opacity(0.8))
                 Spacer()
                 Text(nextMonth.currencyString())

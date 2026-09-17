@@ -56,6 +56,11 @@ struct LineItemRow: View {
         }
     }
 
+    /// Coordinator (2026-09-16): the swipe-trailing "marcar/desmarcar pagado" hint's icon
+    /// tint — same source hex as the paid-card tint (`#006338`, dark green), not system blue
+    /// or the default `.green`.
+    private static let paidHintColor = Color(red: 0x00 / 255.0, green: 0x63 / 255.0, blue: 0x38 / 255.0)
+
     private var convertedCaption: String? {
         guard line.currency == .mxn, let exchangeRate, exchangeRate > 0 else { return nil }
         let usd = CurrencyConversion.toUSD(amount: line.amount, currency: .mxn, rate: exchangeRate)
@@ -89,10 +94,36 @@ struct LineItemRow: View {
 
     private var isPastSecondTrailingThreshold: Bool { !line.isPaid && dragTranslation <= -swipeSecondActionThreshold }
 
+    /// Coordinator (2026-09-17, root-cause fix): which trailing action would fire, frozen the
+    /// instant `onEnded` decides to commit one — set right before the closing `settle`
+    /// animation starts, cleared at the top of every new live drag. Without this, the reveal's
+    /// color/icon were recomputed every frame straight from the live `dragTranslation` even
+    /// DURING the settle animation — so releasing past the second threshold (red "Eliminar")
+    /// would visibly flash back to green "Marcar pagado" as the offset animated back through
+    /// the first threshold on its way to 0.
+    private enum TrailingStage: Equatable {
+        case paidToggle
+        case delete
+        case edit
+    }
+    @State private var committedTrailingStage: TrailingStage?
+
+    private var currentTrailingStage: TrailingStage? {
+        if let committedTrailingStage { return committedTrailingStage }
+        guard dragTranslation < 0 else { return nil }
+        if isPastSecondTrailingThreshold {
+            return line.origin == .manual ? .delete : .edit
+        } else {
+            return .paidToggle
+        }
+    }
+
+    private var settleAnimation: Animation? { reduceMotion ? nil : .easeOut(duration: 0.2) }
+
     #if os(iOS)
     private func hapticImpact() {
-        guard !reduceMotion else { return }
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        // Shared with `RootView`'s tab-switch feedback (2026-09-17) — see `HapticFeedback`.
+        HapticFeedback.lightImpact(reduceMotion: reduceMotion)
     }
     #endif
 
@@ -102,33 +133,51 @@ struct LineItemRow: View {
             .onChanged { value in
                 // Vertical drags (scrolling) must not fight this gesture.
                 guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                // A new live drag always recomputes its stage from the live offset — only the
+                // closing settle (after release) needs a frozen value.
+                committedTrailingStage = nil
                 dragTranslation = value.translation.width
             }
             .onEnded { value in
                 let translation = value.translation.width
-                let settle = { withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { dragTranslation = 0 } }
+                // Coordinator (2026-09-17, root-cause fix): the offset reset and the model
+                // mutation (`onTogglePaid`/`onToggleActive`) must land in the SAME transaction.
+                // Previously `settle()` ran first (animated) and the mutation ran right after,
+                // outside that transaction — `line.isPaid`/`isActive` changed instantly while
+                // the reveal fill was still 200ms into animating closed, so "the fill finished
+                // before the card's own tint caught up." Bundling them here + `.animation(...,
+                // value: line.isPaid)` on the card background (see `cardBackground`) makes both
+                // interpolate on the same clock, however SwiftData/`@Bindable` propagates the
+                // change back into `PeriodView`.
+                func commitAndSettle(_ action: @escaping () -> Void) {
+                    withAnimation(settleAnimation) {
+                        dragTranslation = 0
+                        action()
+                    }
+                    #if os(iOS)
+                    hapticImpact()
+                    #endif
+                }
                 // "Bloqueo de líneas pagadas" (2026-09-16): once isPaid == true, swipe-leading
                 // (activar/desactivar) is a no-op, and swipe-trailing never advances past the
                 // first stage — "Desmarcar pagado" is the only action left, however far the
                 // user drags.
                 if line.isPaid {
                     if translation <= -swipeCommitThreshold {
-                        settle()
-                        onTogglePaid()
-                        #if os(iOS)
-                        hapticImpact()
-                        #endif
+                        committedTrailingStage = .paidToggle
+                        commitAndSettle(onTogglePaid)
                     } else {
-                        settle()
+                        withAnimation(settleAnimation) { dragTranslation = 0 }
                     }
                 } else if translation >= swipeCommitThreshold {
-                    settle()
-                    onToggleActive()
-                    #if os(iOS)
-                    hapticImpact()
-                    #endif
+                    commitAndSettle(onToggleActive)
                 } else if translation <= -swipeSecondActionThreshold {
-                    settle()
+                    // Fix 3: freeze which action (Eliminar/Editar) is committing BEFORE the
+                    // close animation starts — `swipeRevealLayer` reads this instead of the
+                    // live offset while settling, so the strip can't drift back through the
+                    // first threshold's green mid-close and flash the wrong action.
+                    committedTrailingStage = line.origin == .manual ? .delete : .edit
+                    withAnimation(settleAnimation) { dragTranslation = 0 }
                     if line.origin == .manual, let onDelete {
                         onDelete()
                     } else {
@@ -138,77 +187,37 @@ struct LineItemRow: View {
                     hapticImpact()
                     #endif
                 } else if translation <= -swipeCommitThreshold {
-                    settle()
-                    onTogglePaid()
-                    #if os(iOS)
-                    hapticImpact()
-                    #endif
+                    committedTrailingStage = .paidToggle
+                    commitAndSettle(onTogglePaid)
                 } else {
-                    settle()
+                    withAnimation(settleAnimation) { dragTranslation = 0 }
                 }
             }
     }
 
     private var displayRow: some View {
-        ZStack {
-            // Background hint revealed under the row while dragging — matches the icons/tints
-            // `.swipeActions` would have shown (DESIGN_LIQUID.md colors: never green/red,
-            // those are reserved for the sobrante semaphore).
-            HStack {
-                // Bloqueada: swipe-leading (activar/desactivar) no hace nada — el hint no se
-                // muestra aunque haya arrastre, para no prometer una acción que no ocurrirá.
-                if !line.isPaid {
-                    Label(
-                        line.isActive ? "Desactivar" : "Activar",
-                        systemImage: line.isActive ? "minus.circle.fill" : "arrow.uturn.backward.circle.fill"
-                    )
-                    .labelStyle(.iconOnly)
-                    .foregroundStyle(line.isActive ? .gray : .blue)
-                    .opacity(dragTranslation > 8 ? 1 : 0)
-                }
-                Spacer()
-                if isPastSecondTrailingThreshold {
-                    // Second stage of the same trailing gesture, per Larry's ruling: Eliminar
-                    // (manual lines) or Editar (generated lines) — visible + red, never only
-                    // reachable via contextMenu.
-                    Label(
-                        line.origin == .manual ? "Eliminar" : "Editar",
-                        systemImage: line.origin == .manual ? "trash.fill" : "pencil"
-                    )
-                    .labelStyle(.iconOnly)
-                    .foregroundStyle(line.origin == .manual ? .red : .blue)
-                } else {
-                    Label(
-                        line.isPaid ? "Desmarcar pagado" : "Marcar pagado",
-                        systemImage: line.isPaid ? "checkmark.circle.fill" : "circle"
-                    )
-                    .labelStyle(.iconOnly)
-                    .foregroundStyle(.blue)
-                    .opacity(dragTranslation < -8 ? 1 : 0)
-                }
-            }
-
-            rowContent
-                .offset(x: dragTranslation)
-        }
-        // DESIGN_LIQUID.md § "Bloques INCOME/EXPENSES" (Figma, updated 2026-09-15): each line
-        // is now its own card — `AppBackgroundSecondary` (#2A2A2A dark / Frost-equivalent
-        // light), 20pt continuous radius, 16pt padding on all sides. Supersedes the earlier
-        // "no background of its own" rule from the same day (the block containing card was
-        // removed entirely, so each line needs to carry its own surface now).
-        .padding(16)
-        // "Bloqueo de líneas pagadas" (2026-09-16): tercera excepción documentada al verde
-        // (junto a SOBRANTE y la píldora "Hoy") — un tinte verde translúcido sobre el Frost de
-        // la card, no un reemplazo, para que siga leyéndose como la misma familia de tarjetas.
-        .background(
-            ZStack {
-                Color("AppBackgroundSecondary")
-                if line.isPaid {
-                    Color.green.opacity(0.16)
-                }
-            }
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        // Coordinator (2026-09-16): the drag-reveal hint must be a full-bleed color fill from
+        // the card's own edge to wherever the content has been dragged — not an icon floating
+        // over the plain card background. Moved into `cardBackground` (the `.background`
+        // modifier below), which — unlike a same-level `ZStack` layer — sizes itself to
+        // `rowContent`'s frame AFTER padding, i.e. the actual card bounds, so the fill reaches
+        // the real edges instead of sitting 16pt inset from them.
+        rowContent
+            .offset(x: dragTranslation)
+            // DESIGN_LIQUID.md § "Bloques INCOME/EXPENSES" (Figma, updated 2026-09-15): each
+            // line is now its own card — `AppBackgroundSecondary` (#2A2A2A dark /
+            // Frost-equivalent light), 20pt continuous radius, 16pt padding on all sides.
+            .padding(16)
+            .background(cardBackground)
+            // Coordinator (2026-09-16): squircle corners were rendering square during an
+            // ACTIVE drag (before release), not just around the swipe-reveal strip — a known
+            // SwiftUI gotcha where `.clipShape` doesn't reliably re-clip a layer that's still
+            // being transformed (`.offset`) every gesture frame unless the content+background
+            // is first flattened into a single compositing layer. `.compositingGroup()` forces
+            // that flattening so `.clipShape` clips the actual rasterized result every frame,
+            // not a stale/partial one.
+            .compositingGroup()
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         // "La tarjeta inactiva se atenúa completa" — opacity now dims the whole card
         // (background included), not just the text content.
         .opacity(line.isActive ? 1 : 0.4)
@@ -255,6 +264,118 @@ struct LineItemRow: View {
         }
     }
 
+    /// The card's full surface: base Frost, the paid-tint exception, and — on top — the
+    /// full-bleed swipe-reveal fill. Lives in `.background` (not a same-level `ZStack` layer)
+    /// so it sizes to the card's real bounds (post-padding), not the unpadded content.
+    private var cardBackground: some View {
+        ZStack {
+            Color("AppBackgroundSecondary")
+            // "Bloqueo de líneas pagadas" (2026-09-16): tercera excepción documentada al verde
+            // (junto a SOBRANTE y la píldora "Hoy") — un tinte verde translúcido sobre el Frost
+            // de la card, no un reemplazo.
+            if line.isPaid {
+                Color.green.opacity(0.16)
+            }
+            swipeRevealLayer
+        }
+        // Coordinator (2026-09-16): the swipe-reveal fill's right edge was showing square
+        // corners against the card's continuous-radius squircle. `.clipShape` further up the
+        // chain (on `displayRow`) should mask this uniformly, but wasn't in practice — so this
+        // applies the exact same shape here too, guaranteeing both share one mask.
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        // Fix 2 (coordinator, 2026-09-17): `isActive`'s opacity dimming already animated
+        // (`displayRow`'s `.animation(value: line.isActive)`) — `isPaid`'s tint didn't, so it
+        // popped in instantly regardless of what mutated it (this row's own swipe now
+        // animates the mutation itself via Fix 1, but any OTHER path that flips `isPaid` —
+        // e.g. `.contextMenu`'s "Desmarcar pagado" — still needs this to not just snap).
+        .animation(settleAnimation, value: line.isPaid)
+    }
+
+    private static let leadingActivateColor = Color.blue
+    private static let leadingDeactivateColor = Color.gray
+
+    /// Coordinator (2026-09-16): the outer `.clipShape` on `displayRow`/`cardBackground`
+    /// wasn't reliably rounding the reveal fill's outer edge against a live `.offset` — square
+    /// corners persisted on real hardware even with `.compositingGroup()`. Each reveal fill now
+    /// clips ITSELF: rounded only on the corners that touch the card's real edge, square on the
+    /// inner corners that cut against the sliding content — no dependency on an outer mask.
+    private static let leadingRevealShape = UnevenRoundedRectangle(
+        topLeadingRadius: 20, bottomLeadingRadius: 20, bottomTrailingRadius: 0, topTrailingRadius: 0, style: .continuous
+    )
+    private static let trailingRevealShape = UnevenRoundedRectangle(
+        topLeadingRadius: 0, bottomLeadingRadius: 0, bottomTrailingRadius: 20, topTrailingRadius: 20, style: .continuous
+    )
+
+    /// The reveal must be a solid fill from the card's own edge to the drag position — not an
+    /// icon floating over gray — with the icon aligned to that outer edge inside the filled
+    /// area.
+    private var swipeRevealLayer: some View {
+        HStack(spacing: 0) {
+            if !line.isPaid, dragTranslation > 0 {
+                (line.isActive ? Self.leadingDeactivateColor : Self.leadingActivateColor)
+                    .frame(width: dragTranslation)
+                    .overlay(alignment: .leading) {
+                        Label(
+                            line.isActive ? "Desactivar" : "Activar",
+                            systemImage: line.isActive ? "minus.circle.fill" : "arrow.uturn.backward.circle.fill"
+                        )
+                        .labelStyle(.iconOnly)
+                        .foregroundStyle(.white)
+                        .padding(.leading, 24)
+                    }
+                    // `.overlay` isn't clipped to its base view's frame by default (the icon
+                    // could otherwise peek past the rectangle's own edge at a small drag
+                    // width) — and this also rounds the outer (leading) edge against the
+                    // card's real corner, square on the inner edge.
+                    .clipShape(Self.leadingRevealShape)
+                Spacer(minLength: 0)
+            } else if dragTranslation < 0 {
+                Spacer(minLength: 0)
+                // Fix 3 (coordinator, 2026-09-17): reads the FROZEN `currentTrailingStage`,
+                // not a live re-derivation from `dragTranslation` — while settling after a
+                // committed delete/edit, the live offset drifts back through the first
+                // threshold on its way to 0, which would otherwise flip this straight back to
+                // the green "Marcar pagado" branch mid-close (a wrong-action flash).
+                if currentTrailingStage == .delete || currentTrailingStage == .edit {
+                    // Second stage of the same trailing gesture, per Larry's ruling: Eliminar
+                    // (manual lines) or Editar (generated lines) — visible + red, never only
+                    // reachable via contextMenu.
+                    (currentTrailingStage == .delete ? Color.red : Color.blue)
+                        .frame(width: -dragTranslation)
+                        .overlay(alignment: .trailing) {
+                            Label(
+                                currentTrailingStage == .delete ? "Eliminar" : "Editar",
+                                systemImage: currentTrailingStage == .delete ? "trash.fill" : "pencil"
+                            )
+                            .labelStyle(.iconOnly)
+                            .foregroundStyle(.white)
+                            .padding(.trailing, 24)
+                        }
+                        .clipShape(Self.trailingRevealShape)
+                } else {
+                    // Coordinator (2026-09-16): dark green — same source hex as the paid-card
+                    // tint (`#006338`) — and a flat `checkmark`, not `.circle.fill`.
+                    Self.paidHintColor
+                        .frame(width: -dragTranslation)
+                        .overlay(alignment: .trailing) {
+                            Label(
+                                line.isPaid ? "Desmarcar pagado" : "Marcar pagado",
+                                systemImage: "checkmark"
+                            )
+                            .labelStyle(.iconOnly)
+                            .foregroundStyle(.white)
+                            .padding(.trailing, 24)
+                        }
+                        .clipShape(Self.trailingRevealShape)
+                }
+            }
+        }
+        // Belt-and-suspenders (coordinator, 2026-09-16): even though the branches above
+        // already require `dragTranslation != 0` structurally, an explicit opacity gate makes
+        // "fully hidden at rest" independent of animation timing/floating-point edge cases.
+        .opacity(dragTranslation == 0 ? 0 : 1)
+    }
+
     private var rowContent: some View {
         HStack(spacing: 10) {
             VStack(alignment: .leading, spacing: 2) {
@@ -274,18 +395,12 @@ struct LineItemRow: View {
                 .font(.body.weight(.semibold))
                 .monospacedDigit()
                 .strikethrough(!line.isActive)
-
-            // DESIGN_LIQUID.md: "palomita discreta (checkmark.circle.fill, 14pt, tinte .blue)
-            // a la derecha del monto — no afecta números, no cambia opacidad de nada más en
-            // la fila" (its own opacity still follows the row when isActive == false, per the
-            // "inactiva y pagada" combined state — it's not drawn separately at full opacity).
-            if line.isPaid {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(.blue)
-                    .accessibilityHidden(true)
-            }
         }
+        // Coordinator (2026-09-16): removed the permanent "palomita discreta" badge — the
+        // card's green tint (`cardBackground`, `isPaid`) is now the sole "pagado" indicator at
+        // rest; the checkmark only appears transiently in the swipe-reveal hint
+        // (`swipeRevealLayer`). VoiceOver is unaffected: `accessibilityStateValue` below
+        // already announces "pagada" independent of this icon.
         // Coordinator (2026-09-16): plain tap no longer opens the capture/edit sheet — the
         // only way in is long-press → `.contextMenu` → "Editar" (still wired to
         // `onStartEditing()` there). Swipes (activar/desactivar, pagado, Eliminar) are
