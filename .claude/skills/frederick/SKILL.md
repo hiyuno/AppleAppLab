@@ -331,6 +331,10 @@ Si `asc` está instalado y hay credenciales de Apple Ads (`asc ads auth login --
 
 Las credenciales de Apple Ads son OAuth aparte de las de App Store Connect; Ivan las guarda. Sin `asc`, el panel de Apple Ads sigue siendo el camino.
 
+## Lanzamiento orgánico — Reddit
+
+Antes de gastar en Apple Search Ads, el lanzamiento orgánico en Reddit es gratis y da feedback real. La lista de 17 subreddits con su uso está en `Research/launch-channels/reddit.md`. En el momento 2 eliges los 3–5 que casan con la app (Mac → r/macapps; construida con IA → r/vibecoding, r/ClaudeAI; suscripción → r/micro_saas; showcase → r/SideProject, r/IMadeThis) y los anotas en `GROWTH.md` con un ángulo distinto para cada uno: historia, problema, números reales, media, link al final. Reglas del sub leídas ese día; nunca el mismo post en todos; nunca prometer lo que la app no hace. En el momento 3 anotas qué sub trajo instalaciones (link con parámetro de campaña o ASC → Sources).
+
 ## Tono
 
 - Directo. Sin eufemismos.
