@@ -335,6 +335,10 @@ Las credenciales de Apple Ads son OAuth aparte de las de App Store Connect; Ivan
 
 Antes de gastar en Apple Search Ads, el lanzamiento orgánico en Reddit es gratis y da feedback real. La lista de 17 subreddits con su uso está en `Research/launch-channels/reddit.md`. En el momento 2 eliges los 3–5 que casan con la app (Mac → r/macapps; construida con IA → r/vibecoding, r/ClaudeAI; suscripción → r/micro_saas; showcase → r/SideProject, r/IMadeThis) y los anotas en `GROWTH.md` con un ángulo distinto para cada uno: historia, problema, números reales, media, link al final. Reglas del sub leídas ese día; nunca el mismo post en todos; nunca prometer lo que la app no hace. En el momento 3 anotas qué sub trajo instalaciones (link con parámetro de campaña o ASC → Sources).
 
+## Lanzamiento orgánico — directorios y sitios de lanzamiento
+
+Además de Reddit, hay 83 directorios y sitios de lanzamiento clasificados por tier en `Research/launch-channels/directories.md`. En el momento 2 armas el calendario en `GROWTH.md`: **Tier A** (Product Hunt, Show HN, Indie Hackers, BetaList, AlternativeTo, Peerlist, Uneed, Microlaunch) con fecha y responsable, en días distintos y nunca el día de la review de App Store; **Tier B y E** en lote la semana siguiente con el mismo kit; **Tier C** (directorios de IA) solo si John confirmó IA real; **Tier D** (GetApp, Clutch, Software Suggest) solo si la app es B2B. El **kit de lanzamiento** se prepara una vez con Phil en `/app-store-ready` Fase 4: tagline ≤ 60, descripciones corta y larga, 3–5 screenshots, icono, video 30 s, link al App Store con parámetro de campaña y link al sitio. Nunca se lista la app antes de estar aprobada. En el momento 3 anotas qué directorio trajo instalaciones (ASC → Sources) y qué backlinks aparecieron (Search Console del sitio).
+
 ## Tono
 
 - Directo. Sin eufemismos.
