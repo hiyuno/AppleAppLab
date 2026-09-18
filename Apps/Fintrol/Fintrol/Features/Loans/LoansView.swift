@@ -18,6 +18,19 @@ struct LoansView: View {
         allLoans.filter(\.isActive).sorted { endDate(of: $0) < endDate(of: $1) }
     }
 
+    // Coordinator (2026-09-17, DESIGN_LIQUID.md § "Préstamos lista", Figma frame "03 ·
+    // Prestamos lista" 5:67): the flat list with a per-card direction chip is replaced by two
+    // grouped sections, one per direction — the section header communicates direction now, so
+    // the chip disappears from active cards entirely (LIQUIDADOS keeps its own "Pagado" chip,
+    // unaffected).
+    private var lentLoans: [Loan] {
+        activeLoans.filter { $0.direction == .lent }
+    }
+
+    private var borrowedLoans: [Loan] {
+        activeLoans.filter { $0.direction == .borrowed }
+    }
+
     private var liquidatedLoans: [Loan] {
         allLoans.filter { !$0.isActive }
     }
@@ -41,9 +54,26 @@ struct LoansView: View {
                 // so `LoanRow`'s own card background/radius shows through as an independent
                 // floating card with an ~8pt gap, not one big grouped section.
                 List {
-                    Section {
-                        ForEach(activeLoans) { loan in
-                            loanRow(for: loan)
+                    // Coordinator (2026-09-17): section per direction replaces the flat list
+                    // — hidden entirely (not shown empty) when a direction has no active
+                    // loans.
+                    if !lentLoans.isEmpty {
+                        Section {
+                            ForEach(lentLoans) { loan in
+                                loanRow(for: loan)
+                            }
+                        } header: {
+                            sectionHeader("ME DEBEN")
+                        }
+                    }
+
+                    if !borrowedLoans.isEmpty {
+                        Section {
+                            ForEach(borrowedLoans) { loan in
+                                loanRow(for: loan)
+                            }
+                        } header: {
+                            sectionHeader("DEBO")
                         }
                     }
 
@@ -87,11 +117,15 @@ struct LoansView: View {
 
     @ViewBuilder
     private func loanRow(for loan: Loan) -> some View {
-        NavigationLink {
-            LoanDetailView(loan: loan)
-        } label: {
-            LoanRow(loan: loan)
-        }
+        // Coordinator (2026-09-17): same chevron-removal fix as `CreditCardRow` — confirmed
+        // this row has the exact same structure (`NavigationLink` as the List row's label),
+        // so it has the same native disclosure chevron. Invisible `.background` NavigationLink
+        // instead, `LoanRow` alone is the visible label.
+        LoanRow(loan: loan)
+            .background(
+                NavigationLink(destination: LoanDetailView(loan: loan)) { EmptyView() }
+                    .opacity(0)
+            )
         .swipeActions {
             Button(role: .destructive) {
                 PeriodCoordinator.deleteLoan(loan, context: context, exchangeRate: rateStore.currentRate ?? 0)
@@ -105,14 +139,26 @@ struct LoansView: View {
             }
             .tint(.blue)
         }
-        // Strip List's own row chrome — `LoanRow`'s own Frost card (background + 20pt
-        // radius) shows through as an independent floating card instead of a row inside one
-        // big grouped section; the 8pt vertical padding is the gap between cards.
+        // Strip List's own row chrome — `LoanRow`'s own Frost card (background + 18pt
+        // radius, DESIGN_LIQUID.md § Préstamos lista — distinct from the app's usual 20pt)
+        // shows through as an independent floating card instead of a row inside one big
+        // grouped section; the 8pt vertical padding is the gap between cards.
         .listRowInsets(EdgeInsets())
         .listRowBackground(Color.clear)
         .listRowSeparator(.hidden)
         .padding(.horizontal, 16)
         .padding(.vertical, 4)
+    }
+
+    /// "ME DEBEN"/"DEBO" section headers — same `p small` token as Quincena's INCOME/EXPENSES
+    /// headers (`.caption.weight(.bold)`), tracking per DESIGN_LIQUID.md's exact Figma spec
+    /// for this screen (+0.6pt).
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.caption.weight(.bold))
+            .tracking(0.6)
+            .foregroundStyle(.secondary)
+            .textCase(nil)
     }
 
     private func endDate(of loan: Loan) -> CivilDate {
@@ -123,8 +169,13 @@ struct LoansView: View {
     }
 }
 
-/// Custom row — direction chip + progress bar don't fit `LabListRow`. Documented in
+/// Custom row — payment lines + progress bar don't fit `LabListRow`. Documented in
 /// PROJECT_LEARNINGS.md as a generalization candidate.
+///
+/// Coordinator (2026-09-17, DESIGN_LIQUID.md § "Préstamos lista"): the direction chip is gone
+/// for active loans — the section header ("ME DEBEN"/"DEBO") communicates direction now.
+/// LIQUIDADOS keeps its own "Pagado" chip, restyled to spec (white 1pt border, no fill, 8pt
+/// text — was a filled gray capsule at 12pt, didn't match the closed Figma measurements).
 private struct LoanRow: View {
     let loan: Loan
     @Environment(\.modelContext) private var context
@@ -156,6 +207,12 @@ private struct LoanRow: View {
     // schedule-derived version.
     private var paidToDate: Decimal { PeriodCoordinator.loanPaidToDate(loanID: loan.id, context: context) }
 
+    /// Último Pago — amount + date of the most recently confirmed-paid line, reused from
+    /// `PeriodCoordinator` (not re-derived here) per the coordinator's explicit instruction.
+    /// `nil` until the loan has at least one real confirmed payment.
+    private var lastPaymentAmount: Decimal? { PeriodCoordinator.loanLastPaymentAmount(loanID: loan.id, context: context) }
+    private var lastPaymentDate: CivilDate? { PeriodCoordinator.loanLastPaymentDate(loanID: loan.id, context: context) }
+
     private var currentBalance: Decimal {
         let interest = isRevolving
             ? LoanEngine.accumulatedInterest(revolvingRows: revolvingResult?.rows ?? [], through: today)
@@ -170,12 +227,7 @@ private struct LoanRow: View {
     }
 
     private var isDebo: Bool { loan.direction == .borrowed }
-    // Coordinator (2026-09-15, mockup round 4): "Me deben" (.lent) is green, "Debo"
-    // (.borrowed) is orange — DESIGN_LIQUID's chip colors, confirmed against the mockup
-    // (previously this used `.blue` for "Me deben", not the documented green).
-    private var tintColor: Color { isDebo ? .orange : .green }
     private var directionText: String { isDebo ? "Debo" : "Me deben" }
-    private var directionIcon: String { isDebo ? "arrow.up.forward" : "arrow.down.forward" }
     private var isLiquidated: Bool { !loan.isActive }
 
     private var endDateText: String {
@@ -195,71 +247,119 @@ private struct LoanRow: View {
         return "Sin plazo · según pago esperado"
     }
 
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Image(systemName: "banknote")
-                    .foregroundStyle(.secondary)
-                Text(loan.name)
-                    .font(.body.weight(.semibold))
-                Spacer()
-                // Chip nunca depende solo del color — icono + texto siempre visibles (A11Y).
-                // Liquidado: chip gris "Pagado" en vez del chip de dirección (mockup ronda 4).
-                HStack(spacing: 4) {
-                    Image(systemName: isLiquidated ? "checkmark.circle.fill" : directionIcon)
-                    Text(isLiquidated ? "Pagado" : directionText)
-                }
-                .font(.caption.weight(.semibold))
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(Capsule().fill((isLiquidated ? Color.gray : tintColor).opacity(0.15)))
-                .foregroundStyle(isLiquidated ? .gray : tintColor)
-            }
+    // DESIGN_LIQUID.md § "Préstamos lista" exact hex/type measurements (Figma 5:67).
+    private static let mutedLabelColor = Color(red: 0xC7 / 255.0, green: 0xC7 / 255.0, blue: 0xCC / 255.0) // #C7C7CC
 
-            Text("Restante \(isLiquidated ? Decimal(0).currencyString(currency: loan.currency) : currentBalance.currencyString(currency: loan.currency))")
+    /// "Último Pago $X · fecha" — label AND value both Regular #C7C7CC (same weight,
+    /// unlike "Próximo pago" below), one plain `Text`. `nil` if no real payment yet.
+    private var lastPaymentText: Text? {
+        guard let lastPaymentAmount, let lastPaymentDate else { return nil }
+        let dateText = lastPaymentDate.date(calendar: .current).formatted(.dateTime.day().month(.abbreviated).year())
+        return Text("Último Pago  \(lastPaymentAmount.currencyString(currency: loan.currency)) · \(dateText)")
+            .font(.system(size: 14))
+            .foregroundStyle(Self.mutedLabelColor)
+    }
+
+    /// "Próximo pago $Y · fecha" — label Regular #C7C7CC, value Semibold white, composed as
+    /// two concatenated `Text` runs so each half keeps its own weight/color in one line.
+    private func nextPaymentText(amount: Decimal, date: CivilDate) -> Text {
+        let dateText = date.date(calendar: .current).formatted(.dateTime.day().month(.abbreviated))
+        return Text("Próximo pago  ").font(.system(size: 14)).foregroundStyle(Self.mutedLabelColor)
+            + Text("\(amount.currencyString(currency: loan.currency)) · \(dateText)")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white)
+    }
+
+    /// "Restante $Z" — label Regular `.secondary`, value Semibold white, both 14pt.
+    private var restanteText: Text {
+        let amount = isLiquidated ? Decimal(0) : currentBalance
+        return Text("Restante  ").font(.system(size: 14)).foregroundStyle(Self.mutedLabelColor)
+            + Text(amount.currencyString(currency: loan.currency))
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: isLiquidated ? 8 : 8) {
+            Text(loan.name)
                 .font(.body.weight(.semibold))
-                .monospacedDigit()
+                .foregroundStyle(.white)
 
             if isLiquidated {
+                // LIQUIDADOS: unchanged structure — "Pagado" chip lives beside the name (own
+                // HStack, since this branch never shows the payment lines above), Restante,
+                // Liquidado.
+                restanteText
                 Text("Liquidado —")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            } else if isRevolving {
-                if let revolvingNext {
-                    Text("Próximo pago esperado: \(revolvingNext.payment.currencyString(currency: loan.currency)) · \(revolvingNext.date.date(calendar: .current).formatted(.dateTime.day().month(.abbreviated)))")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                Text(revolvingBadgeText)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                ProgressView(value: paidFraction)
-                    .tint(tintColor)
-                    .accessibilityValue("\(Int((paidFraction * 100).rounded())) por ciento pagado")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Self.mutedLabelColor)
             } else {
-                if let nextInstallment {
-                    Text("Próximo pago: \(nextInstallment.payment.currencyString(currency: loan.currency)) · \(nextInstallment.date.date(calendar: .current).formatted(.dateTime.day().month(.abbreviated)))")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                // Payment-lines cluster (8pt internal gap) sits close to the name; the
+                // Restante+progress cluster gets an explicit extra 10pt on top of the
+                // surrounding VStack's own 8pt spacing, landing the two blocks at the 18pt
+                // Figma-measured gap while the name→payment-lines gap stays at the app's usual
+                // 8pt block spacing (the mockup's ascii art only visually calls out ONE large
+                // gap, right before Restante — interpreted here as that one, not a uniform
+                // 18pt everywhere; flagging this reading, not silently assuming it).
+                VStack(alignment: .leading, spacing: 8) {
+                    if let lastPaymentText {
+                        lastPaymentText
+                    }
+                    if isRevolving {
+                        if let revolvingNext {
+                            nextPaymentText(amount: revolvingNext.payment, date: revolvingNext.date)
+                        }
+                        Text(revolvingBadgeText)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else if let nextInstallment {
+                        nextPaymentText(amount: nextInstallment.payment, date: nextInstallment.date)
+                    }
                 }
 
-                Text("Fecha fin: \(endDateText)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                ProgressView(value: paidFraction)
-                    .tint(tintColor)
-                    .accessibilityValue("\(Int((paidFraction * 100).rounded())) por ciento pagado")
+                VStack(alignment: .leading, spacing: 6) {
+                    restanteText
+                    LoanProgressBar(value: paidFraction)
+                }
+                .padding(.top, 10)
             }
         }
-        // Coordinator (2026-09-16): same card-per-row pattern as INCOME/EXPENSES in
-        // PeriodView — each loan is its own Frost card (20pt radius, 16pt padding) instead of
-        // a row inside one big List section with `Divider()`-style separators between them.
+        // Coordinator (2026-09-17): 18pt radius for THIS screen's cards — distinct from the
+        // app's usual 20pt, per Figma 5:67 (confirmed, not an oversight).
         .padding(16)
         .background(Color("AppBackgroundSecondary"))
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(isLiquidated ? "Pagado" : directionText), \(loan.name), restante \(isLiquidated ? Decimal(0).currencyString(currency: loan.currency) : currentBalance.currencyString(currency: loan.currency))\(isRevolving && !isLiquidated ? ", " + revolvingBadgeText : "")")
+    }
+}
+
+/// Track `#023C2F` / fill `#00FFC5`, 5pt radius, 4pt height — DESIGN_LIQUID.md § "Préstamos
+/// lista". Green for BOTH "ME DEBEN" and "DEBO" (confirmed by the coordinator, 2026-09-17):
+/// the section already communicates direction, so the bar no longer tints by it — this
+/// replaces the native `ProgressView(value:).tint(...)`, which can't hit this exact
+/// track/fill/radius/height combination reliably across platforms.
+// Coordinator (2026-09-17): widened from `private` to internal so `CreditCardsView`'s
+// utilization bar can reuse this exact track/fill/radius/height instead of a second copy.
+struct LoanProgressBar: View {
+    let value: Double
+
+    private static let trackColor = Color(red: 0x02 / 255.0, green: 0x3C / 255.0, blue: 0x2F / 255.0) // #023C2F
+    private static let fillColor = Color(red: 0x00 / 255.0, green: 0xFF / 255.0, blue: 0xC5 / 255.0) // #00FFC5
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(Self.trackColor)
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .fill(Self.fillColor)
+                    .frame(width: max(0, geometry.size.width * CGFloat(value)))
+            }
+        }
+        .frame(height: 4)
+        .accessibilityElement()
+        .accessibilityValue("\(Int((value * 100).rounded())) por ciento pagado")
     }
 }
 
@@ -295,7 +395,6 @@ struct LoanEditSheet: View {
     /// can't oscillate: there is nothing to feed back into.
     @State private var termMonths: Int
     @State private var frequencyOption: LoanFrequencyOption
-    @State private var monthlyDay: Int
     @State private var hasOverride: Bool
     @State private var overrideText: String
     @State private var isActive: Bool
@@ -315,13 +414,8 @@ struct LoanEditSheet: View {
         _termMonths = State(initialValue: loan?.termMonths ?? 12)
         if case .biweekly = initialFrequency {
             _frequencyOption = State(initialValue: .biweekly)
-            _monthlyDay = State(initialValue: 1)
-        } else if case .monthly(let day) = initialFrequency {
-            _frequencyOption = State(initialValue: .monthly)
-            _monthlyDay = State(initialValue: day)
         } else {
             _frequencyOption = State(initialValue: .monthly)
-            _monthlyDay = State(initialValue: 1)
         }
         _hasOverride = State(initialValue: loan?.paymentOverride != nil)
         _overrideText = State(initialValue: loan?.paymentOverride?.twoDecimalString ?? "")
@@ -345,8 +439,10 @@ struct LoanEditSheet: View {
         return expectedPayment <= currentMonthInterestEstimate
     }
 
+    // El día de pago mensual se deriva del día del mes de "Fecha de inicio" — no hay un
+    // campo separado que pueda desincronizarse (feedback del usuario).
     private var frequency: LoanFrequency {
-        frequencyOption == .biweekly ? .biweekly : .monthly(day: monthlyDay)
+        frequencyOption == .biweekly ? .biweekly : .monthly(day: Calendar.current.component(.day, from: startDate))
     }
 
     /// `endDate` for display/editing: always freshly derived from `termMonths` (never
@@ -376,7 +472,6 @@ struct LoanEditSheet: View {
         guard !name.isEmpty else { return false }
         guard ValidationRange.amount.contains(principal) else { return false }
         guard aprPercent >= 0, aprPercent <= 100 else { return false }
-        guard ValidationRange.dayOfMonth.contains(monthlyDay) else { return false }
         if mode == .fixedTerm {
             guard ValidationRange.termMonths.contains(termMonths) else { return false }
         } else {
@@ -413,10 +508,9 @@ struct LoanEditSheet: View {
                     .pickerStyle(.segmented)
 
                     HStack {
-                        TextField("Monto original", value: $principal, format: .number.precision(.fractionLength(2)))
-                            #if os(iOS)
-                            .keyboardType(.decimalPad)
-                            #endif
+                        // Coordinator (2026-09-17): `LabDecimalField` — centralized fix for
+                        // "0.00 isn't a placeholder, has to be deleted by hand".
+                        LabDecimalField(placeholder: "Monto original", value: $principal)
                         Picker("Moneda", selection: $currency) {
                             Text("USD").tag(Currency.usd)
                             Text("MXN").tag(Currency.mxn)
@@ -426,10 +520,8 @@ struct LoanEditSheet: View {
                     }
 
                     HStack {
-                        TextField("APR", value: $aprPercent, format: .number.precision(.fractionLength(2)))
-                            #if os(iOS)
-                            .keyboardType(.decimalPad)
-                            #endif
+                        // isCurrency: false — a percentage, not money, no thousands grouping.
+                        LabDecimalField(placeholder: "APR", value: $aprPercent, isCurrency: false)
                         Text("%")
                             .foregroundStyle(.secondary)
                     }
@@ -440,9 +532,6 @@ struct LoanEditSheet: View {
 
                     Picker("Frecuencia", selection: $frequencyOption) {
                         ForEach(LoanFrequencyOption.allCases) { Text($0.rawValue).tag($0) }
-                    }
-                    if frequencyOption == .monthly {
-                        Stepper("Día del mes: \(monthlyDay)", value: $monthlyDay, in: 1...31)
                     }
 
                     LabToggleRow(title: "Hasta liquidar (revolving)", isOn: Binding(

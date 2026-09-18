@@ -92,9 +92,10 @@ Fintrol/
 - `currency: Currency` (`.usd` / `.mxn`)
 - `isPaid: Bool` — switch visual, **no participa en ningún cálculo**
 - `sortOrder: Int`
-- `origin: LineOrigin` (`.manual`, `.carryOver`, `.recurring`, `.subscription`, `.loan`, `.investment`)
+- `origin: LineOrigin` (`.manual`, `.carryOver`, `.recurring`, `.subscription`, `.loan`, `.investment`, `.creditCard`)
 - `sourceRecurringID: UUID?` — enlace lógico al `RecurringItem`/`Subscription` que la generó (no relación SwiftData para no forzar acoplamiento; se resuelve por `id` al regenerar)
 - `sourceLoanID: UUID?` — mismo mecanismo que `sourceRecurringID` pero para `Loan`; una línea `.loan` nunca tiene ambos campos poblados
+- `sourceCreditCardID: UUID?` — mismo mecanismo, para `CreditCard`; una línea `.creditCard` es siempre **una tarjeta individual**, nunca la suma — ver "Credit Cards" más abajo, la fila agregada es solo visual
 - `isManuallyEdited: Bool` — **bandera central de la regla "la edición manual gana"**: se pone en `true` en cualquier edición del usuario sobre una línea con `origin != .manual`; el motor de regeneración nunca toca una línea con esta bandera en `true`
 - `exchangeRateSnapshot: Decimal?` — tipo de cambio efectivo usado al calcular esta línea (para que "Mandar" y el histórico no cambien retroactivamente si el rate cacheado cambia después)
 - `isHomeService: Bool` — solo relevante cuando `origin == .subscription`; distingue la línea combinada "Servicios" (hogar) de "Payments" (suscripciones); ambas comparten `origin == .subscription`, no hay un origin `.service` separado
@@ -135,6 +136,16 @@ Fintrol/
 - `paymentOverride: Decimal?` — **solo `.fixedTerm`**: si el usuario fija un pago distinto al calculado, `LoanEngine` recalcula `n` (número de pagos) a partir de este monto en vez de derivar el pago desde `termMonths`
 - `isActive: Bool`
 - `lineItems: [LineItem]?` (inverso vía `sourceLoanID`, opcional — no es relación `@Relationship` directa, se resuelve igual que recurrentes/suscripciones)
+
+**`CreditCard`** — feature promovida de Fase 2 a v1 (decisión del usuario)
+- `id: UUID`, `name: String`
+- `balance: Decimal` — saldo actual, análogo a `Loan.principal` en modo revolving
+- `apr: Decimal`, `creditLimit: Decimal`
+- `cutoffDay: Int` (1–31) — día de corte; `paymentDay: Int` (1–31) — día de pago del emisor
+- `expectedPayment: Decimal?` — `nil` ⇒ cada período usa `CreditCardEngine.suggestedMinimumPayment` calculado en vivo; si se fija, ese es el default editable por período (mismo patrón que `Loan.revolving.expectedPayment`)
+- `isActive: Bool`
+- `kind` es siempre `.expense` — a diferencia de `Loan`, una tarjeta no tiene `direction`: es deuda propia, nunca dinero prestado a alguien más
+- `lineItems: [LineItem]?` (inverso vía `sourceCreditCardID`, opcional, mismo mecanismo que `Loan`/`RecurringItem`)
 
 **`ExchangeRateCache`** (una fila viva, no historial completo)
 - `date: Date` — fecha del último fetch exitoso
@@ -253,6 +264,27 @@ Cambio de comportamiento sobre el diseño anterior: `LoanDetailView.swift:24` ca
   2. Desmarcarla → la barra retrocede y `paidAt` vuelve a `nil`.
   3. Una línea futura de ese préstamo, aunque su quincena ya haya pasado, **no cuenta** en `paidToDate` mientras no se marque manualmente — el progreso no avanza solo por fecha programada.
 
+### Credit Cards — feature promovida de Fase 2 a v1 (decisión del usuario)
+
+Reutilización máxima de `Loan.revolving`: el patrón de interés mensual sobre saldo, mezcla de pago real/proyectado y proyección acotada ya existe para préstamos revolventes — `CreditCard` no reinventa nada de eso, lo reutiliza.
+
+- **Motor — `Core/Engine/CreditCardEngine.swift` nuevo, sin duplicar la fórmula de interés:** se extrae la fórmula de interés mensual revolvente de `LoanEngine.revolvingSchedule` a una función compartida `LoanEngine.monthlyRevolvingInterest(balance:apr:) -> Decimal` (`interés = saldo × APR/12`, al cruzar de mes civil — misma mecánica ya documentada). `CreditCardEngine` la llama en vez de reimplementarla; solo añade lo que es genuinamente nuevo de tarjetas:
+  - `suggestedMinimumPayment(balance:apr:) -> Decimal` = `MAX($25, balance × 0.01 + interésDelMes)`, donde `interésDelMes` viene de `LoanEngine.monthlyRevolvingInterest`. Fórmula típica de emisores grandes (investigación del plan, fuente Chase/Experian/NerdWallet).
+  - Proyección de saldo por período: mismo mecanismo que `LoanEngine.revolvingSchedule` (pago real cuando existe línea materializada, `expectedPayment`/`suggestedMinimumPayment` como proyección en períodos futuros) — se llama directamente a `LoanEngine.revolvingSchedule` con los datos de la tarjeta en vez de reimplementar el mezclado real-vs-proyectado.
+- **`PeriodCoordinator.reprojectCreditCard(item:context:exchangeRate:)`** — clon de `reprojectLoan` (mismo patrón: busca línea existente por `sourceCreditCardID`, respeta `isManuallyEdited`, crea/actualiza/retira, termina en `recomputeForward`). Única diferencia real: la quincena de la línea no se deriva de una frecuencia fija sino de `cutoffDay`/`paymentDay` **más la preferencia global de regla de fecha**:
+  - `@AppStorage("fintrol.creditCardPaymentDateRule")`, 3 valores: `.onPaymentDate` | `.onCutoffDate` | `.daysBeforeCutoff(Int)` (default 5 días) — decisión del usuario tras investigación (regla informal "pagar antes del corte" reduce el saldo reportado al buró y respeta el grace period de Reg. Z).
+  - **Se lee SOLO en la capa UI** (Ajustes/`PeriodView`) y se pasa a `reprojectCreditCard` como parámetro plano (`dateRule: CreditCardPaymentDateRule`) — nunca se lee `@AppStorage` dentro de `Core/`, mismo patrón ya establecido para `ExchangeRateService`/preferencias (`PeriodCoordinator.swift:33-34`, `navigableLowerBound(context:monthsBack:)`).
+- **`deleteCreditCard`** — cascada de purga igual que `deleteLoan`. **`purgeOrphanLines` se extiende para incluir `sourceCreditCardID`** junto a `sourceRecurringID`/`sourceLoanID` — riesgo señalado explícitamente en la exploración del plan: si se omite, borrar una tarjeta deja `LineItem` huérfanas que ningún `reproject*` vuelve a limpiar.
+- **`creditCardPaidToDate`/`creditCardLastPaymentDate`** — clones exactos de `loanPaidToDate`/`loanLastPaymentDate`, filtrando por `sourceCreditCardID` en vez de `sourceLoanID`; mismas reglas ya fijadas (`isPaid == true` cuenta, `paidAt` da la fecha del último pago, `isPaid` bloquea edición vía `canModify`).
+- **La fila agregada "Credit Cards Payments" es SOLO VISUAL, nunca de datos — para que Woz no invente un modelo de agregación:** cada tarjeta genera su propia `LineItem` real e individual (`origin: .creditCard`, `sourceCreditCardID`, `isPaid`/`paidAt` propios). No existe ni se crea una `LineItem` "suma" ni un modelo de agregación en `Core/`. El agrupamiento ("Credit Cards Payments" como una sola fila colapsada en EXPENSES que suma los montos) ocurre en `PeriodView` puramente como presentación — agrupa por `origin == .creditCard` al renderizar, un sheet abre y opera sobre las líneas individuales reales. Esto preserva intacto todo el motor existente (`isPaid`, `paidAt`, `canModify`, `reprojectCreditCard`, `recomputeForward`) que ya asume una fuente por línea.
+- **Tests obligatorios (Bertrand), los 6 del plan:**
+  1. Fecha de pago con cada una de las 3 reglas (`onPaymentDate`/`onCutoffDate`/`daysBeforeCutoff(N)`) → verificar en qué quincena cae (caso de aceptación del plan: tarjeta corte día 15, pago día 5 del mes siguiente, regla "5 días antes del corte" → cae en la quincena que contiene el día 10).
+  2. `suggestedMinimumPayment` con varios saldos/APR → coincide con `MAX($25, balance×0.01 + interés)`.
+  3. Interés mensual acumulado sobre saldo, vía `LoanEngine.monthlyRevolvingInterest` reutilizada (no una segunda fórmula).
+  4. Pago real vs. proyectado — mismo patrón que `Loan.revolving`: un pago real registrado reemplaza la proyección en `revolvingSchedule` hacia adelante.
+  5. Cascada de borrado (`deleteCreditCard`) no deja `LineItem` huérfanas — `purgeOrphanLines` las alcanza vía `sourceCreditCardID`.
+  6. Línea agregada = suma correcta con 0/1/N tarjetas con pago en la misma quincena (test de `PeriodView`, no de `Core/Engine`).
+
 ### `isPaid == true` bloquea la línea — decisión del usuario
 
 Cuando una `LineItem` tiene `isPaid == true` queda bloqueada: no se puede editar (monto/descripción), no se puede eliminar (manuales), no se puede desactivar (`isActive`, si aplica). La única acción disponible es desmarcar "pagado", que la desbloquea.
@@ -322,6 +354,7 @@ Entitlements:
 - Cambios en esta versión: se agrega `Loan` (y `sourceLoanID`/`.loan` en `LineItem`) directo a `SchemaV1` — el proyecto es **pre-release** (sin datos de usuario en producción), así que no se abre `SchemaV2` ni se escribe migración para este cambio; se edita `SchemaV1` en sitio.
 - **Modo `.revolving` de `Loan` (`mode`, `expectedPayment`, `termMonths`/`endDate` ahora opcionales) → `SchemaV2` en sitio:** sigue siendo pre-release, así que no hace falta `MigrationStage` real, pero el cambio se declara como `SchemaV2` (no otro edit silencioso de V1) para dejar el checkpoint correcto antes de que el proyecto salga de pre-release — desde ese punto sí aplicará la regla estándar de migración explícita.
 - **Feature "Inversiones" (`RecurringItem.category`, `accountName`) → Lightweight, dentro de `SchemaV2` vigente:** son propiedades nuevas con default (`category = .general`, `accountName = nil`) sobre una entidad existente — cae directo en la fila "Agregar propiedad con default → Lightweight, automática" de la tabla de migración de este documento. No amerita `SchemaV3` ni plan de migración custom.
+- **`CreditCard` (entidad nueva, `LineOrigin.creditCard`, `LineItem.sourceCreditCardID`) → `SchemaV2` en sitio, sin migración:** proyecto sigue pre-release (confirmado en `AppMigrationPlan.swift`); una entidad nueva no es lightweight en sentido estricto, pero al no haber datos de usuario en producción no requiere `MigrationStage` — se agrega directo a `SchemaV2` vigente, igual que `Loan.revolving`.
 - Estrategia: se adopta el patrón `VersionedSchema` + `SchemaMigrationPlan` **desde el día 1**, aunque V1 no tenga nada que migrar todavía. Es más barato empezar con el patrón correcto que retrofit-earlo cuando ya haya datos de usuario en producción. Esta regla de "editar V1 en sitio mientras sea pre-release" deja de aplicar en cuanto haya un build de producción con datos reales — desde ese punto, cualquier cambio de schema (incluido uno igual de simple) exige `SchemaV2` + migración real.
 - Plan: `Fintrol/Core/Migration/SchemaV1.swift` + `AppMigrationPlan.swift` (stage list vacía por ahora, lista para `MigrationStage.lightweight`/`.custom` en V2).
 - Prueba requerida: no aplica todavía (no hay V0). Bertrand deja un test placeholder que verifica que `ModelContainer` abre limpio con `SchemaV1`.
@@ -436,6 +469,10 @@ Entitlements:
 | 2026-09-16 | Consistencia de "aportado a la fecha" (Inversiones) con esta misma regla: señalada como pregunta abierta para el usuario, no aplicada todavía | Evita tocar Inversiones sin decisión explícita, aunque el problema de fondo sea el mismo |
 | 2026-09-16 | Límite histórico de navegación deja de ser un piso único; se agrega un techo configurable ("meses hacia atrás visibles", `@AppStorage`, default 1) — gana el más restrictivo entre piso (primera materializada) y techo (N meses civiles atrás desde hoy) | Decisión explícita del usuario — límite de navegación, no de datos: cambiar `N` nunca borra ni rematerializa nada |
 | 2026-09-16 | `LineItem.isPaid == true` bloquea edición/borrado/desactivación; guard centralizado en `PeriodCoordinator.canModify(line:)`, no repetido por vista; `togglePaid` es la única acción exenta | Decisión explícita del usuario — ocultar el botón no basta, el guard debe ser robusto a cualquier ruta de mutación |
+| 2026-09-17 | "Credit Cards" se promueve de Fase 2 a v1: `@Model CreditCard`, `LineOrigin.creditCard`, `CreditCardEngine` reutilizando `LoanEngine.monthlyRevolvingInterest` (fórmula extraída, no duplicada), `reprojectCreditCard` clon de `reprojectLoan` | Decisión explícita del usuario, plan completo en `~/.claude/plans/glimmering-swinging-bumblebee.md` |
+| 2026-09-17 | Regla de fecha de pago de tarjeta (`onPaymentDate`/`onCutoffDate`/`daysBeforeCutoff(N)` default 5) vive en `@AppStorage`, leída solo en UI y pasada como parámetro plano a `reprojectCreditCard` — nunca leída dentro de `Core/` | Mismo patrón ya establecido para preferencias (`navigableLowerBound`, apariencia, re-bloqueo) — `Core/` no toca `UserDefaults` |
+| 2026-09-17 | Fila "Credit Cards Payments" es agregación **solo visual** en `PeriodView`; cada tarjeta sigue generando su propia `LineItem` real con `sourceCreditCardID` | Evita inventar un modelo de agregación de datos nuevo; preserva `isPaid`/`paidAt`/`canModify`/`reprojectCreditCard` tal cual, que asumen una fuente por línea |
+| 2026-09-17 | `purgeOrphanLines` se extiende para incluir `sourceCreditCardID` | Riesgo identificado explícitamente en el plan — sin esto, borrar una tarjeta deja `LineItem` huérfanas |
 | 2026-09-15 | Materialización perezosa de quincenas — nunca se generan 240 registros de golpe | Requisito explícito del PRD (riesgo de "proyección infinita"); Overview calcula en memoria |
 | 2026-09-15 | Recálculo de encadenado incremental con fixed-point, no recálculo completo | Acota el costo a quincenas materializadas realmente afectadas |
 | 2026-09-15 | Regla "edición manual gana" implementada con bandera explícita `isManuallyEdited` por línea | Evita heurísticas de diff frágiles; mapea 1:1 al criterio de aceptación del PRD |

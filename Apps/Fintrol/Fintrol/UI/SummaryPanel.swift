@@ -12,6 +12,46 @@ struct SummaryPanel: View {
     let mandar: Decimal
     let nextMonth: Decimal
 
+    var body: some View {
+        // Coordinator (2026-09-17): "Mandar" moves to AFTER "Next Month" (was between SOBRANTE
+        // and Next Month, i.e. first in this column — now last).
+        VStack(alignment: .leading, spacing: 8) {
+            NextMonthCard(nextMonth: nextMonth)
+
+            // Coordinator (2026-09-17, corrected — restored with the right value): loose
+            // titles need an extra indent past the screen's outer padding to align with the
+            // text INSIDE cards (their own internal padding starts further in than the card's
+            // outer edge) — same +8pt as "TOTAL INCOME"/"TOTAL EXPENSES" and the section
+            // headers in `PeriodView.swift`, not the +16pt this row carried before (that
+            // overshot past the card-text alignment point).
+            row(title: String(localized: "summary_send_label", defaultValue: "To Send"), value: mandar.currencyString() + " USD")
+                .padding(.horizontal, 8)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(String(localized: "summary_panel_a11y", defaultValue: "Summary panel"))
+    }
+
+    private func row(title: String, value: String, isSecondary: Bool = false) -> some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .font(.body.weight(isSecondary ? .regular : .semibold))
+                .monospacedDigit()
+                .foregroundStyle(isSecondary ? .secondary : .primary)
+        }
+    }
+}
+
+/// "Next Month" card — extracted (Woz, feature "Home", 2026-09-17) so `PeriodPreviewCard` can
+/// reuse it verbatim; Jonny's design excludes "Mandar"/"To Send" from that preview (it's an
+/// operational action, not a summary datum), so the whole panel isn't a fit there, only this
+/// block. Behavior/visuals unchanged from what `SummaryPanel` inlined before.
+struct NextMonthCard: View {
+    let nextMonth: Decimal
+
     // Coordinator (2026-09-15, mockup round 4): "Next Month" takes the same solid
     // green/yellow/red treatment as SobranteBadge, keyed off its OWN value (it's a projected
     // sobrante for the next quincena, so the same threshold applies) — white text, black only
@@ -40,44 +80,24 @@ struct SummaryPanel: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            row(title: "Mandar", value: mandar.currencyString() + " USD")
-                .padding(.horizontal, 16)
-
-            HStack(alignment: .center) {
-                // Coordinator (2026-09-16): unified with `SobranteBadge`'s "Sobrante" label —
-                // same 17pt Semibold token, was `.subheadline` here (visibly different
-                // size/weight side-by-side).
-                // Coordinator (2026-09-17): 8-style library — that token is `h3` (`.headline`),
-                // mirrors the same fix in `SobranteBadge`. The amount stays `p big` (`.body` +
-                // Semibold) per the coordinator's explicit mapping for this element.
-                Text("Next Month")
-                    .font(.headline)
-                    .foregroundStyle(nextMonthTextColor.opacity(0.8))
-                Spacer()
-                Text(nextMonth.currencyString())
-                    .font(.body.weight(.semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(nextMonthTextColor)
-            }
-            .padding(16)
-            .background(nextMonthColor)
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityLabel("Panel de resumen")
-    }
-
-    private func row(title: String, value: String, isSecondary: Bool = false) -> some View {
-        HStack {
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+        HStack(alignment: .center) {
+            // Coordinator (2026-09-16): unified with `SobranteBadge`'s "Sobrante" label —
+            // same 17pt Semibold token, was `.subheadline` here (visibly different
+            // size/weight side-by-side).
+            // Coordinator (2026-09-17): 8-style library — that token is `h3` (`.headline`),
+            // mirrors the same fix in `SobranteBadge`. The amount stays `p big` (`.body` +
+            // Semibold) per the coordinator's explicit mapping for this element.
+            Text(String(localized: "summary_next_month_label", defaultValue: "Next Month"))
+                .font(.headline)
+                .foregroundStyle(nextMonthTextColor.opacity(0.8))
             Spacer()
-            Text(value)
-                .font(.body.weight(isSecondary ? .regular : .semibold))
+            Text(nextMonth.currencyString())
+                .font(.body.weight(.semibold))
                 .monospacedDigit()
-                .foregroundStyle(isSecondary ? .secondary : .primary)
+                .foregroundStyle(nextMonthTextColor)
         }
+        .padding(16)
+        .background(nextMonthColor)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 }

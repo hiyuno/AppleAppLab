@@ -21,6 +21,11 @@ public final class LineItem {
     /// Same mechanism as `sourceRecurringID` but for `Loan` — a `.loan` line never has both
     /// populated (TRD).
     public var sourceLoanID: UUID?
+    /// Same mechanism as `sourceLoanID` but for `CreditCard` (TRD "Credit Cards", 2026-09-17)
+    /// — a `.creditCard` line always has exactly this one source populated, always individual
+    /// (never a "sum" line; the aggregated "Credit Cards Payments" row is presentation-only in
+    /// `PeriodView`, grouping by `origin == .creditCard` at render time).
+    public var sourceCreditCardID: UUID?
     public var isManuallyEdited: Bool = false
     public var exchangeRateSnapshot: Decimal?
     /// Only meaningful when `origin == .subscription` — distinguishes the combined
@@ -49,6 +54,7 @@ public final class LineItem {
         origin: LineOrigin = .manual,
         sourceRecurringID: UUID? = nil,
         sourceLoanID: UUID? = nil,
+        sourceCreditCardID: UUID? = nil,
         isManuallyEdited: Bool = false,
         exchangeRateSnapshot: Decimal? = nil,
         isHomeService: Bool = false,
@@ -66,6 +72,7 @@ public final class LineItem {
         self.originRaw = origin.rawValue
         self.sourceRecurringID = sourceRecurringID
         self.sourceLoanID = sourceLoanID
+        self.sourceCreditCardID = sourceCreditCardID
         self.isManuallyEdited = isManuallyEdited
         self.exchangeRateSnapshot = exchangeRateSnapshot
         self.isHomeService = isHomeService

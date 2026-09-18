@@ -125,7 +125,6 @@ private struct RecurringEditSheet: View {
     @State private var amount: Decimal
     @State private var currency: Currency
     @State private var frequencyKind: FrequencyKind
-    @State private var monthlyDay: Int
     @State private var onceDate: Date
     @State private var startDate: Date
     @State private var hasEndDate: Bool
@@ -146,15 +145,12 @@ private struct RecurringEditSheet: View {
         switch item?.frequency ?? .biweekly {
         case .biweekly:
             _frequencyKind = State(initialValue: .biweekly)
-            _monthlyDay = State(initialValue: 1)
             _onceDate = State(initialValue: .now)
-        case .monthlyOnDay(let day):
+        case .monthlyOnDay:
             _frequencyKind = State(initialValue: .monthlyOnDay)
-            _monthlyDay = State(initialValue: day)
             _onceDate = State(initialValue: .now)
         case .once(let date):
             _frequencyKind = State(initialValue: .once)
-            _monthlyDay = State(initialValue: 1)
             _onceDate = State(initialValue: date)
         }
     }
@@ -165,10 +161,9 @@ private struct RecurringEditSheet: View {
                 Section {
                     LabTextField(placeholder: "Descripción", text: $title, config: PatternConfig(accentColor: .accentColor))
                     HStack {
-                        TextField("Monto", value: $amount, format: .number.precision(.fractionLength(2)))
-                            #if os(iOS)
-                            .keyboardType(.decimalPad)
-                            #endif
+                        // Coordinator (2026-09-17): `LabDecimalField` — centralized fix for
+                        // "0.00 isn't a placeholder, has to be deleted by hand".
+                        LabDecimalField(placeholder: "Monto", value: $amount)
                         Picker("Moneda", selection: $currency) {
                             Text("USD").tag(Currency.usd)
                             Text("MXN").tag(Currency.mxn)
@@ -186,13 +181,15 @@ private struct RecurringEditSheet: View {
                     case .biweekly:
                         EmptyView()
                     case .monthlyOnDay:
-                        Stepper("Día del mes: \(monthlyDay)", value: $monthlyDay, in: 1...31)
+                        EmptyView()
                     case .once:
                         DatePicker("Fecha", selection: $onceDate, displayedComponents: .date)
                     }
                 }
 
                 Section {
+                    // El día de pago mensual se deriva del día del mes de "Inicio" — no hay
+                    // un campo separado que pueda desincronizarse (feedback del usuario).
                     DatePicker("Inicio", selection: $startDate, displayedComponents: .date)
                     Toggle("Tiene fecha de fin", isOn: $hasEndDate)
                     if hasEndDate {
@@ -211,7 +208,7 @@ private struct RecurringEditSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Guardar") { save() }
-                        .disabled(title.isEmpty || !ValidationRange.amount.contains(amount) || !ValidationRange.dayOfMonth.contains(monthlyDay))
+                        .disabled(title.isEmpty || !ValidationRange.amount.contains(amount))
                 }
             }
         }
@@ -220,7 +217,8 @@ private struct RecurringEditSheet: View {
     private var resolvedFrequency: RecurringFrequency {
         switch frequencyKind {
         case .biweekly: .biweekly
-        case .monthlyOnDay: .monthlyOnDay(monthlyDay)
+        // El día de pago mensual se deriva del día del mes de "Inicio" (feedback del usuario).
+        case .monthlyOnDay: .monthlyOnDay(Calendar.current.component(.day, from: startDate))
         case .once: .once(onceDate)
         }
     }

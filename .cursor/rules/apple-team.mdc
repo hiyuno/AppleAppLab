@@ -41,6 +41,7 @@ Cuando el flujo requiera un agente, lee su skill file y adopta ese rol completam
 | Tim | `.claude/skills/tim/SKILL.md` | Analytics — TelemetryDeck/PostHog, privacidad (solo si la app lo necesita) | `ANALYTICS.md` |
 | John | `.claude/skills/john/SKILL.md` | Core ML & AI — on-device vs API, Core ML, LLMs (solo si hay features de IA) | `AI_SPEC.md` |
 | Frederick | `.claude/skills/frederick/SKILL.md` | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de mercado y competidores | `GROWTH.md` |
+| Sam | `.claude/skills/sam/SKILL.md` | Asesor de Finanzas Personales & Score Crediticio — umbrales, fórmulas de deuda/interés y estrategias con fuentes reales | `FINANCE_ADVISOR.md` |
 | `/optimize-app` (rutina) | `.claude/skills/optimize-app/SKILL.md` | Auditoría de performance — Bertrand mide con Instruments, Avie revisa el código, Steve entrega plan por etapas; `go <n>` aplica cada etapa | `PERFORMANCE_AUDIT.md` |
 | `/architecture-audit` (rutina) | `.claude/skills/architecture-audit/SKILL.md` | Auditoría de arquitectura — Avie mapea estructura real vs TRD y roadmap, 6 criterios, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración strangler por etapas; `go <n>` aplica cada etapa y actualiza TRD.md | `ARCHITECTURE_AUDIT.md` |
 | `/app-store-ready` (rutina) | `.claude/skills/app-store-ready/SKILL.md` | Preparación para App Store — Phil lidera; cuenta, build, Privacy Manifest, entitlements/sandbox, guidelines de rechazo, App Store Connect y gates cruzados; veredicto LISTA / LISTA CON FIXES / NO LISTA / NO VIABLE, plan por etapas y opciones de distribución alternativas; `go <n>` aplica cada etapa | `APP_STORE_READINESS.md` |
@@ -63,6 +64,7 @@ Agregar según necesidad:
 - **Analytics** → Tim (cuando el usuario lo pide o antes del primer lanzamiento)
 - **Features de IA** → John (solo si hay inteligencia real) → Ivan (si hay API externa)
 - **Multi-idioma** → Kim → Woz (fixes) → Phil (App Store l10n)
+- **Finanzas personales / score crediticio** → Sam (define regla/umbral con fuentes) → Avie (modelo) → Jonny (indicador) → Woz
 - **Seguridad sensible** → Ivan después de Avie, después de Woz y sobre el archive antes de Phil/Craig
 
 ## Fast Track — tiers de complejidad
@@ -83,6 +85,7 @@ Agregar según necesidad:
 - **Analytics** → Tim → Woz (implementación)
 - **Features de IA** → John → Ivan (si API externa) → Woz
 - **Localización** → Kim → Woz (fixes) → Kim (re-verifica) → Phil
+- **Finanzas personales / score crediticio** → Sam → Avie/Jonny → Woz
 - **Legal** → Kate → Steve presenta hallazgos al usuario → usuario aprueba → agentes implementan
 
 ## Cadena de documentos del proyecto
@@ -108,6 +111,7 @@ Antes de lanzar cualquier agente, lee los documentos existentes y pásalos como 
 | `AI_SPEC.md` | John | Ivan, Woz |
 | `L10N_AUDIT.md` | Kim | Woz, Phil |
 | `GROWTH.md` | Frederick | Phil, Kara |
+| `FINANCE_ADVISOR.md` | Sam | Avie, Jonny, Woz |
 | `PERFORMANCE_AUDIT.md` | Steve (rutina `/optimize-app`: Bertrand + Avie) | Woz, Bertrand, `/architecture-audit` (hallazgos 🏗) |
 | `ARCHITECTURE_AUDIT.md` | Steve (rutina `/architecture-audit`: Avie lidera) | Woz, Bertrand, Avie (actualiza TRD.md al cerrar etapas) |
 | `APP_STORE_READINESS.md` | Steve (rutina `/app-store-ready`: Phil lidera) | Woz, Kate, Ivan, Bertrand, Phil (submit) |

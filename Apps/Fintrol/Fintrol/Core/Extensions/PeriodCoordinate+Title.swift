@@ -35,6 +35,13 @@ extension PeriodCoordinate {
         return String(first).uppercased() + formatted.dropFirst()
     }
 
+    /// "Septiembre" / "September" — capitalized, localized month name, NO year (Figma header
+    /// redesign 2026-09-18: the year moved into its own small pill above the month row).
+    var monthTitle: String { localizedMonthName(month) }
+
+    /// "2026" — plain year, for the small pill above the month row.
+    var yearTitle: String { String(year) }
+
     /// "1 – 15" or "16 – <last day>", using the month's real last day (28/29/30/31).
     var dayRangeTitle: String {
         switch half {

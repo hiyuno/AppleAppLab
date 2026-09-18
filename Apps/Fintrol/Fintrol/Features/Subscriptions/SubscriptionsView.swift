@@ -6,6 +6,7 @@ struct SubscriptionsView: View {
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Query(sort: \Subscription.name) private var allSubscriptions: [Subscription]
+    @Query(sort: \SubscriptionCategoryItem.sortOrder) private var categories: [SubscriptionCategoryItem]
 
     @State private var editingSubscription: Subscription?
     @State private var isPresentingNew = false
@@ -67,13 +68,13 @@ struct SubscriptionsView: View {
 
     private func row(for subscription: Subscription) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: iconName(for: subscription.category))
+            Image(systemName: iconName(for: subscription.categoryRaw))
                 .foregroundStyle(Color.accentColor)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(subscription.name)
                     .foregroundStyle(.primary)
-                Text("Día \(subscription.paymentDay) · \(subscription.category.rawValue)")
+                Text("Día \(subscription.paymentDay) · \(categoryDisplayName(for: subscription.categoryRaw))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -85,16 +86,15 @@ struct SubscriptionsView: View {
         }
     }
 
-    private func iconName(for category: SubscriptionCategory) -> String {
-        switch category {
-        case .tools: "wrench.and.screwdriver"
-        case .entertainment: "play.tv"
-        case .apartment: "house"
-        case .work: "briefcase"
-        case .personal: "person"
-        case .hobby: "paintpalette"
-        case .investment: "chart.line.uptrend.xyaxis"
-        }
+    /// Categories are now user-editable (`SubscriptionCategoryItem`) — `categoryRaw` matches a
+    /// live category by `name`, not a fixed enum case anymore. Fallback ("tag") covers a
+    /// `Subscription` whose category was renamed/deleted since it was saved.
+    private func iconName(for categoryRaw: String) -> String {
+        categories.first { $0.name == categoryRaw }?.iconName ?? "tag"
+    }
+
+    private func categoryDisplayName(for categoryRaw: String) -> String {
+        categories.first { $0.name == categoryRaw }?.name ?? categoryRaw
     }
 }
 
@@ -102,30 +102,30 @@ private struct SubscriptionEditSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Environment(\.dismiss) private var dismiss
+    @Query(sort: \SubscriptionCategoryItem.sortOrder) private var categories: [SubscriptionCategoryItem]
+    @Query(sort: \CreditCard.name) private var allCards: [CreditCard]
 
     let subscription: Subscription?
 
     @State private var name: String
     @State private var price: Decimal
     @State private var currency: Currency
-    @State private var paymentDay: Int
     @State private var startDate: Date
     @State private var hasEndDate: Bool
     @State private var endDate: Date
-    @State private var card: String
-    @State private var category: SubscriptionCategory
+    @State private var creditCardID: UUID?
+    @State private var categoryRaw: String
 
     init(subscription: Subscription?) {
         self.subscription = subscription
         _name = State(initialValue: subscription?.name ?? "")
         _price = State(initialValue: subscription?.price ?? 0)
         _currency = State(initialValue: subscription?.currency ?? .usd)
-        _paymentDay = State(initialValue: subscription?.paymentDay ?? 1)
         _startDate = State(initialValue: subscription?.startDate ?? .now)
         _hasEndDate = State(initialValue: subscription?.endDate != nil)
         _endDate = State(initialValue: subscription?.endDate ?? .now)
-        _card = State(initialValue: subscription?.card ?? "")
-        _category = State(initialValue: subscription?.category ?? .tools)
+        _creditCardID = State(initialValue: subscription?.creditCardID)
+        _categoryRaw = State(initialValue: subscription?.categoryRaw ?? SubscriptionCategory.tools.rawValue)
     }
 
     var body: some View {
@@ -134,10 +134,9 @@ private struct SubscriptionEditSheet: View {
                 Section {
                     TextField("Nombre", text: $name)
                     HStack {
-                        TextField("Precio", value: $price, format: .number.precision(.fractionLength(2)))
-                            #if os(iOS)
-                            .keyboardType(.decimalPad)
-                            #endif
+                        // Coordinator (2026-09-17): `LabDecimalField` — centralized fix for
+                        // "0.00 isn't a placeholder, has to be deleted by hand".
+                        LabDecimalField(placeholder: "Precio", value: $price)
                         Picker("Moneda", selection: $currency) {
                             Text("USD").tag(Currency.usd)
                             Text("MXN").tag(Currency.mxn)
@@ -145,10 +144,11 @@ private struct SubscriptionEditSheet: View {
                         .pickerStyle(.segmented)
                         .frame(width: 140)
                     }
-                    Stepper("Día de pago: \(paymentDay)", value: $paymentDay, in: 1...31)
                 }
 
                 Section {
+                    // El día de pago se deriva del día del mes de "Inicio" — no hay un
+                    // campo separado que pueda desincronizarse (feedback del usuario).
                     DatePicker("Inicio", selection: $startDate, displayedComponents: .date)
                     Toggle("Tiene fecha de fin", isOn: $hasEndDate)
                     if hasEndDate {
@@ -157,9 +157,16 @@ private struct SubscriptionEditSheet: View {
                 }
 
                 Section {
-                    TextField("Tarjeta", text: $card)
-                    Picker("Categoría", selection: $category) {
-                        ForEach(SubscriptionCategory.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                    Picker("Tarjeta", selection: $creditCardID) {
+                        Text("Ninguna").tag(UUID?.none)
+                        ForEach(allCards) { card in
+                            Text(card.name).tag(card.id as UUID?)
+                        }
+                    }
+                    Picker("Categoría", selection: $categoryRaw) {
+                        ForEach(categories) { item in
+                            Text(item.name).tag(item.name)
+                        }
                     }
                 }
             }
@@ -173,27 +180,43 @@ private struct SubscriptionEditSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Guardar") { save() }
-                        .disabled(name.isEmpty || !ValidationRange.amount.contains(price) || !ValidationRange.dayOfMonth.contains(paymentDay))
+                        .disabled(name.isEmpty || !ValidationRange.amount.contains(price))
                 }
             }
         }
     }
 
+    /// `card: String` stays the persisted, human-readable value `BackupService`/
+    /// `SubscriptionImportService` round-trip (see `Subscription.card` doc) — coordinator
+    /// (2026-09-17) decision: derive it from the selected `CreditCard.name` so export/backup
+    /// keeps a legible value instead of going blank now that the field is a picker, not free
+    /// text. Empty when "Ninguna" (nil) is selected.
+    private var resolvedCardName: String {
+        guard let creditCardID else { return "" }
+        return allCards.first { $0.id == creditCardID }?.name ?? ""
+    }
+
     private func save() {
         let resolvedEndDate = hasEndDate ? endDate : nil
+        // El stepper "Día de pago" se eliminó (feedback del usuario): el día del mes de
+        // "Inicio" es la única fuente de verdad para `paymentDay`.
+        let derivedPaymentDay = Calendar.current.component(.day, from: startDate)
         if let subscription {
             subscription.name = name
             subscription.price = price
             subscription.currency = currency
-            subscription.paymentDay = paymentDay
+            subscription.paymentDay = derivedPaymentDay
             // Normalize at the DatePicker→model boundary (TRD "Decisiones de Swift" —
             // Fechas): every save goes through `civilStartDate`/`civilEndDate`.
             subscription.civilStartDate = CivilDate(from: startDate, calendar: .current)
             subscription.civilEndDate = resolvedEndDate.map { CivilDate(from: $0, calendar: .current) }
-            subscription.card = card
-            subscription.category = category
+            subscription.creditCardID = creditCardID
+            subscription.card = resolvedCardName
+            subscription.categoryRaw = categoryRaw
         } else {
-            let newSubscription = Subscription(name: name, price: price, currency: currency, paymentDay: paymentDay, startDate: startDate, endDate: resolvedEndDate, card: card, kind: .subscription, category: category)
+            let newSubscription = Subscription(name: name, price: price, currency: currency, paymentDay: derivedPaymentDay, startDate: startDate, endDate: resolvedEndDate, card: resolvedCardName, kind: .subscription, category: .tools)
+            newSubscription.creditCardID = creditCardID
+            newSubscription.categoryRaw = categoryRaw
             context.insert(newSubscription)
         }
         try? context.save()

@@ -24,6 +24,8 @@ struct PeriodView: View {
         let kind: LineKind
     }
     @State private var showJumpSheet = false
+    @State private var isPresentingCreditCardSheet = false
+    @State private var isPresentingInvestmentSheet = false
     @State private var isLoading = true
 
     // HIG_REVIEW #5 (Larry): the leading/trailing swipe gestures on a line have no visual
@@ -80,11 +82,27 @@ struct PeriodView: View {
                 content
             }
         }
+        // Coordinator (2026-09-18): applied once here, at the root of `body`, instead of inside
+        // `loadingSkeleton`/`content` separately — covers BOTH branches from the very first
+        // frame (`isLoading = true`'s default), so there is never a gap where this screen
+        // renders with SwiftUI's default white background. Fixes the white-flash "reload
+        // glitch" reported when a Home→Quincena drag commits: `selectedTab = .period` mounts a
+        // brand-new `PeriodView()` instance in `iOSRootView` (distinct from the drag's
+        // `staticPeriodLayer`), which starts `isLoading = true` again and, without this, showed
+        // `loadingSkeleton` with no background of its own for that one frame.
+        .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("")
         #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
+        // Coordinator (2026-09-17, round 2): the system nav bar (empty title, `.inline` mode)
+        // was still reserving its own fixed height above the custom fixed header — a visibly
+        // gray strip (system bar material) with too much empty air before "September 2026".
+        // `toolbarContent` only ever held an `EmptyView`, so the nav bar itself was pure
+        // overhead once the screen grew its own header — hiding it removes both the gray
+        // mismatch AND the extra vertical space in one fix. `.safeAreaInset(edge: .top)` still
+        // respects the status bar/notch/Dynamic Island on its own, independent of the nav bar,
+        // so nothing needs to change there to keep clear of it.
+        .toolbar(.hidden, for: .navigationBar)
         #endif
-        .toolbar { toolbarContent }
         .task {
             await rateStore.refresh(context: context)
             loadPeriod()
@@ -117,6 +135,26 @@ struct PeriodView: View {
                 saveLine(target.line, kind: target.kind, title: title, amount: amount, currency: currency)
             }
         }
+        .sheet(isPresented: $isPresentingCreditCardSheet) {
+            CreditCardPaymentsSheet(
+                lines: (period?.lineItems ?? []).filter { $0.origin == .creditCard }.sorted { $0.sortOrder < $1.sortOrder },
+                exchangeRate: effectiveRate,
+                onDelete: { deleteLine($0) },
+                onQuickCommit: { commitQuickEdit() },
+                onToggleActive: { toggleActive($0) },
+                onTogglePaid: { togglePaid($0) }
+            )
+        }
+        .sheet(isPresented: $isPresentingInvestmentSheet) {
+            InvestmentPaymentsSheet(
+                lines: (period?.lineItems ?? []).filter { $0.origin == .investment }.sorted { $0.sortOrder < $1.sortOrder },
+                exchangeRate: effectiveRate,
+                onDelete: { deleteLine($0) },
+                onQuickCommit: { commitQuickEdit() },
+                onToggleActive: { toggleActive($0) },
+                onTogglePaid: { togglePaid($0) }
+            )
+        }
     }
 
     // MARK: - Content
@@ -124,8 +162,6 @@ struct PeriodView: View {
     private var content: some View {
         ScrollView {
             VStack(spacing: 24) {
-                header
-
                 if isLargeAccessibilitySize {
                     VStack(spacing: 24) {
                         blocks
@@ -140,15 +176,15 @@ struct PeriodView: View {
                             SobranteBadge(sobrante: sobrante)
                         }
                         .accessibilityElement(children: .contain)
-                        .accessibilityLabel("Columna de ingresos y gastos")
+                        .accessibilityLabel(String(localized: "period_two_column_income_a11y", defaultValue: "Income and expenses column"))
 
                         summaryPanel
                             .frame(width: 280)
                             .accessibilityElement(children: .contain)
-                            .accessibilityLabel("Columna de resumen")
+                            .accessibilityLabel(String(localized: "period_two_column_summary_a11y", defaultValue: "Summary column"))
                     }
                     .accessibilityElement(children: .contain)
-                    .accessibilityLabel("Diseño de dos columnas")
+                    .accessibilityLabel(String(localized: "period_two_column_layout_a11y", defaultValue: "Two-column layout"))
                     #else
                     blocks
                     SobranteBadge(sobrante: sobrante)
@@ -156,8 +192,65 @@ struct PeriodView: View {
                     #endif
                 }
             }
-            .padding(16)
+            // Coordinator (2026-09-17): horizontal margin explicitly 10pt (was 16pt). Matches
+            // `stickyHeader`'s own horizontal padding below so the fixed header stays aligned
+            // with the scrolling content under it.
+            .padding(.horizontal, 10)
+            // Coordinator (2026-09-17, round 4): the gap between the fixed header's pill and
+            // "INCOME" was way too large — reduced from 16pt (applied uniformly top+bottom via
+            // a single `.padding(.vertical, 16)`) to 12pt on top specifically, matching the
+            // 12pt gap already standardized elsewhere on this screen (header-to-first-card,
+            // last-card-to-TOTAL). Bottom keeps its original 16pt — only the top gap changed.
+            .padding(.top, 12)
+            .padding(.bottom, 16)
         }
+        // Coordinator (2026-09-17): the Quincena header (title/chevrons/range pill) is now
+        // fixed above the scroll content instead of scrolling away with it — `.safeAreaInset`
+        // both pins it AND automatically reserves exactly its own height as extra top inset
+        // for the ScrollView's content, so nothing needs a hand-tuned padding-top to avoid
+        // starting hidden underneath it (the manual-overlay/ZStack alternative would need
+        // that arithmetic redone by hand any time the header's height changes).
+        .safeAreaInset(edge: .top, spacing: 0) {
+            stickyHeader
+        }
+    }
+
+    /// `header` + an opaque background so it fully occludes content scrolling underneath.
+    ///
+    /// Coordinator (2026-09-17, rounds 1-3): tried a gradient "scrim" tail (`.overlay`, offset
+    /// below the header) to fade scrolled content out gradually instead of a hard clip. This
+    /// was the wrong technique: the tail is STATIC (part of the fixed `.safeAreaInset` layer,
+    /// not tied to scroll position), so any tail tall/opaque enough to hide a rubber-band
+    /// overscroll glimpse also permanently paints over the top of the actual scroll content —
+    /// which is exactly what was hiding "INCOME" and reading as "too much gray space" (a
+    /// static 80pt semi-opaque rectangle sitting on top of it). Reverted to a plain solid
+    /// background that exactly matches the header's own bounds, nothing extra bleeding past
+    /// it. `.safeAreaInset` already keeps normal scroll content from rendering on top of this
+    /// region on its own; the only edge case this doesn't cover is a brief rubber-band
+    /// overscroll glimpse, which is a much smaller cosmetic issue than hiding "INCOME".
+    ///
+    /// Coordinator (2026-09-17, round 5): brought the fade back, this time genuinely contained
+    /// — it's a layer INSIDE this same `.background`, which `.background` always sizes to
+    /// match `header`'s own frame exactly. The gradient occupies only the bottom 14pt of that
+    /// fixed frame; it cannot extend past the header's own bounds into the `ScrollView` because
+    /// there's no separate `.overlay`/offset placing it outside that frame this time.
+    private var stickyHeader: some View {
+        header
+            // Coordinator (2026-09-17): matches `content`'s 10pt horizontal margin.
+            .padding(.horizontal, 10)
+            .padding(.top, 4)
+            .padding(.bottom, 8)
+            .background(alignment: .bottom) {
+                ZStack(alignment: .bottom) {
+                    Color("AppBackground")
+                    LinearGradient(
+                        colors: [Color("AppBackground"), Color("AppBackground").opacity(0)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 14)
+                }
+            }
     }
 
     private var blocks: some View {
@@ -165,8 +258,8 @@ struct PeriodView: View {
             if !hasSeenSwipeHint {
                 swipeDiscoverabilityHint
             }
-            lineBlock(title: "INCOME", kind: .income)
-            lineBlock(title: "EXPENSES", kind: .expense)
+            lineBlock(title: String(localized: "period_income_header", defaultValue: "INCOME"), kind: .income)
+            lineBlock(title: String(localized: "period_expenses_header", defaultValue: "EXPENSES"), kind: .expense)
         }
     }
 
@@ -174,7 +267,7 @@ struct PeriodView: View {
         HStack(spacing: 10) {
             Image(systemName: "hand.draw")
                 .foregroundStyle(Color.accentColor)
-            Text("Desliza una línea: hacia la derecha para activar/desactivar, hacia la izquierda para marcarla pagada (y de nuevo para eliminar/editar).")
+            Text(String(localized: "period_swipe_hint_message", defaultValue: "Swipe a line: right to activate or deactivate, left to mark it as paid (swipe again to delete or edit)."))
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Spacer(minLength: 0)
@@ -185,7 +278,7 @@ struct PeriodView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Cerrar aviso")
+            .accessibilityLabel(String(localized: "period_swipe_hint_dismiss_a11y", defaultValue: "Dismiss hint"))
         }
         .padding(12)
         // Larry (2026-09-17): a dismissible inline tip banner (12pt padding), not a card in
@@ -213,40 +306,47 @@ struct PeriodView: View {
                     .frame(width: 29, height: 29)
             }
             .buttonStyle(.glass)
-            .accessibilityLabel("Quincena anterior")
+            .accessibilityLabel(String(localized: "period_previous_a11y", defaultValue: "Previous period"))
             .disabled(coordinate <= earliestCoordinate)
 
             Spacer()
 
-            VStack(spacing: 2) {
+            VStack(spacing: 4) {
                 Button {
                     showJumpSheet = true
                 } label: {
-                    VStack(spacing: 2) {
-                        Text(coordinate.monthYearTitle)
+                    VStack(spacing: 6) {
+                        // Figma header redesign (2026-09-18, node 128:66): the year sits above
+                        // the month row as plain text, no longer appended to the month text.
+                        // Coordinator (2026-09-18): pill container removed per user request —
+                        // same size/weight/color as before, just no background/Capsule.
+                        Text(coordinate.yearTitle)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.white)
+
+                        Text(coordinate.monthTitle)
                             .font(.title2.weight(.semibold))
                             .foregroundStyle(.primary)
                         // Coordinator (2026-09-16, DESIGN_LIQUID.md, Jonny): the separate
                         // "Current"/"Proyección" badge is gone — this day-range pill is now
-                        // the ONLY indicator. Today's period → solid green pill, white bold
-                        // text (same green as the positive sobrante). Anything else (past OR
-                        // future, no distinction) → transparent background, subtle border,
-                        // `.secondary` text, no extra label.
+                        // the ONLY indicator. Today's period → bold green text, no fill.
+                        // Anything else (past OR future, no distinction) → `.secondary` text,
+                        // no extra label.
+                        // Coordinator (2026-09-18, user request): removed the solid green
+                        // `.fill` — the pill shape stays (padding + `Capsule` stroke), but it's
+                        // transparent now; the green moved from the background to the text.
                         Text(coordinate.dayRangeTitle)
                             .font(.subheadline.weight(isTodayCoordinate ? .bold : .regular))
-                            .foregroundStyle(isTodayCoordinate ? .white : .secondary)
+                            .foregroundStyle(isTodayCoordinate ? Color.green : .secondary)
                             .padding(.horizontal, 10).padding(.vertical, 3)
-                            .background(
-                                Capsule().fill(isTodayCoordinate ? Color.green : Color.clear)
-                            )
                             .overlay(
-                                Capsule().strokeBorder(isTodayCoordinate ? Color.clear : Color.secondary.opacity(0.3))
+                                Capsule().strokeBorder(isTodayCoordinate ? Color.green.opacity(0.5) : Color.secondary.opacity(0.3))
                             )
                     }
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Fecha: \(coordinate.accessibleTitle)\(isTodayCoordinate ? ", quincena actual" : "")")
-                .accessibilityHint("Toca para saltar a otra quincena")
+                .accessibilityLabel("Fecha: \(coordinate.accessibleTitle)\(isTodayCoordinate ? String(localized: "period_date_a11y_current_suffix", defaultValue: ", current period") : "")")
+                .accessibilityHint(String(localized: "period_date_a11y_hint", defaultValue: "Tap to jump to another period"))
             }
 
             Spacer()
@@ -263,14 +363,9 @@ struct PeriodView: View {
                     .frame(width: 29, height: 29)
             }
             .buttonStyle(.glass)
-            .accessibilityLabel("Quincena siguiente")
+            .accessibilityLabel(String(localized: "period_next_a11y", defaultValue: "Next period"))
         }
         .padding(.horizontal, 4)
-    }
-
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .principal) { EmptyView() }
     }
 
     private func lineBlock(title: String, kind: LineKind) -> some View {
@@ -278,20 +373,47 @@ struct PeriodView: View {
             .filter { $0.kind == kind }
             .sorted { $0.sortOrder < $1.sortOrder }
 
-        // Coordinator (2026-09-15): "INCOME"/"EXPENSES" move out of the card entirely — a
-        // grouped-list-style section header sitting above it (iOS grouped table convention:
-        // caption/footnote, uppercase, secondary, left-aligned with the card's own padding,
-        // ~8pt gap), not a title inside the card. The card itself now starts directly with
-        // the rows. `accessibilityHidden` stays on the header text — the card's own
-        // `.accessibilityLabel` below still announces "Ingresos"/"Gastos" for VoiceOver, so
-        // this is not a regression, just moved with the rest of the visual.
-        // Coordinator (2026-09-17): header-to-first-card gap standardized to 12pt to match
-        // the last-card-to-TOTAL gap below (`card(...)`'s TOTAL row top padding) — both were
-        // previously different (8pt here vs. 18pt there).
-        return VStack(alignment: .leading, spacing: 12) {
+        return card(title: title, kind: kind, lines: lines)
+    }
+
+    // Coordinator (2026-09-18, user's Figma review): INCOME and EXPENSES now each get their
+    // OWN enclosing container — the "INCOME"/"EXPENSES" label + "+" button, the individual
+    // line cards (still `LineItemRow`'s own nested card style, unchanged), and "TOTAL
+    // INCOME"/"TOTAL EXPENSES" all live inside the SAME card now, instead of sitting loose
+    // directly on the root background. Root `AppBackground` is pure black in dark mode now,
+    // so this container needs to visually read as a distinct surface on top of it.
+    //
+    // Coordinator (2026-09-18, read access restored to the Figma file — exact values pulled
+    // from node 12:7 "income card" via `get_design_context`): supersedes the earlier
+    // `.ultraThinMaterial.opacity(0.5)` placeholder used while the file was still read-locked.
+    // The real design uses a solid `PeriodSectionCardBackground` fill (#161617 dark) — a
+    // dedicated color asset, not `AppBackgroundSecondary` (that one is still pure black in
+    // dark mode and wouldn't read as distinct from the root). Sobrante/Next Month/Mandar stay
+    // loose below, untouched.
+    private func card(title: String, kind: LineKind, lines: [LineItem]) -> some View {
+        // TRD/DESIGN_LIQUID.md "Credit Cards" (2026-09-17): the ONLY row in Quincena that
+        // represents more than one `LineItem` — `origin == .creditCard` lines collapse into a
+        // single "Credit Cards Payments" navigation row (EXPENSES only), purely a presentation
+        // grouping. Each card still keeps its own real `LineItem`/`isPaid`/`paidAt` — nothing
+        // aggregated in `Core/`.
+        let creditCardLines = kind == .expense ? lines.filter { $0.origin == .creditCard } : []
+        // "Agrupar inversiones" (2026-09-17): same aggregation pattern as Credit Cards — GBM/
+        // Webull/etc. (`origin == .investment`) collapse into a single "Investments" navigation
+        // row (EXPENSES only). `regularLines` now excludes BOTH aggregated origins.
+        let investmentLines = kind == .expense ? lines.filter { $0.origin == .investment } : []
+        let regularLines = kind == .expense ? lines.filter { $0.origin != .creditCard && $0.origin != .investment } : lines
+        let creditCardTotal = creditCardLines.reduce(Decimal(0)) { $0 + $1.amount }
+        let investmentTotal = investmentLines.reduce(Decimal(0)) { $0 + $1.amount }
+
+        return VStack(alignment: .leading, spacing: 24) {
             // Coordinator (2026-09-16, user's Figma review): "+" reverts to the section
             // header, trailing "INCOME"/"EXPENSES" — the below-the-cards spot from the
             // previous pass is reverted per explicit instruction.
+            // Coordinator (2026-09-18): now the top row INSIDE the container instead of a
+            // loose title above it — no more +8pt indent needed to line up with the nested
+            // row cards' inner text, since both the header and the rows now sit inside the
+            // SAME 16pt container padding (an outer-edge-to-outer-edge relationship, not the
+            // old loose-title-to-inner-text one).
             HStack {
                 Text(title)
                     // Coordinator (2026-09-17): no longer distinct from "TOTAL INCOME"/"TOTAL
@@ -315,59 +437,103 @@ struct PeriodView: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel(kind == .income ? "Agregar ingreso" : "Agregar gasto")
+                .accessibilityLabel(kind == .income ? String(localized: "period_add_income_a11y", defaultValue: "Add income") : String(localized: "period_add_expense_a11y", defaultValue: "Add expense"))
             }
-            // Coordinator (2026-09-17): flush with the line cards' own left edge (no extra
-            // indent) — this header's own `.padding(.horizontal, 16)` was on top of the
-            // screen's outer 16pt padding, pushing it 16pt further right than the cards below
-            // it (which only inherit the outer padding). Removed; "TOTAL INCOME"/"TOTAL
-            // EXPENSES" below is the only element that keeps a small indent now.
 
-            card(title: title, kind: kind, lines: lines)
-        }
-    }
+            // DESIGN_LIQUID.md § "Bloques INCOME/EXPENSES" (Figma, updated 2026-09-15 —
+            // supersedes the single-card-with-dividers layout): each line is still its own
+            // nested card (see `LineItemRow`), stacked with an 8pt gap, no `Divider()` between
+            // them — the gap itself is the separator. This whole stack now lives inside the
+            // outer INCOME/EXPENSES container (2026-09-18) rather than directly on the root
+            // background.
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(regularLines) { line in
+                    LineItemRow(
+                        line: line,
+                        exchangeRate: effectiveRate,
+                        onStartEditing: { captureTarget = CaptureTarget(line: line, kind: kind) },
+                        onDelete: line.origin == .manual ? { deleteLine(line) } : nil,
+                        onQuickCommit: { commitQuickEdit() },
+                        onToggleActive: { toggleActive(line) },
+                        onTogglePaid: { togglePaid(line) }
+                    )
+                }
 
-    // DESIGN_LIQUID.md § "Bloques INCOME/EXPENSES" (Figma, updated 2026-09-15 — supersedes
-    // the single-card-with-dividers layout): each line is its own card now (see
-    // `LineItemRow`), stacked with an 8pt gap, no `Divider()` between them — the gap itself
-    // is the separator. "⊕ Agregar ingreso/gasto" sits below the last card as plain
-    // `.secondary` text directly on the background (no card of its own); tapping it turns the
-    // capture into a new card of the same style via the normal editing-row path. TOTAL
-    // INCOME/EXPENSES sits below that, also directly on the background, no card.
-    private func card(title: String, kind: LineKind, lines: [LineItem]) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            ForEach(lines) { line in
-                LineItemRow(
-                    line: line,
-                    exchangeRate: effectiveRate,
-                    onStartEditing: { captureTarget = CaptureTarget(line: line, kind: kind) },
-                    onDelete: line.origin == .manual ? { deleteLine(line) } : nil,
-                    onQuickCommit: { commitQuickEdit() },
-                    onToggleActive: { toggleActive(line) },
-                    onTogglePaid: { togglePaid(line) }
-                )
+                if !creditCardLines.isEmpty {
+                    Button {
+                        isPresentingCreditCardSheet = true
+                    } label: {
+                        HStack {
+                            Text(String(localized: "period_credit_cards_row_title", defaultValue: "Credit Cards Payments"))
+                                .font(.body)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(creditCardTotal.currencyString())
+                                .font(.body.weight(.semibold))
+                                .monospacedDigit()
+                                .foregroundStyle(.primary)
+                        }
+                        .padding(16)
+                        .background(Color("AppBackgroundSecondary"))
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    // DESIGN_LIQUID.md: pure navigation, no swipe/contextMenu/palomita — the
+                    // state lives per-card inside the sheet, not on this row.
+                    .accessibilityLabel(String(localized: "period_credit_cards_row_a11y", defaultValue: "Credit card payments, \(creditCardTotal.currencyString())"))
+                    .accessibilityHint(String(localized: "period_credit_cards_row_a11y_hint", defaultValue: "Double-tap to see the breakdown by card"))
+                }
+
+                if !investmentLines.isEmpty {
+                    Button {
+                        isPresentingInvestmentSheet = true
+                    } label: {
+                        HStack {
+                            Text(String(localized: "period_investments_row_title", defaultValue: "Investments"))
+                                .font(.body)
+                                .foregroundStyle(.primary)
+                            Spacer()
+                            Text(investmentTotal.currencyString())
+                                .font(.body.weight(.semibold))
+                                .monospacedDigit()
+                                .foregroundStyle(.primary)
+                        }
+                        .padding(16)
+                        .background(Color("AppBackgroundSecondary"))
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                    // Same pattern as the Credit Cards row: pure navigation, no
+                    // swipe/contextMenu/palomita — the state lives per-line inside the sheet,
+                    // not on this row.
+                    .accessibilityLabel(String(localized: "period_investments_row_a11y", defaultValue: "Investments, \(investmentTotal.currencyString())"))
+                    .accessibilityHint(String(localized: "period_investments_row_a11y_hint", defaultValue: "Double-tap to see the breakdown by account"))
+                }
             }
 
             HStack {
-                // `p small` (`.caption` Bold, 12pt) — same token as the section header above.
-                Text(kind == .income ? "TOTAL INCOME" : "TOTAL EXPENSES")
+                // `p small` (`.caption` Bold, 12pt) — same token as the header above.
+                Text(kind == .income ? String(localized: "period_total_income", defaultValue: "TOTAL INCOME") : String(localized: "period_total_expenses", defaultValue: "TOTAL EXPENSES"))
                     .font(.caption.weight(.bold))
                 Spacer()
                 Text(total(for: kind).currencyString())
                     .font(.caption.weight(.bold))
                     .monospacedDigit()
             }
-            // Coordinator (2026-09-17): the enclosing VStack's own `spacing: 8` (unchanged —
-            // also governs the gap between line cards, not touched) already contributes 8pt
-            // here; this top padding supplies the remaining 4pt so the total gap between the
-            // last card and this row is 12pt, matching the header-to-first-card gap above.
-            .padding(.top, 4)
-            // Coordinator (2026-09-17): the only element on this screen that keeps a small
-            // indent past the cards' left edge — the header above is now flush (no indent).
-            .padding(.horizontal, 8)
         }
+        // Coordinator (2026-09-18): the container's own padding — 16pt is the standard card
+        // padding already used everywhere else in the app (`LoanDetailView`,
+        // `InvestmentsView`, `LineItemRow`'s own nested cards) — wraps the header, the line
+        // cards and the TOTAL row together as one surface.
+        .padding(16)
+        // Coordinator (2026-09-18, Figma node 12:7 via `get_design_context`, exact values):
+        // solid `PeriodSectionCardBackground` (#161617 dark) instead of `.ultraThinMaterial`,
+        // and 24pt corner radius instead of 20pt — supersedes the material/20pt placeholder
+        // used before read access to this node was available.
+        .background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(Color("PeriodSectionCardBackground")))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)
-        .accessibilityLabel(kind == .income ? "Ingresos" : "Gastos")
+        .accessibilityLabel(kind == .income ? String(localized: "period_income_a11y", defaultValue: "Income") : String(localized: "period_expenses_a11y", defaultValue: "Expenses"))
     }
 
     // Coordinator (2026-09-15, Figma tSUzh4zfCpDPYT5A88otst node 8:2): the "Tipo de cambio"
@@ -395,7 +561,7 @@ struct PeriodView: View {
             }
         }
         .padding(16)
-        .accessibilityLabel("Cargando quincena")
+        .accessibilityLabel(String(localized: "period_loading_a11y", defaultValue: "Loading period"))
     }
 
     // MARK: - Actions

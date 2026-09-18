@@ -49,6 +49,12 @@ struct SettingsView: View {
                     }
                 }
 
+                NavigationLink {
+                    SubscriptionCategoriesView()
+                } label: {
+                    Text("Categorías de suscripciones")
+                }
+
                 Picker("Apariencia", selection: Binding(
                     get: { AppAppearance(rawValue: appearanceRaw) ?? .system },
                     set: { appearanceRaw = $0.rawValue }
@@ -98,6 +104,24 @@ struct SettingsView: View {
                     isPresentingBackupImporter = true
                 } label: {
                     Text("Importar respaldo completo…")
+                }
+            }
+
+            // Coordinator (2026-09-17): own section, out of "Preferencias" — room for more
+            // card-specific settings later without crowding the general prefs section.
+            Section("Credit Cards") {
+                // TRD "Credit Cards" (2026-09-17): global preference, applies to every card —
+                // read only here/`PeriodView` and passed as a plain parameter into
+                // `reprojectCreditCard`, never read from `@AppStorage` inside `Core/`.
+                NavigationLink {
+                    CreditCardPaymentDateRuleView()
+                } label: {
+                    HStack {
+                        Text("Regla de pago de tarjetas")
+                        Spacer()
+                        Text(creditCardDateRuleSummary)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
 
@@ -273,6 +297,16 @@ struct SettingsView: View {
 
     @AppStorage("fintrol.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
     @AppStorage("fintrol.historyMonthsBack") private var historyMonthsBack = 1
+    @AppStorage("fintrol.creditCardPaymentDateRuleKind") private var creditCardDateRuleKind = 2
+    @AppStorage("fintrol.creditCardPaymentDateRuleDays") private var creditCardDateRuleDays = 5
+
+    private var creditCardDateRuleSummary: String {
+        switch creditCardDateRuleKind {
+        case 0: return "On the payment date"
+        case 1: return "On the cutoff date"
+        default: return "\(creditCardDateRuleDays) days before cutoff"
+        }
+    }
 
     private var exchangeRateSummary: String {
         guard let rate = rateStore.currentRate else { return "—" }

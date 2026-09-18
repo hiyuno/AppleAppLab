@@ -39,6 +39,13 @@ struct DeveloperCardsView: View {
         DensitySample(padding: 24, label: "Grande"),
     ]
 
+    private let largeRadiusSamples: [RadiusSample] = [
+        RadiusSample(radius: 28, label: "—"),
+        RadiusSample(radius: 32, label: "—"),
+        RadiusSample(radius: 36, label: "—"),
+        RadiusSample(radius: 40, label: "—"),
+    ]
+
     var body: some View {
         List {
             Section("Radio") {
@@ -58,7 +65,23 @@ struct DeveloperCardsView: View {
                 ForEach(densitySamples) { sample in
                     VStack(alignment: .leading, spacing: 6) {
                         sampleCard(cornerRadius: 20, padding: sample.padding)
-                        Text("Padding \(Int(sample.padding))pt — \(sample.label)")
+                        Text("Padding \(Int(sample.padding))pt · Radio 20pt — \(sample.label)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .listRowSeparator(.hidden)
+                    .padding(.vertical, 4)
+                }
+            }
+
+            // Coordinator (2026-09-17): extra radius options specifically at the "Grande"
+            // density's 24pt padding — larger radii read differently against more internal
+            // whitespace than they do at the 16pt regular padding used in "Radio" above.
+            Section("Radio grande (padding 24pt)") {
+                ForEach(largeRadiusSamples) { sample in
+                    VStack(alignment: .leading, spacing: 6) {
+                        sampleCard(cornerRadius: sample.radius, padding: 24)
+                        Text("\(Int(sample.radius))pt" + (sample.label == "—" ? "" : " — \(sample.label)"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

@@ -199,6 +199,13 @@ public enum LoanEngine {
 
     private static let revolvingMaxYears = 10
 
+    /// TRD "Credit Cards" (2026-09-17): extracted so `CreditCardEngine` can reuse the exact
+    /// same monthly-interest-on-revolving-balance formula instead of reimplementing it —
+    /// `interés = saldo × APR/12`, rounded to cents. Pure.
+    public static func monthlyRevolvingInterest(balance: Decimal, apr: Decimal) -> Decimal {
+        roundToCents(balance * (apr / 12))
+    }
+
     /// Pure, deterministic — same guarantees as `schedule`. `actualPayments` are real payments
     /// already registered (an edited `LineItem`, keyed by that installment's `CivilDate`);
     /// every date without one falls back to `expectedPayment`. A period straddling both real
@@ -213,8 +220,7 @@ public enum LoanEngine {
     ) -> RevolvingResult {
         guard principal > 0 else { return RevolvingResult(rows: [], neverEnds: false) }
 
-        let monthlyRate = apr / 12
-        let initialMonthInterest = roundToCents(principal * monthlyRate)
+        let initialMonthInterest = monthlyRevolvingInterest(balance: principal, apr: apr)
         // TRD: "expectedPayment <= el interés mensual del saldo inicial" — compared against
         // what actually lands against the balance in a month, so for `.biweekly` (2 payments/
         // month) this is `expectedPayment * 2`, not a single period's payment; otherwise a
@@ -248,7 +254,7 @@ public enum LoanEngine {
 
             var interestThisRow: Decimal = 0
             if date.year != lastMonthYear || date.month != lastMonth {
-                interestThisRow = roundToCents(balance * monthlyRate)
+                interestThisRow = monthlyRevolvingInterest(balance: balance, apr: apr)
                 guard !interestThisRow.isNaN else { break }
                 balance += interestThisRow
                 lastMonthYear = date.year

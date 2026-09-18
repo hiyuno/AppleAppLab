@@ -9,67 +9,109 @@ struct RecurringHubView: View {
     @Query private var recurringItems: [RecurringItem]
     @Query private var subscriptions: [Subscription]
     @Query private var loans: [Loan]
+    @Query private var creditCards: [CreditCard]
 
     private var incomeCount: Int { recurringItems.filter { $0.kind == .income && $0.category != .investment }.count }
     private var expenseCount: Int { recurringItems.filter { $0.kind == .expense && $0.category != .investment }.count }
     private var serviceCount: Int { subscriptions.filter { $0.kind == .service }.count }
     private var subscriptionCount: Int { subscriptions.filter { $0.kind == .subscription }.count }
     private var loanCount: Int { loans.count }
+    private var creditCardCount: Int { creditCards.filter(\.isActive).count }
     private var investmentCount: Int { recurringItems.filter { $0.category == .investment }.count }
 
     var body: some View {
-        // Coordinator (2026-09-15, mockup round 4): grouped into 3 sections whose headers
-        // are the literal strings the user chose — "INCOME"/"EXPENSES"/"OTHERS" — NOT a
-        // semantic recategorization of the 6 rows (explicitly: Servicios/Suscripciones/
-        // Préstamos live under "EXPENSES" even though none of them are income vs. expense
-        // classifications on their own; do not "fix" this grouping to be more logical).
+        // Coordinator (2026-09-17): "Gastos recurrentes" moved from "INCOME" to "EXPENSES"
+        // (first row there, before Servicios/Suscripciones/Préstamos) — corrects the earlier
+        // literal-string grouping (2026-09-15) that put it under INCOME despite being an
+        // expense; INCOME now holds only "Ingresos recurrentes". DESIGN_LIQUID.md § Hub
+        // updated to match.
         List {
             Section {
                 NavigationLink {
                     RecurringListView(kind: .income)
                 } label: {
-                    row(title: "Ingresos recurrentes", systemImage: "arrow.down.circle", count: incomeCount)
-                }
-                NavigationLink {
-                    RecurringListView(kind: .expense)
-                } label: {
-                    row(title: "Gastos recurrentes", systemImage: "arrow.up.circle", count: expenseCount)
+                    row(
+                        title: String(localized: "hub_row_recurring_income", defaultValue: "Recurring income"),
+                        description: String(localized: "hub_row_recurring_income_desc", defaultValue: "Income that repeats every period, like your salary"),
+                        systemImage: "arrow.down.circle",
+                        count: incomeCount
+                    )
                 }
             } header: {
-                sectionHeader("INCOME")
+                sectionHeader(String(localized: "hub_section_income", defaultValue: "INCOME"))
             }
 
             Section {
                 NavigationLink {
+                    RecurringListView(kind: .expense)
+                } label: {
+                    row(
+                        title: String(localized: "hub_row_recurring_expense", defaultValue: "Recurring expenses"),
+                        description: String(localized: "hub_row_recurring_expense_desc", defaultValue: "Expenses that repeat automatically each period"),
+                        systemImage: "arrow.up.circle",
+                        count: expenseCount
+                    )
+                }
+                NavigationLink {
                     ServicesView()
                 } label: {
-                    row(title: "Servicios", systemImage: "house.fill", count: serviceCount)
+                    row(
+                        title: String(localized: "hub_row_services", defaultValue: "Services"),
+                        description: String(localized: "hub_row_services_desc", defaultValue: "Fixed monthly bills — rent, utilities, internet"),
+                        systemImage: "house.fill",
+                        count: serviceCount
+                    )
                 }
                 NavigationLink {
                     SubscriptionsView()
                 } label: {
-                    row(title: "Suscripciones", systemImage: "repeat", count: subscriptionCount)
+                    row(
+                        title: String(localized: "hub_row_subscriptions", defaultValue: "Subscriptions"),
+                        description: String(localized: "hub_row_subscriptions_desc", defaultValue: "Recurring subscriptions — streaming, apps, memberships"),
+                        systemImage: "repeat",
+                        count: subscriptionCount
+                    )
                 }
                 NavigationLink {
                     LoansView()
                 } label: {
-                    row(title: "Préstamos", systemImage: "banknote", count: loanCount)
+                    row(
+                        title: String(localized: "hub_row_loans", defaultValue: "Loans"),
+                        description: String(localized: "hub_row_loans_desc", defaultValue: "Loans you're paying off or that are being paid to you"),
+                        systemImage: "banknote",
+                        count: loanCount
+                    )
+                }
+                NavigationLink {
+                    CreditCardsView()
+                } label: {
+                    row(
+                        title: String(localized: "hub_row_credit_cards", defaultValue: "Credit Cards"),
+                        description: String(localized: "hub_row_credit_cards_desc", defaultValue: "Manage balances, APR, and payment dates"),
+                        systemImage: "creditcard.fill",
+                        count: creditCardCount
+                    )
                 }
             } header: {
-                sectionHeader("EXPENSES")
+                sectionHeader(String(localized: "hub_section_expenses", defaultValue: "EXPENSES"))
             }
 
             Section {
                 NavigationLink {
                     InvestmentsView()
                 } label: {
-                    row(title: "Inversiones", systemImage: "chart.line.uptrend.xyaxis", count: investmentCount)
+                    row(
+                        title: String(localized: "hub_row_investments", defaultValue: "Investments"),
+                        description: String(localized: "hub_row_investments_desc", defaultValue: "Recurring contributions to your investments"),
+                        systemImage: "chart.line.uptrend.xyaxis",
+                        count: investmentCount
+                    )
                 }
             } header: {
-                sectionHeader("OTHERS")
+                sectionHeader(String(localized: "hub_section_others", defaultValue: "OTHERS"))
             }
         }
-        .navigationTitle("Recurrentes y pagos")
+        .navigationTitle(String(localized: "hub_title", defaultValue: "Recurring & Payments"))
     }
 
     // Same header style already used in Ajustes (SettingsView): caption, uppercase, secondary.
@@ -80,17 +122,28 @@ struct RecurringHubView: View {
             .foregroundStyle(.secondary)
     }
 
-    private func row(title: String, systemImage: String, count: Int) -> some View {
+    // Layout: icon, then title + one-line description stacked (description subordinate to
+    // title — .caption/.secondary, same family used for the count today). The item count
+    // moves to a trailing badge before the chevron so it stays legible without competing
+    // with the description for the same line; .tertiary keeps it clearly the least important
+    // piece of text in the row. "Regular" density from STYLE_BRIEF.md is preserved — still one
+    // row per category, no extra vertical padding added.
+    private func row(title: String, description: String, systemImage: String, count: Int) -> some View {
         HStack(spacing: 12) {
             Image(systemName: systemImage)
                 .foregroundStyle(Color.accentColor)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                Text(count == 1 ? "1 elemento" : "\(count) elementos")
+                Text(description)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Spacer(minLength: 8)
+            Text(String(localized: "hub_item_count", defaultValue: "\(count) items"))
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+                .monospacedDigit()
         }
     }
 }

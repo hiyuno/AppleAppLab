@@ -1,7 +1,7 @@
 # DESIGN_LIQUID — Fintrol
 
 > Estilo para iOS 26+ / macOS 26+ (Tahoe, Liquid Glass).
-> Fuente de verdad de diseño. Última actualización: 2026-09-15.
+> Fuente de verdad de diseño. Última actualización: 2026-09-17.
 > Todo lo que no está aquí no está decidido.
 
 ---
@@ -30,7 +30,7 @@
 | Rol | Token SwiftUI | Hex Light | Hex Dark |
 |-----|--------------|-----------|----------|
 | Fondo principal | `Color(.systemBackground)` | #FFFFFF | #323232 (fondo del tema Fintrol, no negro puro) |
-| Fondo secundario | `Color(.secondarySystemBackground)` | #F2F2F7 | #2A2A2A |
+| Fondo secundario | `Color(.secondarySystemBackground)` | #F2F2F7 | #000000 |
 | Superficie / card | `Color(.tertiarySystemBackground)` | #FFFFFF | #3C3C3C |
 | Texto primario | `.primary` | #000000 | #FFFFFF |
 | Texto secundario | `.secondary` | #3C3C43 @60% | #EBEBF5 @60% |
@@ -145,6 +145,7 @@ Se formalizaron como **Text Styles reales de Figma** (no cajas de muestra suelta
 | `p normal` | `subheadline` | 15pt Regular | Texto secundario/metadata — frecuencia, día de pago (`.subheadline`, 6 ocurrencias) |
 | `p small` | `caption` (caption1) | 12pt Regular | El texto pequeño más usado en la app — labels, captions (`.caption`, 31 + 5 con peso Semibold). **Nuevo uso confirmado:** también reemplaza al `.system(size: 14, weight: .bold)` de los encabezados de sección INCOME/EXPENSES — ver nota de migración abajo |
 | `p tiny` | `caption2` | 11pt Regular | Badges de categoría/origen (`.caption2`, 5 ocurrencias) |
+| `h5` | ⚠️ **ninguno — no es Dynamic Type** | 14pt Semibold, **tamaño fijo** | `.system(size: 14, weight: .semibold)` — decisión explícita del usuario. No escala con Ajustes de Texto/Dynamic Type, a diferencia de los 8 estilos anteriores. Misma naturaleza de excepción que el `.system(size: 14, weight: .bold)` que migró a `p small` (ver nota 3 más abajo) — aquí el usuario decidió lo contrario: mantenerlo como tamaño fijo en vez de migrarlo a un Dynamic Type style |
 
 **Decisiones cerradas por el usuario (ya no son preguntas abiertas):**
 1. "p big" se queda en `body` 17pt, sin cambio — no se reserva un tamaño nuevo.
@@ -246,7 +247,7 @@ En la práctica, Woz consume esto a través de `PatternConfig` del tema Fintrol 
 |---|---|---|---|
 | Ventana principal sobre wallpaper (fondo de `NavigationSplitView`) | Liquid Glass `regular` en sidebar; contenido central en `AppBackground` sólido (#323232), no glass | Sin capa neutral adicional — el fondo sólido del tema ya da el contraste que un `clear` necesitaría simular | Fintrol es una app de trabajo con números todo el tiempo en pantalla; un fondo `clear` que deja ver el wallpaper detrás de columnas de dinero compite con la legibilidad — se prioriza la lectura sobre el efecto atmosférico |
 | Cards internas (bloques INCOME/EXPENSES, panel resumen, Suscripciones/Recurrentes) | Frost del tema (no glass) | Fill `AppBackground.tertiary` ~`#3C3C3C`, sin borde adicional — la separación la da el material Frost, no un borde | Frost aporta la textura translúcida de marca sin competir con Liquid Glass de la sidebar |
-| Campo de texto (monto, descripción, tipo de cambio manual) | Fill `AppBackground.secondary` (~#2A2A2A) opaco | Borde de foco `accentBorder` (#FF7E4D dark), 1.5pt | El foco usa el token de acento de Fintrol, nunca naranja hardcoded fuera del token |
+| Campo de texto (monto, descripción, tipo de cambio manual) | Fill `AppBackground.secondary` (~#000000) opaco | Borde de foco `accentBorder` (#FF7E4D dark), 1.5pt | El foco usa el token de acento de Fintrol, nunca naranja hardcoded fuera del token |
 
 No hay mezcla `clear`/`regular` en la misma superficie continua: la sidebar (Liquid Glass regular) y el contenido central (sólido/Frost) son niveles claramente separados por el propio `NavigationSplitView`.
 
@@ -275,36 +276,37 @@ Con Suscripciones y Servicios ahora dentro del hub (ver abajo), la tab bar queda
 
 Cada tab envuelve un `NavigationStack` propio. Push para detalle de línea recurrente/suscripción/servicio; sheet para editar una línea de quincena o capturar una nueva.
 
-### Recurrentes y pagos — hub de cuatro entradas (iPhone) / ítems directos en sidebar (Mac)
+### Recurrentes y pagos — hub (iPhone) / ítems directos en sidebar (Mac)
 
 Decisión del usuario, en cuatro pasos: primero "Recurrentes" se dividió en **"Ingresos recurrentes"** y **"Gastos recurrentes"** (cada una lista solo su tipo, botón "+" crea ese tipo directo, sin picker de ingreso/egreso). Después se agregó **"Servicios"** — pagos del hogar (renta, luz, internet, agua, gas, seguro), mismo mecanismo automático por día de pago que Suscripciones (TRD, `Subscription`) pero con su propia pantalla, icono y categorías de hogar, distinta de Suscripciones (Netflix, Claude, Spotify…). Con tres listas ya viviendo fuera de un tab propio, mover también **Suscripciones** al mismo hub fue lo coherente: las cuatro son "cosas que la app genera solas en cada quincena sin captura manual". Luego se agregó **"Préstamos"** (ver "Préstamos (Loans)" más abajo) como quinta fila. Ahora se agrega **"Inversiones"** (feature v1 nueva, ver "Inversiones (Investments)" más abajo) como sexta fila — aportaciones recurrentes a cuentas de inversión (GBM, Webull, crypto…) que también generan su línea sola en cada quincena, misma razón que las otras cinco. **Nota de alcance:** esto es distinto de "Control de inversiones" que el PRD marca fuera de v1 (Fase 3) — esa exclusión es sobre rendimientos/valor de portafolio; "Inversiones" aquí es solo el registro de la aportación periódica, tan simple como un recurrente con cuenta destino. El hueco de rendimientos/valor actual queda anotado en "Sin definir aún" para etapa 2, no se diseña ahora.
 
 Esto también informa el patrón de acceso rápido que ya existía en `SettingsView` (`Apps/Fintrol/Fintrol/Features/Settings/SettingsView.swift:92`, fila `NavigationLink("Recurrentes")`) — esa fila queda obsoleta como camino alterno mixto: Ajustes no debe ofrecer una segunda entrada a estas listas por fuera del hub; si Woz quiere mantener acceso rápido desde Ajustes, debe ser un solo `NavigationLink("Recurrentes y pagos")` que abre el mismo hub, no filas sueltas por tipo.
 
-**Actualización del usuario (mockup exportado, no live file de Figma):** las 6 filas se agrupan en **3 secciones con encabezado** (mismo patrón visual de encabezado de sección que INCOME/EXPENSES en Quincena — `.caption` `ALL CAPS`, `.secondary`, fuera de las cards):
-- **"INCOME"** — Ingresos recurrentes, Gastos recurrentes
-- **"EXPENSES"** — Servicios, Suscripciones, Préstamos
+**Actualización del usuario (mockup exportado, no live file de Figma):** las filas se agrupan en **3 secciones con encabezado** (mismo patrón visual de encabezado de sección que INCOME/EXPENSES en Quincena — `.caption` `ALL CAPS`, `.secondary`, fuera de las cards):
+- **"INCOME"** — Ingresos recurrentes
+- **"EXPENSES"** — Gastos recurrentes, Servicios, Suscripciones, Préstamos, **Credit Cards** (feature v1 nueva, promovida desde Fase 2 del PRD — ver "Tarjetas de crédito (Credit Cards)" más abajo)
 - **"OTHERS"** — Inversiones
 
-**Nota:** decisión explícita del usuario, dejada tal cual aunque los nombres de sección no describen el contenido con precisión — "EXPENSES" agrupa Servicios+Suscripciones+**Préstamos** (que no son necesariamente un gasto: "Me deben" es lo contrario), y "Gastos recurrentes" vive bajo el encabezado "INCOME". No corregir a criterio propio; si Woz o Steve necesitan nombres más descriptivos, es una pregunta para el usuario, no un ajuste de diseño.
+**Actualización (2026-09-17, coordinador):** "Gastos recurrentes" se movió de "INCOME" a "EXPENSES" (primera fila de ese grupo, antes de Servicios/Suscripciones/Préstamos) — corrige la agrupación puramente literal documentada arriba, que dejaba un gasto bajo el encabezado "INCOME" sin ninguna razón semántica. "INCOME" ahora contiene solo "Ingresos recurrentes". La nota anterior ("no corregir a criterio propio") queda superada por esta instrucción explícita del coordinador — "EXPENSES" sigue sin ser 100% preciso para Préstamos (que pueden ser "Me deben"), eso no cambió.
 
-- **iPhone:** la tab "Recurrentes y pagos" (icono `arrow.triangle.2.circlepath`) abre un hub — `List` de 6 filas `LabListRow` con chevron, agrupadas en las 3 secciones de arriba. Orden dentro de cada sección (ingresos y gastos primero por ser el corazón de la proyección multi-año del PRD; servicios y suscripciones después por ser más operativos; préstamos e inversiones al final por ser los casos de uso menos frecuentes de tocar, solo consulta ocasional del saldo):
+- **iPhone:** la tab "Recurrentes y pagos" (icono `arrow.triangle.2.circlepath`) abre un hub — `List` de 7 filas `LabListRow` con chevron, agrupadas en las 3 secciones de arriba. Orden dentro de cada sección:
   1. "Ingresos recurrentes" — `systemImage: "arrow.down.circle"`, subtitle con conteo
   2. "Gastos recurrentes" — `systemImage: "arrow.up.circle"`, subtitle con conteo
   3. "Servicios" — `systemImage: "house.fill"`, subtitle con conteo
   4. "Suscripciones" — `systemImage: "repeat"`, subtitle con conteo
-  5. "Préstamos" — `systemImage: "banknote"`, subtitle con conteo — **no** `creditcard.and.123`: el PRD excluye tarjetas de crédito de v1 explícitamente y ese símbolo visualmente lee como estado de cuenta de tarjeta; `banknote` comunica "dinero prestado/prestado a alguien" sin esa asociación
-  6. "Inversiones" — `systemImage: "chart.line.uptrend.xyaxis"`, subtitle con conteo — se acepta la sugerencia del coordinador: es el símbolo estándar de Apple para inversión/crecimiento, distinto de los otros cinco orígenes y sin ambigüedad con "gráficas de Overview" (Overview usa `chart.bar.fill`, una barra, no una línea — no se confunden en la tab bar)
+  5. "Préstamos" — `systemImage: "banknote"`, subtitle con conteo — símbolo elegido en su momento en parte para no leer como "tarjeta de crédito" cuando esa feature estaba fuera de v1; ahora que Credit Cards entró a v1 (ver fila 6), `banknote` se mantiene igual — sigue siendo el símbolo correcto para "dinero prestado/prestado a alguien", distinto conceptualmente de una tarjeta
+  6. **"Credit Cards"** — `systemImage: "creditcard.fill"`, subtitle con conteo — feature v1 nueva, ver "Tarjetas de crédito (Credit Cards)" más abajo
+  7. "Inversiones" — `systemImage: "chart.line.uptrend.xyaxis"`, subtitle con conteo — se acepta la sugerencia del coordinador: es el símbolo estándar de Apple para inversión/crecimiento, distinto de los otros orígenes y sin ambigüedad con "gráficas de Overview" (Overview usa `chart.bar.fill`, una barra, no una línea — no se confunden en la tab bar)
   - Tap en cada fila hace push a su lista filtrada, donde vive el botón "+" que crea ese tipo directo. El hub no tiene botón "+" propio.
-- **Mac:** el límite de tabs es exclusivo de iPhone; el sidebar no lo tiene, así que ahí las seis son **ítems directos**, sin hub intermedio — cada uno navega directo a su lista con su propio "+" en el toolbar.
+- **Mac:** el límite de tabs es exclusivo de iPhone; el sidebar no lo tiene, así que ahí las siete son **ítems directos**, sin hub intermedio — cada uno navega directo a su lista con su propio "+" en el toolbar.
 
 ### Mac — `NavigationSplitView`, sidebar + detail (sin columna media)
 
-9 secciones en sidebar (ancho 220pt): Quincena, Ingresos recurrentes, Gastos recurrentes, Servicios, Suscripciones, Préstamos, Inversiones, Overview, Ajustes. El PRD tiene solo 2 niveles de profundidad reales (lista → detalle de recurrente/suscripción/servicio/préstamo/inversión), así que no se usa columna `content` intermedia — sidebar + detail directo:
+10 secciones en sidebar (ancho 220pt): Quincena, Ingresos recurrentes, Gastos recurrentes, Servicios, Suscripciones, Préstamos, Credit Cards, Inversiones, Overview, Ajustes. El PRD tiene solo 2 niveles de profundidad reales (lista → detalle de recurrente/suscripción/servicio/préstamo/tarjeta/inversión), así que no se usa columna `content` intermedia — sidebar + detail directo:
 
 ```swift
 NavigationSplitView {
-    SidebarView()   // Quincena, Ingresos recurrentes, Gastos recurrentes, Servicios, Suscripciones, Préstamos, Inversiones, Overview, Ajustes
+    SidebarView()   // Quincena, Ingresos recurrentes, Gastos recurrentes, Servicios, Suscripciones, Préstamos, Credit Cards, Inversiones, Overview, Ajustes
 } detail: {
     // la vista de la sección seleccionada; Quincena maneja su propia
     // navegación interna (prev/next, jump a año) dentro del detail
@@ -371,7 +373,7 @@ Jump sheet — Quincena
 **Decisión del usuario (edición directa en Figma, frame "01 · Quincena", `8:2`): cada línea es ahora su propia card/pill independiente, no una fila dentro de una card contenedora única.** Se abandona el patrón "una `LabNestedCard` con filas separadas por `Divider()`" en favor de "una card por línea, apiladas con gap". El total queda fuera de las cards, directamente sobre el fondo de la app.
 
 - **Header de sección fuera de la card** (sigue igual que antes): `ALL CAPS`, `.caption` Bold, tracking +0.6, `.secondary` 60%, con padding propio de 10pt (ya no es solo texto suelto — vive envuelto en un contenedor con padding, ver tabla de medidas).
-- **Cada línea (`LineItemRow`) es su propia card**: fondo Frost `AppBackground.secondary` (`#2A2A2A`), radio **20pt** (mismo radio que las cards grandes, no el radio interno de 12pt), padding **16pt** en los 4 lados, contenido en `HStack` (`.spaceBetween`) descripción `.leading` + monto `.trailing`, `.body` (17pt) Regular, blanco. Sin separador `Divider()` entre líneas — el separador visual ahora es el espacio, no una línea.
+- **Cada línea (`LineItemRow`) es su propia card**: fondo Frost `AppBackground.secondary` (`#000000`), radio **20pt** (mismo radio que las cards grandes, no el radio interno de 12pt, sin cambio), padding **16pt** en los 4 lados (el usuario probó 24pt en Figma y revirtió al original), contenido en `HStack` (`.spaceBetween`) descripción `.leading` + monto `.trailing`, `.body` (17pt) Regular, blanco. Sin separador `Divider()` entre líneas — el separador visual ahora es el espacio, no una línea.
 - **Gap entre cards de línea: 8pt** (`SpacingTokens.itemSpacing`), no los 4pt de densidad de tabla documentados antes — ese valor queda obsoleto para este patrón.
 - **Fila de total: fuera de toda card**, sobre el fondo de la app directamente (sin `LabNestedCard` propio). `.body` (17pt) Bold, blanco, padding `10pt` arriba / `10pt` horizontal / ~1pt abajo, `HStack` `.spaceBetween`. Ya no lleva el `Divider()` de 2pt que la separaba del último ítem — el espacio hace esa función.
 - **El patrón de card-por-línea con TOTAL fuera aplica por igual a INCOME y a EXPENSES** — no es exclusivo de INCOME, EXPENSES migra al mismo tratamiento (cards individuales + total suelto sobre el fondo). Confirmado en Figma: ambos bloques ya tienen sus líneas como cards independientes.
@@ -403,7 +405,7 @@ Jump sheet — Quincena
 | `plus` (`57:66` en INCOME, `57:75` en EXPENSES) | ✅ válido, delgado, sin fondo de círculo/cápsula | De vuelta en el header de sección (derecha de "INCOME"/"EXPENSES"), ~19.8×19.8pt | Contradice el estado "confirmado en código" (CTA suelto debajo de la última card). Ya no es `plus.circle.fill` con relleno — es el símbolo `plus` desnudo. También el texto del header subió de 13pt a 16pt Bold en esta exploración. Pendiente de confirmación del usuario antes de mover el CTA de vuelta al header. |
 
 **Otros cambios detectados en esta misma lectura, sin resolver:**
-- Una de las dos cards "WALO $2,750.00" en INCOME tiene fondo `#023c2f` (verde oscuro) mientras la otra sigue en `#2A2A2A` neutral — no hay explicación visible (¿estado "pagada"? ¿resaltado accidental de una copia duplicada?). No asumir semántica; preguntar antes de documentar como estado nuevo.
+- Una de las dos cards "WALO $2,750.00" en INCOME tiene fondo `#023c2f` (verde oscuro) mientras la otra sigue en `#000000` neutral — no hay explicación visible (¿estado "pagada"? ¿resaltado accidental de una copia duplicada?). No asumir semántica; preguntar antes de documentar como estado nuevo.
 - Pill de rango de días ("1 – 15"): valores exactos en esta lectura — fondo `rgba(52,199,89,0.5)`, texto `#34C759`, radio `50px` (no `999px`), texto 12pt Semibold. Cercano pero no idéntico a lo ya documentado en "Header de Quincena" — actualizar ahí si el usuario confirma estos como los valores finales.
 - Tab bar: los 4 íconos ya son SF Symbols reales y sus nombres de capa coinciden con el símbolo: `calendar`, `arrow.trianglehead.2.clockwise.rotate.90` (reemplaza al glifo `↻`), `menucard` (✅ coincide con lo ya esperado para la tab 3), `gearshape`. Gap entre íconos: 30pt (antes documentado 18pt).
 
@@ -421,7 +423,7 @@ Documentar `LineItemRow` (ahora card individual) y el patrón "stack de cards co
 | **Inactiva** (excluida de la suma) | Opacidad de toda la fila reducida a `0.4`; monto con `.strikethrough()`; el motor de totales la omite del cálculo del bloque |
 | **Inactiva y pagada** | Se combinan: fondo verde tenue (igual que "Pagada — bloqueada") + opacidad de toda la fila reducida a `0.4` (el verde también queda atenuado, no se dibuja aparte a opacidad completa), monto tachado, palomita azul presente a la misma opacidad reducida — lee como "esto pasó, pero ahora mismo no cuenta". También bloqueada — solo "Desmarcar pagado" disponible (desmarcar revela de nuevo las acciones normales de una línea inactiva) |
 
-**Token del fondo verde de "Pagada":** `Color.green.opacity(0.16)` superpuesto sobre el fondo Frost de la card (`AppBackground.secondary`, `#2A2A2A`) — no reemplaza el material, se mezcla encima. Deliberadamente más sutil que el verde sólido del badge de SOBRANTE (que es 100% opaco con texto contrastante) — aquí es un tinte, nunca relleno neón. Mismo radio 20pt Continuous Corners que cualquier card-por-línea, sin cambio de forma. Es una segunda excepción documentada al uso de verde en la app (la primera es la pill "Hoy" del header de Quincena, ver "Decisiones registradas") — ambas están confirmadas explícitamente por el usuario, no se generaliza verde a ningún otro estado sin la misma confirmación.
+**Token del fondo verde de "Pagada":** `Color.green.opacity(0.16)` superpuesto sobre el fondo Frost de la card (`AppBackground.secondary`, `#000000`) — no reemplaza el material, se mezcla encima. Deliberadamente más sutil que el verde sólido del badge de SOBRANTE (que es 100% opaco con texto contrastante) — aquí es un tinte, nunca relleno neón. Mismo radio 20pt Continuous Corners que cualquier card-por-línea, sin cambio de forma. Es una segunda excepción documentada al uso de verde en la app (la primera es la pill "Hoy" del header de Quincena, ver "Decisiones registradas") — ambas están confirmadas explícitamente por el usuario, no se generaliza verde a ningún otro estado sin la misma confirmación.
 | Línea en MXN | Bajo el monto principal (que siempre se muestra en su moneda de captura), una segunda línea `.caption` `.secondary` `.monospacedDigit()`: "≈ $842.30 USD · TC 18.42" |
 | Línea en MXN con override manual del tipo de cambio para esa quincena | Igual + badge `.caption2` pill pequeño "manual" en `accentSubtle`/`accentForeground`, junto al TC — señala que ese número no vino de la API |
 | Editando | **Ya no es un estado in-place de la fila** — tap en la fila abre el "Sheet de captura/edición de línea" (ver más abajo) precargado con sus valores. La fila en sí no cambia de fondo ni de layout; el sheet es una presentación modal separada. Si el origen no es manual, el sheet puede mostrar contexto "Generado por: [nombre]" — ver "Origen de línea" |
@@ -509,7 +511,7 @@ mayor a 0                                 confirmar con datos inválidos; oculto
 - **`presentationDetents`:** `[.medium, .large]`, default `.medium` — coincide con la referencia visual del usuario ("cubre la mitad inferior"), arrastrable a `.large` si Dynamic Type grande necesita más espacio vertical. No se usa una altura fija en puntos (`.height(...)`) porque el contenido debe poder crecer con Dynamic Type sin recortarse.
 - **`presentationCornerRadius`:** 20pt, Continuous Corners (mismo radio que las cards grandes de la app).
 - **`presentationDragIndicator`:** `.visible` — el grabber estándar de iOS.
-- **Fondo — Frost, no Liquid Glass ni blanco:** `AppBackground.secondary` (`#2A2A2A`) con el material Frost del tema (blur 0.5, transparencia 0.5) vía `PatternConfig`, **no** `.regularMaterial`/`glassEffect()` del sistema — es la excepción ya señalada en "Componentes de navegación — Liquid Glass". El resto de la pantalla detrás del sheet se atenúa con el dimming estándar del sistema (`.presentationBackground` no reemplaza el scrim, solo el material del propio sheet).
+- **Fondo — Frost, no Liquid Glass ni blanco:** `AppBackground.secondary` (`#000000`) con el material Frost del tema (blur 0.5, transparencia 0.5) vía `PatternConfig`, **no** `.regularMaterial`/`glassEffect()` del sistema — es la excepción ya señalada en "Componentes de navegación — Liquid Glass". El resto de la pantalla detrás del sheet se atenúa con el dimming estándar del sistema (`.presentationBackground` no reemplaza el scrim, solo el material del propio sheet).
 - **Descripción:** `LabTextField`, ancho completo, `.textInputAutocapitalization(.sentences)`. Recibe el foco automáticamente al aparecer el sheet (`@FocusState`, sin necesidad de que el usuario toque el campo).
 - **Monto + selector de moneda:** en la misma fila — `LabTextField` numérico (`.decimalPad`) que toma el espacio flexible, selector USD/MXN compacto (pill, ancho fijo ~70pt) a la derecha. Moneda por defecto USD en captura nueva; en edición, precarga la moneda real de la línea.
 - **Texto de ayuda:** `.caption`, `.red`, aparece solo cuando el usuario intenta confirmar con descripción vacía o monto ≤ 0 — "Escribe una descripción y un monto mayor a 0". No se muestra en reposo antes del primer intento de confirmar (no se anticipa el error).
@@ -545,7 +547,7 @@ $1,240.50                 ← .monospacedDigit(), bold, relativeTo: .largeTitle,
 
 **Decisión cerrada del usuario (edición en Figma, frame `8:2`):** la card Resumen se simplifica — pierde la fila "Tipo de cambio"; ese control **vive solo en Ajustes → Preferencias** (ver "Tipo de cambio" en Ajustes más abajo), no se duplica aquí. "Mandar" deja de estar dentro de la card: sale como texto suelto sobre el fondo, entre SOBRANTE y la card Resumen.
 
-- **iPhone:** "Mandar: $X USD" es una fila suelta sobre el fondo de la app (sin card propia, sin fondo, padding vertical ~6pt, `.body` 17pt — label `.secondary`, valor blanco), inmediatamente debajo del badge de sobrante. Debajo de esa fila, una card independiente (`LabNestedCard`, mismo ancho) contiene **solo** "Next Month: $Y". "Next Month" siempre muestra el mismo número que el usuario verá al avanzar con el chevron: si la siguiente quincena ya está materializada (con o sin ediciones manuales), es su sobrante real ya calculado; si no está materializada, es la proyección en memoria de `ProjectionEngine`. No hay distinción visual entre ambos casos — es un solo campo, un solo comportamiento. **Actualización del usuario (mockup exportado):** esta card deja de ser neutral (`#2A2A2A`, label `.secondary` / valor blanco Semibold) — pasa a llevar **fondo sólido del color de semáforo** correspondiente al sobrante proyectado de esa quincena (mismo criterio que el badge de SOBRANTE, ver "Badge de sobrante" arriba: fondo `#006338` / texto `#01F98E` en el estado verde, ambos textos del row en ese mismo verde menta, no solo el valor). Es la única card de esta pantalla que lleva color de estado además del badge de SOBRANTE mismo.
+- **iPhone:** "Mandar: $X USD" es una fila suelta sobre el fondo de la app (sin card propia, sin fondo, padding vertical ~6pt, `.body` 17pt — label `.secondary`, valor blanco), inmediatamente debajo del badge de sobrante. Debajo de esa fila, una card independiente (`LabNestedCard`, mismo ancho) contiene **solo** "Next Month: $Y". "Next Month" siempre muestra el mismo número que el usuario verá al avanzar con el chevron: si la siguiente quincena ya está materializada (con o sin ediciones manuales), es su sobrante real ya calculado; si no está materializada, es la proyección en memoria de `ProjectionEngine`. No hay distinción visual entre ambos casos — es un solo campo, un solo comportamiento. **Actualización del usuario (mockup exportado):** esta card deja de ser neutral (`#000000`, label `.secondary` / valor blanco Semibold) — pasa a llevar **fondo sólido del color de semáforo** correspondiente al sobrante proyectado de esa quincena (mismo criterio que el badge de SOBRANTE, ver "Badge de sobrante" arriba: fondo `#006338` / texto `#01F98E` en el estado verde, ambos textos del row en ese mismo verde menta, no solo el valor). Es la única card de esta pantalla que lleva color de estado además del badge de SOBRANTE mismo.
 - **Mac:** dado que "en Mac la quincena cabe sin scroll y el resumen puede ir a un lado" (requisito del usuario), el panel vive en una tercera zona fija a la derecha del detail (no una columna `NavigationSplitView` adicional — un `HStack` dentro del detail: bloques INCOME/EXPENSES a la izquierda en `ScrollView` si excede alto de ventana, panel de resumen a la derecha en ancho fijo ~280pt, sin scroll propio). Ver "Consideraciones de plataforma".
 
 ### Listas (Ingresos recurrentes, Gastos recurrentes, Servicios, Suscripciones)
@@ -668,7 +670,7 @@ Ningún monto, título de línea ni cifra se renderiza detrás de esta pantalla 
 
 ## Préstamos (Loans)
 
-Feature v1 nueva. Modela lo que hoy son "recurrentes especiales con fecha fin" en el PRD (Upstart #1, Upstart #2, "Ada") pero con datos propios de amortización — saldo restante, interés, plazo — que un `RecurringItem` genérico no captura. Vive en el hub "Recurrentes y pagos" (fila 5) y como ítem directo en el sidebar de Mac. Explícitamente no es "tarjetas de crédito" (eso sigue fuera de v1, Fase 2 del PRD) — un préstamo tiene plazo fijo y amortización determinística, una tarjeta tiene saldo revolvente; no comparten modelo ni pantalla.
+Feature v1 nueva. Modela lo que hoy son "recurrentes especiales con fecha fin" en el PRD (Upstart #1, Upstart #2, "Ada") pero con datos propios de amortización — saldo restante, interés, plazo — que un `RecurringItem` genérico no captura. Vive en el hub "Recurrentes y pagos" (fila 5) y como ítem directo en el sidebar de Mac. **Actualización:** "tarjetas de crédito" ya no está fuera de v1 — se promovió desde Fase 2 del PRD (ver "Tarjetas de crédito (Credit Cards)" más abajo) — pero Préstamos y Credit Cards siguen siendo modelos y pantallas distintos, no se fusionan: un préstamo tiene plazo fijo y amortización determinística (o "Hasta liquidar" con pago esperado pero aun así una sola dirección de deuda conocida), una tarjeta tiene saldo revolvente sin plazo y su propio motor de interés mensual (`CreditCardEngine`, ver TRD).
 
 Dos modos conviven en la misma entidad `Loan`: **Plazo fijo** (Upstart — monto, APR, plazo/fecha fin conocidos, pago fijo calculado) y **Hasta liquidar** (caso "Ada" — $824 al 26.2%, la hermana del usuario paga montos variables ~$200 por quincena, sin plazo definido de antemano; se liquida cuando el saldo llega a $0, lo que dependerá de cuánto pague realmente cada quincena). El modo es un switch en el formulario, no una entidad distinta — ambos comparten lista, detalle y origen de línea en Quincena.
 
@@ -678,25 +680,59 @@ En vez de plazo/fecha fin conocidos, el préstamo define un **"Pago esperado"** 
 
 ### 1. Lista de préstamos
 
-`LabList` con una fila custom por préstamo (no cabe en `LabListRow` estándar — necesita dirección + progreso, se documenta como candidato a generalizar en `PROJECT_LEARNINGS.md`):
+**Cambio estructural del usuario (lectura de Figma, frame "03 · Prestamos lista" `5:67`, no escrito por mí — solo lectura, comparado contra `LoansView.swift` que hoy es lista plana con chip por card):** la lista deja de ser plana con un chip de dirección por card — ahora se **agrupa en dos secciones con encabezado**, una por dirección, y el chip de dirección desaparece de la card (el agrupamiento por sección lo reemplaza). El chip "Pagado" de LIQUIDADOS **sí se mantiene** por card en esa tercera sección.
 
 ```
-[banknote] Upstart #1                          [ Debo ]      ← nombre + chip de dirección
-Saldo restante: $18,420.00                                    ← .body, semibold, .monospacedDigit()
-Próximo pago: $629.00 · 20 sept                                ← .subheadline, .secondary
-Fecha fin: ago 2030                                             ← .caption, .secondary
-[███████░░░░░░░░░░░░] 34% pagado                                ← barra de progreso + porcentaje
+ME DEBEN                                        ← encabezado de sección, .caption Bold, tracking +0.6, .secondary 60%
+┌──────────────────────────────────────────┐
+│ Ada                                       │  ← nombre, .body Semibold 17pt blanco (ya no lleva chip de dirección)
+│ Ultimo Pago   $200.00 · Sep 15, 2026      │  ← nueva línea: Regular 14pt, .secondary (#C7C7CC)
+│ Próximo pago  $400.00 · Oct 15, 2026      │  ← nueva línea: label Regular / valor Semibold, 14pt, blanco
+│                                            │
+│ Restante      $4,320.00                   │  ← label Regular .secondary / valor Semibold blanco, 14pt
+│ [████████░░░░░░░░░░░░░░░░░░░]             │  ← barra de progreso
+└──────────────────────────────────────────┘
+
+DEBO                                            ← misma estructura, sección separada, sin chip por card
+┌──────────────────────────────────────────┐
+│ Debo · Restante · Último/Próximo pago ...  │
+└──────────────────────────────────────────┘
+
+LIQUIDADOS                                      ← sin cambio: chip "Pagado" se mantiene por card
+┌──────────────────────────────────────────┐
+│ Laptop — Ada                    [Pagado]  │
+│ Restante      $0.00                        │
+│ Liquidado     —                            │
+└──────────────────────────────────────────┘
 ```
 
-- **Chip de dirección** — nunca solo icono, siempre icono + texto, para que la lectura no dependa del color (regla de accesibilidad del skill):
-  - **"Me lo prestaron"** (es una deuda del usuario): chip pill con icono `arrow.up.forward` + texto **"Debo"**, tinte `.orange` (semántica de "advertencia/compromiso pendiente" del catálogo de estados, no el naranja de marca ni el semáforo verde/amarillo/rojo del sobrante — para no competir con esa semántica ya fija del PRD).
-  - **"Lo presté"** (a alguien le presté, me deben): chip pill con icono `arrow.down.forward` + texto **"Me deben"**, tinte `.blue` (semántica "información neutral" del catálogo de estados).
-- **Barra de progreso**: `ProgressView(value:)` custom-estilizado (radio pill, altura 6pt, Continuous Corners), color = tinte de la dirección del préstamo (naranja si "Debo", azul si "Me deben") — no el accent de marca, para que la lectura de "cuánto llevo pagado de esta deuda" no se confunda visualmente con una acción primaria de la app.
-- **Préstamo en modo "Hasta liquidar"** — la fila cambia dos elementos respecto al modo Plazo fijo:
-  - Donde iba "Fecha fin: ago 2030" aparece un badge pill `.caption2` `.secondary` con texto **"Sin plazo"**, seguido en la misma línea de "· termina aprox. mar 2029" (`.caption`, `.secondary`) — la estimación recalculada con el ritmo de pago real hasta la fecha; si aún no hay ningún pago real registrado, el texto es "termina aprox. según pago esperado" en vez de una fecha, para no aparentar precisión que no existe todavía.
-  - El progreso (barra + porcentaje) se calcula igual (saldo pagado / monto original) — no depende de tener plazo, así que no cambia de comportamiento.
-- Orden de lista: activos primero (por fecha de fin más próxima; los "Hasta liquidar" ordenan por su fecha estimada más próxima), luego préstamos ya liquidados (`isActive == false`) en una sección aparte **"LIQUIDADOS"** (encabezado `ALL CAPS`, mismo tratamiento de encabezado de sección que INCOME/EXPENSES), colapsada por defecto. **Actualización del usuario (mockup exportado):** en esta sección, el chip de dirección ("Debo"/"Me deben") se reemplaza por un chip **"Pagado"** (`.secondary`, sin tinte naranja/azul — ya no aplica una dirección activa) cuando el saldo restante es `$0.00`; la fila sigue mostrando "Restante $0.00" y la barra de progreso al 100%.
+- **Agrupamiento por sección reemplaza al chip de dirección:** ya no hay chip "Debo"/"Me deben" dentro de la card de un préstamo activo — la sección "ME DEBEN" agrupa los que antes llevaban chip azul, la sección "DEBO" los que llevaban chip naranja. El nombre del préstamo ya no comparte fila con ningún chip.
+- **Dos líneas de pago en vez de una:** "Último Pago $X · fecha" (Regular, `.secondary`) y "Próximo pago $Y · fecha" (label Regular / valor Semibold, blanco) — antes solo existía "Próximo pago". Gap vertical entre ambas líneas: 8pt.
+- **"Restante $Z" y la barra de progreso se mantienen sin cambio de comportamiento** — solo bajó su tamaño tipográfico (ver medidas exactas abajo).
+- **El chip "Pagado" de la sección LIQUIDADOS no cambia**: sigue por card, ahí sí se mantiene (a diferencia de ME DEBEN/DEBO, que ya no llevan chip).
+- **Préstamo en modo "Hasta liquidar"** — sigue documentado como antes: badge "Sin plazo" + estimado en vez de fecha fin; el progreso se calcula igual. Pendiente confirmar cómo se integra visualmente con las dos líneas nuevas de Último/Próximo pago (no visible en esta captura).
 - Tap/click → push a Detalle. Swipe/botón "+" en toolbar → Formulario de alta.
+
+#### Medidas y colores exactos (lectura de Figma `5:67`, para Woz — los 3 tipos de card)
+
+| Elemento | Card activa (ME DEBEN / DEBO) | Card LIQUIDADOS |
+|---|---|---|
+| Fondo de card | `#3C3C3C` | `#3C3C3C` (igual) |
+| Radio de card | 18pt | 18pt |
+| Padding interno | 16pt | 16pt |
+| Gap interno entre bloques | 18pt (nombre → líneas de pago → restante → barra) | 8pt (nombre+chip → restante → liquidado) |
+| Nombre | `.body` Semibold, 17pt, blanco | `.body` Semibold, 17pt, blanco |
+| Chip de dirección | **ninguno** (removido) | — |
+| Chip "Pagado" | — | borde blanco 1pt, sin relleno, radio 999pt (pill), texto 8pt Regular blanco, padding 10pt horizontal / 6pt vertical |
+| "Ultimo Pago" / "Próximo pago" / "Restante" / "Liquidado" — label | 14pt Regular, `#C7C7CC` | 14pt Regular, `#C7C7CC` |
+| "Próximo pago" / "Restante" — valor | 14pt Semibold, blanco | 14pt Semibold, blanco |
+| "Ultimo Pago" — valor | 14pt Regular, `#C7C7CC` (mismo peso que el label, a diferencia de "Próximo pago" que sí resalta en Semibold) | — |
+| Barra de progreso — track | `#023C2F` (verde muy oscuro), radio 5pt, alto 4pt | — |
+| Barra de progreso — fill | `#00FFC5` (verde menta brillante/neón) | — |
+| Encabezado de sección ("ME DEBEN"/"DEBO") | 13pt Bold, `rgba(235,235,245,0.6)`, tracking +0.6pt, padding 10pt | "LIQUIDADOS": 12pt Bold, tracking +1pt (ligeramente distinto del resto — verificar si es intencional o inconsistencia) |
+| Gap entre secciones | ~24–26pt (sección → título → card) | igual |
+
+**Pregunta abierta para el usuario (no resuelta a criterio propio):** el track/fill de la barra de progreso ya no usa el tinte naranja/azul de dirección documentado antes ("color = tinte de la dirección del préstamo") — ahora ambas secciones (ME DEBEN y DEBO) muestran la misma barra verde (`#023C2F`/`#00FFC5`) en la captura leída. ¿Es intencional que el progreso ya no distinga visualmente dirección (porque la sección ya lo hace), o falta aplicar el tinte naranja a la sección "DEBO"?
 
 ### 2. Formulario crear/editar
 
@@ -780,6 +816,130 @@ Igual que Recurrentes/Suscripciones/Servicios: la línea que un préstamo genera
 | Evento | Estado inicial → final | Curva | Duración | Reduce Motion |
 |---|---|---|---|---|
 | Activar/desactivar "Hasta liquidar" | "Plazo/Fecha fin/Pago calculado" colapsan (`opacity 1→0` + `height→0`) mientras "Pago esperado" aparece (`opacity 0→1`) | `.easeInOut` | 0.25s | Sin colapso animado — los campos cambian instantáneamente, es un `Form` de configuración, no necesita narrativa |
+
+---
+
+## Tarjetas de crédito (Credit Cards)
+
+Feature v1 nueva, promovida desde Fase 2 del PRD (plan `glimmering-swinging-bumblebee.md`). Modela deuda revolvente — sin plazo fijo, interés mensual sobre saldo, pago mínimo sugerido con fórmula estándar de emisores. Vive en el hub "Recurrentes y pagos", sección "EXPENSES" (fila 6, icono `creditcard.fill`) y como ítem directo en el sidebar de Mac. Reutiliza el motor de `Loan.revolving`/`LoanEngine` a nivel de datos (ver TRD) pero es un modelo y una pantalla distintos — una tarjeta nunca es "Me deben" (siempre `.expense`), un préstamo sí puede serlo.
+
+**Pieza de diseño específica de esta feature — la fila agregada:** cada tarjeta genera su propia `LineItem` real (como un préstamo), pero en Quincena las líneas `origin == .creditCard` de una misma quincena se muestran como **una sola fila colapsada** "Credit Cards Payments" (suma de montos) en vez de una fila por tarjeta — a diferencia de Préstamos e Inversiones, que sí muestran una fila por ítem. Es la única fila de Quincena que representa más de una línea de datos.
+
+### 1. Formulario "Nueva tarjeta"
+
+`Form` nativo, mismo patrón que Préstamos:
+
+| Campo | Control | Comportamiento |
+|---|---|---|
+| Nombre | `LabTextField` | Texto libre |
+| Saldo actual | `LabTextField` numérico, `.decimalPad` | Sin selector de moneda — asumido USD como el resto de deuda financiera de la app (el PRD no pide MXN para tarjetas; si se necesita, es una extensión, no v1) |
+| APR (%) | `LabTextField` numérico, `.decimalPad`, sufijo "%" | Mismo patrón que Préstamos |
+| Límite de crédito | `LabTextField` numérico, `.decimalPad` | Nuevo campo, no existe en Préstamos — es la base del % de utilización en el Detalle |
+| Día de corte | `Stepper` 1–31 o `LabTextField` numérico acotado | "Cutoff day" — fecha en que el emisor congela el saldo del período |
+| Día de pago | `Stepper` 1–31 o `LabTextField` numérico acotado | "Due date" — fecha límite legal de pago sin intereses (grace period) |
+| Pago esperado (opcional) | `LabTextField` numérico, `.decimalPad`, **placeholder dinámico** | Vacío por defecto. El placeholder muestra en vivo el mínimo sugerido calculado — `MAX($25, saldo × 1% + interés del mes)` — como texto gris de ejemplo (`.placeholder`, no un valor real hasta que el usuario escribe algo). Si el usuario nunca lo fija, cada quincena usa el mínimo sugerido recalculado ese período, igual patrón que "Pago esperado" de Préstamos "Hasta liquidar" pero aquí el cálculo es automático en vez de un número fijo que el usuario decide una vez |
+| Activa | `LabToggleRow` | Mismo patrón que el resto del hub |
+
+**Nota de fórmula (para que Woz y Larry no la reinventen):** `suggestedMinimumPayment = max($25, balance × 0.01 + interésDelMes)`, donde `interésDelMes = balance × APR / 12` — fórmula típica de emisores grandes (Chase), investigada y citada en el plan de Avie.
+
+### 2. Fila "Credit Cards Payments" — Hub y Quincena
+
+**En el hub:** fila estándar del catálogo, igual tratamiento que las otras seis (`LabListRow`, chevron, subtitle con conteo de tarjetas activas), `systemImage: "creditcard.fill"`. Tap/click → push a la lista de tarjetas (una fila por tarjeta, no agregada — la agregación solo ocurre en Quincena).
+
+**En Quincena (EXPENSES), solo si hay ≥1 tarjeta con pago en ese período:**
+
+```
+[ ]  Credit Cards Payments          $958.00     ← misma card-por-línea que cualquier
+                                                    otra fila de EXPENSES: fondo Frost,
+                                                    radio 20pt, .body 17pt, monto .trailing
+```
+
+- Visualmente **idéntica** a cualquier card de línea (mismo fondo Frost, radio, tipografía, `.monospacedDigit()`) — no se inventa un tratamiento especial para no romper el ritmo visual de la lista.
+- **Sin swipe ni menú contextual de pagado/editar/eliminar/activar-desactivar.** Es una fila de navegación, no una línea editable — tocarla (tap/click, toda la fila) abre el "Sheet de detalle — Credit Cards Payments" descrito abajo. No hay palomita de pagado en esta fila (el estado pagado vive por tarjeta, dentro del sheet) ni icono de origen (consistente con "Origen de línea" — ninguna fila de Quincena lleva icono).
+- Si ninguna tarjeta tiene pago en esa quincena, la fila simplemente no aparece — no hay un estado "Credit Cards Payments: $0.00" vacío ocupando espacio.
+
+### 3. Sheet de detalle — "Credit Cards Payments"
+
+Mismo patrón de presentación que el "Sheet de captura/edición de línea" (`.presentationDetents([.medium, .large])`, fondo Frost, grabber, radio 20pt) — se abre al tocar la fila agregada:
+
+```
+━━━
+Credit Cards Payments              ← .title3, semibold, centrado
+
+Chase Sapphire                     ← nombre, .body, semibold
+Sugerido: $58.00 · A pagar: [___]  ← monto sugerido de solo lectura junto al campo editable
+Saldo restante tras el pago: $1,942.00
+Corte: 15 · Pago: 5 del próximo mes
+
+Amex Gold
+Sugerido: $312.00 · A pagar: [___]
+...
+```
+
+- **Cada fila de tarjeta dentro del sheet SÍ es una `LineItemRow` completa** (no la versión de solo navegación de la fila agregada) — reutiliza el patrón ya documentado: monto editable, palomita de pagado, y el **bloqueo al marcar pagado ya especificado para `LineItemRow`** (fondo verde tenue `Color.green.opacity(0.16)`, solo queda disponible "Desmarcar pagado", sin swipe de eliminar/editar mientras está pagada — ver "Fila de línea" arriba, mismo token, mismo comportamiento, cero reinvención).
+- Monto sugerido vs. a pagar: el sugerido se muestra como referencia (`.caption`, `.secondary`) junto al campo editable — igual que "Pago esperado" en el Formulario, el usuario puede pagar más, menos, o exactamente el sugerido.
+- "Saldo restante tras el pago" se recalcula en vivo mientras el usuario edita el monto a pagar de esa tarjeta — feedback inmediato de qué tanto baja la deuda con ese pago específico.
+- Fecha de corte/pago de esa tarjeta: texto informativo `.caption`, `.secondary`, no editable desde aquí (se edita en el Detalle de tarjeta o el Formulario).
+- Total del sheet (suma de "a pagar" de todas las tarjetas) se muestra al pie, y es ese número el que retroalimenta el monto de la fila agregada "Credit Cards Payments" en Quincena al cerrar el sheet.
+
+### 4. Detalle de tarjeta individual (push)
+
+Mismo patrón que `LoanDetailView` (cabecera + tabla real-vs-proyectado), con un campo nuevo — % de utilización:
+
+```
+Saldo actual
+$1,942.00
+
+Límite de crédito: $5,000.00
+Utilización: 38.8%                 ← saldo ÷ límite, .monospacedDigit(), color de estado
+                                       (ver regla de color abajo — no es semáforo del sobrante)
+Interés acumulado a la fecha: $186.40
+Próximo pago: $58.00 · 5 oct
+```
+
+- **Color de "Utilización":** no reutiliza el semáforo verde/amarillo/rojo del sobrante (reglas distintas, umbrales distintos, confundiría el significado). Usa su propia escala de dos estados con umbral único, apoyada en texto no solo color: `.secondary` (texto normal) si utilización < 30% (buena práctica de crédito estándar, citada en la investigación del plan); `.orange` + un texto de apoyo breve "Alta utilización" en `.caption` si ≥ 30% — un solo umbral, no un semáforo de tres colores, para no competir visualmente con el del sobrante.
+- **Tabla real-vs-proyectado:** idéntica en estructura y reglas a la de Préstamos "Hasta liquidar" (`List` en iPhone, `Table` en Mac, fila actual resaltada, filas proyectadas con etiqueta "Proyectado" explícita, no solo opacidad) — una tarjeta revolvente sin plazo fijo es, en términos de UI, el mismo patrón que un préstamo "Hasta liquidar"; ver esa sección para la spec completa en vez de repetirla aquí.
+
+### Ajustes → Preferencias — regla de fecha de pago
+
+Nueva fila, junto a las demás de Preferencias (moneda, tipo de cambio, apariencia, Historial visible):
+
+| Fila | Control | Comportamiento |
+|---|---|---|
+| Regla de pago de tarjetas | `NavigationLink` a subpantalla "Payment Date Rule" | Preferencia **global** (aplica a todas las tarjetas), 3 opciones en `Picker` `.pickerStyle(.inline)` (no `.menu` — cada opción necesita espacio para su explicación, no cabe en un menú compacto) |
+
+Las 3 opciones, cada una con su explicación corta **en inglés** (decisión explícita del usuario, texto exacto para Woz):
+
+```
+○ On the payment date
+  Only avoids interest. Simplest option, no credit score benefit.
+
+○ On the statement/cutoff date
+  Almost as good as paying early, with no buffer if something goes wrong.
+
+● N days before the cutoff date                    ← default, N = 5
+  Reduces the balance your card issuer reports to the credit
+  bureau — often the best practice for your credit score.
+  [Stepper: 5 días] — visible solo cuando esta opción está seleccionada
+```
+
+- Default: "N days before the cutoff date", N = 5 — coincide con la regla informal "15/3" investigada en el plan (pagar unos días antes del corte).
+- El `Stepper` de N (rango razonable 1–15, no se especifica límite superior estricto en el plan — Woz puede acotar a 1–15 sin pedir confirmación, es un detalle de implementación menor) solo aparece cuando esa opción está seleccionada, mismo patrón de campo condicional que "Tiempo de re-bloqueo" en Seguridad.
+- Por qué inglés: decisión explícita del usuario, no es inconsistencia — el resto de la UI de Fintrol es español, esta es la única excepción de idioma en toda la app, documentarla como tal si Larry la señala en revisión.
+
+### Origen de línea en Quincena — regla de edición manual
+
+Cada `LineItem` individual generada por una tarjeta nace con `origin: .creditCard`, `isManuallyEdited: false` — igual regla que el resto del hub. La fila agregada de Quincena no tiene su propio `isManuallyEdited` (es una vista, no un dato); la edición ocurre por tarjeta dentro del sheet, y ahí sí aplica "la edición manual gana" sobre la línea individual de esa tarjeta.
+
+### Accesibilidad
+
+- Fila agregada de Quincena: `accessibilityLabel` = "Pagos de tarjetas de crédito, 958 dólares" + `accessibilityHint` = "Toca dos veces para ver el desglose por tarjeta" — comunica que es navegación, no una línea editable, ya que no tiene las `accessibilityActions` de swipe que sí llevan las demás filas.
+- Filas del sheet de detalle: mismas `accessibilityActions`/`accessibilityValue` ya especificadas para `LineItemRow` ("pagada", bloqueo al pagar) — sin reinventar.
+- "Utilización" en el Detalle de tarjeta: el `accessibilityLabel` incluye el porcentaje y, si aplica, el texto "alta utilización" — nunca solo el color naranja.
+
+### Estado vacío
+
+`LabEmptyState(systemImage: "creditcard.fill", title: "Sin tarjetas todavía", subtitle: "Agrega una tarjeta para calcular sus pagos automáticamente")` con CTA — mismo patrón que el resto del hub.
 
 ---
 
@@ -924,6 +1084,156 @@ Fintrol no tiene una feature de búsqueda en v1 — el volumen de datos de un pr
 
 ---
 
+## Home
+
+Pantalla nueva, primer tab de la app — no es un splash ni un landing sin salida: es el resumen "¿cómo estoy hoy?" desde el que se entra a la Quincena completa. Brief original: header pequeño "00 · Home" (interno de Figma, no se lleva a producción), fecha grande bold, bloque de mensaje dinámico (copy ya cerrado por el usuario, ver PRD/plan — Jonny solo diseña el tratamiento visual, no el texto), y debajo una preview de la card oscura de Quincena.
+
+### Decisión de navegación — Home reemplaza a Quincena como tab 1
+
+**Home pasa a ser el primer tab de la app; Quincena se mueve al segundo lugar.** Tab bar de iPhone pasa de 4 a 5 tabs — llena el quinto slot que se había dejado libre a propósito (`Decisiones registradas`, 2026-09-15: "no se rellena el quinto slot solo por simetría"). Esa decisión seguía siendo correcta entonces porque no había una quinta pantalla real; Home sí lo es.
+
+Orden final:
+
+| # | Tab (iPhone) / Sidebar (Mac) | Icono | accessibilityLabel |
+|---|---|---|---|
+| 1 | **Home** (nuevo) | `house.fill` | "Home" |
+| 2 | Quincena | `calendar` | "Quincena" |
+| 3 | Recurrentes y pagos | `arrow.triangle.2.circlepath` | "Recurrentes y pagos" |
+| 4 | Overview | `menucard` | "Overview" |
+| 5 | Ajustes | `gearshape.fill` | "Ajustes" |
+
+**Por qué tab nuevo y no splash/landing:** un splash sin salida (fullScreenCover de un solo uso, tipo onboarding) no encaja con una app que se abre "dos veces al mes" para consultarla repetidamente — el usuario necesita volver a este resumen a media sesión, no solo al arrancar. Un tab es la única presentación que permite eso sin fricción (push/pop innecesario, o forzar `dismiss()` cada vez). HIG: `TabView` es correcto para 2–5 secciones de igual jerarquía de alto nivel en iPhone, y Home cumple el mismo criterio que las otras cuatro — es una sección real, no una interrupción.
+
+**Por qué reemplaza a Quincena como default (no se agrega como quinto tab manteniendo Quincena primero):** la app entera existe para responder "¿cómo estoy ahorita?" en un vistazo (STYLE_BRIEF: "se entiende en un vistazo, no como un dashboard bancario") — Home es exactamente esa respuesta, más rápida de leer que la Quincena completa (que exige escanear bloques INCOME/EXPENSES línea por línea). Precedente de plataforma: Salud (tab "Resumen"), Wallet (tab "Overview") — un resumen glanceable primero, el detalle editable a un tap. La Quincena completa sigue siendo el segundo tab, no queda enterrada — el usuario que abre la app para capturar una línea llega en un tap igual que hoy.
+
+**Icono `house.fill` coincide con el de "Servicios"** (fila del hub "Recurrentes y pagos", no un tab). Nunca son visibles en la misma pantalla — no hay colisión real de reconocimiento, y `house.fill` es el símbolo estándar de Apple para "inicio/resumen" (Salud, muchas apps de terceros). No se cambia por esta coincidencia de bajo riesgo.
+
+**Mac:** Home se agrega como primer ítem de sidebar (antes de Quincena), mismo patrón — 10 secciones en vez de 9. Sin hub (el límite de 5 es exclusivo de iPhone).
+
+### Estructura de la pantalla
+
+```
+ScrollView
+├─ Header de fecha             ← hero de esta pantalla (equivalente al rol de SOBRANTE en Quincena), fondo blanco (ver "Fondo del header")
+├─ 32pt                        ← revisión 2026-09-18, duplicado desde 16pt (ver "Espaciado" abajo)
+├─ Bloque de mensaje dinámico  ← prosa, 2–4 oraciones por escenario, sin ícono inline (revertido, ver "Mensaje dinámico"), TODO el párrafo en Semibold, mismo fondo blanco del header
+├─ 48pt                        ← sin cambio desde la revisión 2026-09-18, restaura el aire del mockup original (ver "Espaciado" abajo)
+└─ Card de Quincena embebida (preview, un solo tap target → navega a tab Quincena) — se queda oscura; su fondo pasa de `#2A2A2A` a `#000000` puro (cambio global de `AppBackgroundSecondary`, ver "Fondo — negro puro" abajo). Sus esquinas superiores llevan el radio de 55pt de la pantalla — no el header blanco, que se queda recto arriba (ver "Fondo del header")
+```
+
+Sin header "00 · Home" visible — es una anotación interna del mockup de Figma para organizar el archivo, no una instrucción de UI (confirmado en el brief del usuario). Añadir un eyebrow label ahí no aporta información nueva y va contra "reduce, no añadas". Toda la pantalla vive en un `ScrollView`, igual que Quincena — no se fuerza a caber sin scroll en iPhone.
+
+**Revisión 2026-09-17 (referencia "Loop Lentz"):** el usuario compartió una app de calendario/productividad como referencia explícita ("se debe de ver como el primer screenshot") y pidió adaptar su header (día + dot + fecha secundaria), sus iconos inline en el mensaje, evaluar una fila de stats, y más aire general. Las cuatro subsecciones siguientes documentan qué se adoptó, qué se adaptó y qué se descartó — con razón explícita en cada caso, no en silencio.
+
+### Header de fecha — día de la semana + fecha secundaria
+
+**Adoptado, adaptado.** Reemplaza la fecha única "17 de septiembre" por dos elementos en una fila, `HStack(alignment: .center)` — **revisión 2026-09-18:** cambia desde `.firstTextBaseline`; la fecha secundaria ("SEPTIEMBRE"/"2026") queda centrada verticalmente contra el hero "Jueves" en vez de alinear por la línea base, lectura más equilibrada ahora que la fecha secundaria son dos líneas apiladas en vez de una sola línea de texto.
+
+| Elemento | Contenido | Token | Alineación |
+|---|---|---|---|
+| Día de la semana (hero, izquierda) | "Jueves" — día completo localizado, capitalizado (`Locale.current`, `.weekday(.wide)`, misma técnica de capitalizar la primera letra que ya usa `todayDateTitle`) | `h1` (`.largeTitle.weight(.bold)`, 34pt), `HomeHeaderTextPrimary` (ver "Fondo del header" abajo — ya no `.primary` dinámico) | `.leading` |
+| Spacer | — | — | — |
+| Fecha completa (secundaria, derecha) | Dos líneas, **ALL CAPS**: "SEPTIEMBRE" / "2026" | `p small` (`.caption`, 12pt) **Semibold**, tracking **+0.5**, `.textCase(.uppercase)` × 2, `HomeHeaderTextSecondary` | `.trailing`, `VStack(alignment: .trailing, spacing: 2)` |
+
+- **Por qué día de la semana como hero y no la fecha exacta (que era la decisión previa del mismo día):** el usuario pidió explícitamente replicar el patrón de la referencia tras verla junto al Home actual — es una decisión de diseño nueva, no un descuido de la anterior. Sigue siendo información útil para una app de finanzas quincenales ("hoy es viernes, la quincena cierra el lunes"); la fecha exacta no desaparece, baja de jerarquía a la posición secundaria donde antes solo iba a existir la fecha sola.
+- **Se recupera el año** (la decisión de 2026-09-17 anterior lo excluía "por no competir con el hero") — ya no aplica esa razón: el año ahora vive en `p small` secundario, no en el hero, así que no compite con nada. Aporta contexto real sin costo visual.
+- **El punto rojo de la referencia — descartado, no adoptado.** Dos razones, ambas suficientes por sí solas:
+  1. **Rompe la regla de paleta ya fijada** ("el naranja nunca decora, siempre señala", Decisiones registradas 2026-09-17): un punto junto al día no señala ningún dato accionable, sería decoración pura. Usar rojo genérico (como la referencia) introduciría además un segundo color de "alerta" fuera del semáforo verde/amarillo/rojo del sobrante — colisión directa con una regla ya escrita.
+  2. **Es redundante en Home específicamente:** el punto en la referencia distingue "hoy" de otros días en un calendario que muestra múltiples fechas. Home de Fintrol siempre muestra HOY — no hay otro día en pantalla del que distinguirse, así que el indicador no aporta información nueva ("reduce, no añadas").
+- **Espaciado interno:** `spacing: 2` entre las dos líneas de la fecha secundaria (ya usado en el header de `PeriodPreviewCard` para el mismo patrón título+subtítulo apilado).
+- **Formato de fecha — restaurado 2026-09-18 (mockup original "00 · Home", frame `81:2`, ahora DEPRECATED):** el usuario comparó el Home implementado contra ese primerísimo mockup y pidió puntualmente recuperar el tratamiento de la fecha secundaria: mayúsculas con tracking ("SEPTEMBER" / "2026" en el original), perdido en la iteración "Loop Lentz" del 2026-09-17 que la dejó en Title Case ("17 de septiembre"). Se localiza el mes a español ("SEPTIEMBRE") — el resto de la UI de Fintrol es español salvo la excepción ya documentada de fecha de pago de tarjetas — y se **reutiliza el token ya existente de encabezados de sección ALL CAPS** (`p small`/`.caption` Semibold, tracking +0.5, `.textCase(.uppercase)` — mismo tratamiento de "INCOME"/"EXPENSES" en Quincena y del bloque "Aportado a la fecha" en Inversiones) en vez de inventar un token nuevo para esta pantalla. **No se toca el día de la semana como hero** ("Jueves" solo, una línea) — el usuario dejó esa opción fuera explícitamente al responder esta ronda; sigue en `h1`/`.largeTitle.weight(.bold)` tal cual está.
+
+### Fondo del header — excepción blanca (restaurado del mockup original, DEPRECATED)
+
+**Restaurado 2026-09-18.** El mockup original de Figma ("00 · Home", frame `81:2`, marcado DEPRECATED tras las iteraciones posteriores) mostraba el bloque de header — fecha + mensaje dinámico, todo lo que va **arriba** de `PeriodPreviewCard` — sobre fondo **blanco**, no negro. Esa versión se perdió en las iteraciones intermedias, cuando el header pasó a heredar `AppBackground` (#323232) como el resto de la pantalla. El usuario comparó ambas versiones y pidió explícitamente recuperar el fondo blanco del header.
+
+**Esto es una excepción deliberada a "Dark por defecto"** (`Plataforma y versión target` arriba: "Modos soportados: Dark por defecto"). Se documenta explícitamente aquí para que Woz y Larry no la traten como un bug ni la "corrijan" de vuelta a `AppBackground` en una futura pasada:
+
+| Superficie | Color | Token | Nota |
+|---|---|---|---|
+| Fondo del bloque header (fecha + mensaje dinámico) | `#FFFFFF` sólido | `HomeHeaderBackground` (nuevo, Assets.xcassets, **sin variante Dark** — "Any Appearance" única) | Blanco fijo, no sigue el `colorScheme` del sistema ni el picker de Ajustes ("Sistema"/"Claro"/"Oscuro") — es intencional: el contraste consciente es entre el header y la card, no entre el header y el modo del sistema |
+| `PeriodPreviewCard` (debajo del header) | Sin cambio — Frost `AppBackground.secondary` | Sin cambio | **No se toca.** Sigue oscura tal cual está hoy; el cambio es exclusivamente el fondo detrás del bloque de texto de arriba |
+| Resto de la pantalla (`ScrollView` background, safe areas) | Sin cambio — `AppBackground` (#323232) | Sin cambio | El blanco es una zona acotada al header, no un cambio de fondo global de Home |
+
+- **Por qué es una excepción y no una regla nueva:** "Dark por defecto" sigue siendo la norma para el resto de la app — Quincena, Recurrentes, Overview, Ajustes no cambian. Esta excepción vive únicamente en el header de Home, y existe porque el usuario pidió puntualmente restaurar ese contraste consciente del mockup original: **header claro arriba, card oscura de Quincena abajo, dos tonos en la misma pantalla** — es la composición que el mockup original comunicaba y que las iteraciones posteriores (fondo uniforme `AppBackground`) diluyeron.
+- **Color de texto sobre el header — pasa a oscuro, ya no puede seguir siendo `.primary`/`.secondary` dinámico:** el texto del header hoy es blanco sobre negro (`.primary` resuelve a blanco en dark mode, que es el modo por defecto de la app). Si el fondo pasa a blanco fijo, el texto debe volverse oscuro para seguir siendo legible — y como el fondo **no seguirá** el `colorScheme` del sistema, el texto tampoco puede usar los semánticos dinámicos de Apple (que sí lo siguen): en dark mode, `.primary` seguiría resolviendo a blanco sobre un fondo ahora blanco, ilegible. Se definen dos colores fijos nuevos, reutilizando los valores estándar de Apple para texto sobre superficies claras que ya están documentados en la tabla de "Paleta semántica" de este mismo archivo (columna "Hex Light"), en vez de inventar hex nuevos:
+
+| Rol | Token nuevo | Valor fijo | Reutiliza | Uso |
+|---|---|---|---|---|
+| Texto primario del header | `HomeHeaderTextPrimary` | `#000000` | Mismo hex que `.primary` en Light mode (tabla "Paleta semántica") | Día de la semana (`h1`), texto base del mensaje dinámico (`p big` `.primary`→este token) |
+| Texto secundario del header | `HomeHeaderTextSecondary` | `#3C3C43` @60% | Mismo hex que `.secondary` en Light mode (tabla "Paleta semántica") | Fecha secundaria ALL CAPS ("SEPTIEMBRE"/"2026") |
+
+  El naranja de acento en las cifras resaltadas del mensaje dinámico (`Color.accentColor`, FintrolOrange) **no cambia** — el accent de Fintrol ya está calibrado para pasar contraste tanto en superficies claras como oscuras (ver tabla de verificación WCAG de la sección de paleta); sigue siendo el mismo naranja sobre el nuevo fondo blanco.
+- **Implementación para Woz:** `HomeHeaderBackground`, `HomeHeaderTextPrimary` y `HomeHeaderTextSecondary` se definen como `Color Set` en `Assets.xcassets` con una sola variante ("Any Appearance", sin "Dark") — exactamente lo opuesto de cómo se define `AppBackground` (que si tiene variante Dark explícita). Esto asegura que el header se vea igual sin importar si el usuario tiene la app en "Sistema", "Claro" u "Oscuro" — es una superficie de marca fija, no una superficie semántica. Aplican solo dentro del bloque de header de `HomeView`; el resto de la pantalla sigue usando `.primary`/`.secondary`/`AppBackground` normalmente.
+- **Contraste:** `#000000` sobre `#FFFFFF` = 21:1 (excede cualquier mínimo WCAG). `#3C3C43 @60%` sobre `#FFFFFF` es el mismo par que Apple usa como `secondaryLabel` en light mode en todo iOS — ya pasa AA por definición del sistema.
+
+### Mensaje dinámico — tratamiento visual
+
+El copy (8 frases de referencia en el prompt del usuario) ya está cerrado — Jonny diseña solo cómo se ve, no el texto. **Nota abierta, no bloqueante:** el copy de referencia está en inglés; toda la UI de Fintrol es español salvo una única excepción ya documentada (regla de fecha de pago de tarjetas, Ajustes). Si este es un segundo caso especial o si Kim/Steve deben traducirlo antes de que Woz lo implemente queda señalado aquí — no cambia el tratamiento tipográfico, que aplica igual en cualquier idioma.
+
+- **Token — revisión 2026-09-18:** todo el párrafo en `p big` **Semibold** (`.body.weight(.semibold)`), no solo las cifras resaltadas — antes solo las cifras llevaban peso Semibold y el resto de la frase era Regular; el usuario pidió más presencia visual al párrafo completo. `HomeHeaderTextPrimary` (ver "Fondo del header" arriba — ya no `.primary`, porque este bloque vive sobre el fondo blanco fijo del header, no sobre `AppBackground`), `.leading`, sin card — texto suelto directamente sobre `HomeHeaderBackground`, mismo patrón ya usado para TOTAL INCOME/EXPENSES y "To Send" (nunca todo lo que aparece en Fintrol necesita un contenedor).
+- **Longitud — revisión 2026-09-18:** el copy pasó de una sola oración corta a 2–4 oraciones por escenario (~25–55 palabras), más detallado y explicativo que la versión inicial. La tipografía y el tratamiento visual no cambian por esto — `lineSpacing(4)` y `lineLimit(nil)` ya estaban dimensionados para el caso largo.
+- **Interlineado:** `lineSpacing(4)` — aplica la regla ya escrita en "Leading" de este documento (texto ≥3 líneas en el estado largo).
+- **Sin límite de líneas:** `lineLimit(nil)` + `.fixedSize(horizontal: false, vertical: true)`. Nunca se trunca información financiera, así que no hay truncamiento ni "leer más" — el `ScrollView` absorbe la altura extra.
+- **Énfasis de las cifras accionables:** los valores dinámicos del mensaje —`{n}` pagos pendientes, `{loanPct}%`, `{cardsDue}` tarjetas— se resaltan inline con `Text` concatenado (no `AttributedString` — decisión ya tomada por Woz, ver `HomeInsightMessage.attributedText`): mismo peso Semibold que ya lleva ahora todo el párrafo, pero en `.foregroundStyle(Color.accentColor)` (FintrolOrange) — el color, no el peso, es lo que las distingue del resto del texto tras la revisión de arriba. Coherente con la regla de paleta ("el naranja nunca decora, siempre señala") — señala exactamente el número que el usuario necesita retener.
+
+#### SF Symbol inline antes de cada cifra — **revertido 2026-09-18, vuelve a estar descartado**
+
+**Revertido.** La adopción del 2026-09-17 (ver entrada superseded en "Decisiones registradas") antepuso un SF Symbol (`checklist`/`creditcard.fill`/`banknote`) a cada cifra resaltada vía `Text(Image(systemName:))`. El usuario pidió quitarlos en la revisión del 2026-09-18 — `HomeInsightMessage.attributedText` (`HomeView.swift`) ya no llama a ningún helper `iconedHighlight`, solo `highlighted(_:)` con color naranja, sin símbolo. La razón original que había descartado los iconos el 2026-09-17 (antes de la adopción acotada) vuelve a aplicar: el mensaje se lee mejor como prosa limpia, sin el ruido visual de un glifo repetido antes de cada cifra. Esta subsección queda como registro histórico de la iteración intermedia — no describe el estado actual del código.
+
+#### Fila de stats pequeña — **descartada, no adoptada**
+
+La referencia muestra "🚶 4.7K steps  🌙 7.3 hours" debajo del mensaje. Fintrol no tiene datos de fitness, pero la pregunta real es si vale la pena un análogo financiero (ej. "Sobrante: $X" chico, o "N días para tu próximo pago"). **No se adopta:**
+
+- **Redundancia directa, no análoga:** en la referencia, steps/hours no aparecen en ningún otro lugar de la pantalla — es información nueva. En Home de Fintrol, el dato más cercano (sobrante, próximo mes) ya vive en la `PeriodPreviewCard` inmediatamente debajo, a un scroll de distancia mínima. Una fila de stats repitiendo o anticipando ese mismo dato sería ruido, no señal — exactamente lo que "reduce, no añadas" prohíbe.
+- **Identidad de la app, no de la referencia:** Fintrol es una herramienta financiera densa por diseño (STYLE_BRIEF), no un dashboard minimalista de bienestar — llenar el espacio "aireado" de la referencia con una fila decorativa solo por igualar la composición visual iría en contra de esa identidad ya establecida, sin aportar valor real al usuario.
+- **Si en el futuro aparece un dato nuevo** que no viva ya en la card de abajo (ej. una racha de quincenas sin deuda), esta fila es el lugar natural para introducirlo — queda anotado en "Sin definir aún", no cerrado para siempre.
+
+### Espaciado — más aire, sin romper densidad regular
+
+**Adoptado parcialmente.** La referencia se siente notablemente menos densa que el Home actual. Se ajustan tres valores puntuales del header hacia el bloque de mensaje y la card, sin adoptar el minimalismo extremo de la referencia (que no aplica a una app financiera densa por diseño):
+
+| Elemento | Valor anterior | Valor nuevo | Razón |
+|---|---|---|---|
+| Espacio header de fecha → mensaje dinámico | 12pt | 16pt | Un salto perceptible sin llegar a separar visualmente el header del mensaje — siguen leyéndose como el mismo bloque |
+| **Espacio header de fecha → mensaje dinámico — revisión 2026-09-18** | 16pt | **32pt** | Duplicado sobre el valor anterior — el usuario pidió más aire también arriba del mensaje, no solo entre el mensaje y la card, para que el header completo (fecha + mensaje) respire igual que el nuevo salto de 48pt de abajo |
+| Espacio mensaje → card de Quincena | 24pt | 32pt | El salto más grande de la pantalla — es donde la referencia respira más, y es el punto natural de Fintrol para separar "resumen en prosa" de "card de datos" |
+| **Espacio mensaje → card de Quincena — revisión 2026-09-18** | 32pt | **48pt** | El usuario comparó el Home implementado contra el mockup original de Figma ("00 · Home", frame `81:2`, DEPRECATED) y pidió puntualmente más aire aquí — en ese mockup el mensaje termina aproximadamente a la mitad de la pantalla y hay un salto grande de espacio en blanco antes de que arranque la card oscura. 32pt (la iteración anterior) ya no comunicaba ese salto una vez el header pasó a fondo blanco: con dos tonos distintos en pantalla (header claro / card oscura), la transición necesita más aire para leerse como una pausa intencional y no como un espaciado de sección normal. 48pt es el siguiente múltiplo de 8 con salto perceptible (+16pt sobre 32pt, el doble del ajuste anterior 24→32) sin volverse un hueco vacío que rompa la lectura vertical del `ScrollView`. **Sin cambio en esta revisión** — confirmado que sigue en 48pt |
+| Padding superior del `ScrollView` | 12pt | 20pt | Da al header su propio espacio antes de tocar la safe area, en vez de sentirse pegado al notch/Dynamic Island |
+
+Se mantiene sin cambio el padding lateral de pantalla (20pt) y el padding interno de la card (16pt) — ya están dentro del sistema de espaciado de la app y no forman parte de este encargo (la card de Quincena embebida no se toca).
+
+- **Estado corto vs. largo:** no hay tratamiento especial por longitud — la tipografía de 17pt Regular con `lineSpacing(4)` funciona igual de bien en una línea de 8 palabras que en cuatro líneas de 25; el espacio de 32pt hacia la card de abajo es fijo, no compensa por la altura del texto (el `ScrollView` ya lo resuelve).
+
+### Card de Quincena embebida — preview de solo lectura, no la vista completa
+
+**No es un link a texto ("Ver Quincena →") ni la `PeriodView` completa incrustada** — es una card nueva y más chica, `PeriodPreviewCard`, que reutiliza piezas ya construidas en modo lectura:
+
+| Bloque (de arriba a abajo) | Reutiliza | Cambios para el modo preview |
+|---|---|---|
+| Título + pill de rango | Mismo patrón visual del header de Quincena ("Septiembre 2026" `h2`/`.title2` Semibold + pill "1 – 15"/"16 – 30" con el mismo tratamiento verde-si-es-hoy) | No abre el jump sheet al tocarlo — toda la card es un solo tap target, no hay sub-interacciones dentro de ella. **Revisión 2026-09-18 (mockup de Figma):** el bloque completo se centra horizontalmente (antes alineado a la izquierda como el resto del contenido de la card), con `padding(.top, 38)` y `padding(.bottom, 16)` propios — separa visualmente este header del bloque INCOME/EXPENSES de abajo |
+| INCOME / EXPENSES | Mismo token que "TOTAL INCOME"/"TOTAL EXPENSES" (`p small`/`.caption.weight(.bold)` tras la migración pendiente, ver Tipografía) | **Rediseñado 2026-09-18 (mockup de Figma):** deja de ser una fila de texto simple — pasa a ser **dos cajas lado a lado** (`HStack(spacing: 12)`), una por INCOME y otra por EXPENSES. Cada caja: label arriba (`.caption.weight(.bold)`, tracking +0.5, `.secondary`) y el monto debajo dentro de un nested-card (`.ultraThinMaterial.opacity(0.5)`, radio 16pt, `padding(16)`) — mismo padding que usa la caja "Next Month", para que ambas filas de cajas midan la misma altura visual. Sin las cards de línea individuales, sin botón "+"; sigue siendo un resumen, no un editor |
+| Sobrante | `SobranteBadge` reutilizado tal cual (mismo componente, mismo semáforo verde/amarillo/rojo, `h1` Bold) | Sin cambios — es el dato que más importa de la card |
+| Next Month | `SummaryPanel`'s bloque "Next Month" reutilizado tal cual | Sin cambios |
+
+- **"Mandar"/"To Send" queda fuera del preview** — no es parte de lo que el usuario listó en el mockup ("INCOME/EXPENSES, Sobrante grande, Next Month") y es una acción operativa (convertir a MXN para enviar), no un dato de resumen; se ve al entrar a la Quincena completa.
+- **Espaciado pill → INCOME/EXPENSES — revisión 2026-09-18:** el salto entre la pill de rango y las cajas INCOME/EXPENSES se duplica (+16pt adicionales sobre el spacing base de la card), para separar con más claridad el header centrado (título + pill) del bloque de totales.
+- **Contenedor:** una sola card Frost, `AppBackground.secondary`, radio 20pt en el resto de la app (Home usa 55pt en sus esquinas superiores, ver abajo), padding 16pt. Sin swipe actions, sin menú contextual — toda la superficie es un botón.
+- **Esquinas superiores redondeadas — 55pt, solo en la card, no en el header blanco.** El radio de 55pt (curva de pantalla del iPhone 17 Pro, confirmado con el usuario) vive exclusivamente en `PeriodPreviewCard.clipShape` (`UnevenRoundedRectangle`, esquinas superiores únicamente, bottom en 0 porque la card corre edge-to-edge hasta el borde físico inferior). El bloque header blanco (fecha + mensaje) va con esquinas **rectas** arriba — corrección explícita tras un error de ubicación en una iteración previa donde el radio se había aplicado al header por accidente. `HomeView` reaplica su propia versión animada de este mismo `clipShape` durante el drag-to-transition, con el mismo radio en reposo.
+- **Fondo — negro puro (cambio global, no solo Home).** `AppBackgroundSecondary` (Assets.xcassets) pasa de gris `#2A2A2A` a **`#000000`** en dark mode — ver `Assets.xcassets/AppBackgroundSecondary.colorset/Contents.json`. Es el fondo Frost de todas las cards oscuras de la app, no solo `PeriodPreviewCard`: Quincena, Préstamos, Tarjetas, Inversiones, etc. heredan el mismo cambio automáticamente al usar el mismo token. Todas las menciones de `#2A2A2A` en este documento se actualizaron a `#000000` para reflejarlo. **Pendiente:** revisar si los frames ya sincronizados en Figma (`02 · Quincena` y sucesivos) necesitan el mismo refresco de color — no se tocaron en esta pasada, solo `01 · Home`.
+- **Interacción:** tap en cualquier punto de la card navega al tab/sidebar-item Quincena, mostrando la quincena actual (mismo `coordinate` que ya se estaría mostrando ahí). No hay chevron ni flecha "ver más" dentro de la card — la superficie completa siendo tappable ya es un patrón establecido en la app (filas del hub navegan igual, con tap simple).
+- **Accesibilidad:** la card es un solo `accessibilityElement(children: .combine)` con un label compuesto ("Quincena actual, [rango], sobrante [monto], toca para ver detalle") en vez de leer cada sub-bloque por separado — un VoiceOver user no necesita navegar 4 elementos internos en una preview que no tiene acciones propias.
+
+### Ajustes a `RootView.swift` — para Woz
+
+1. **`FintrolTab`** (iPhone): agregar `case home` como **primer** caso (el orden de `CaseIterable.allCases` sigue el orden de declaración, así que debe ir antes de `.period`), con `systemImage: "house.fill"` y `accessibilityLabel: "Home"`. Actualizar `destination(for:)` con `case .home: HomeView()`.
+2. **`@State private var selection: FintrolTab = .period`** → cambia el default a `.home`.
+3. **`FintrolSection`** (Mac): mismo patrón — `case home` primero, `title: "Home"`, `systemImage: "house.fill"`, y en `MacRootView` el default `@State private var selection: FintrolSection? = .period` → `.home`, más `case .home: HomeView()` en `destination(for:)`.
+4. **Navegación programática Home → Quincena:** hoy `selection` vive como `@State` privado dentro de `iOSRootView`/`MacRootView` — `HomeView` no tiene forma de cambiarlo al tocar la card embebida. Woz necesita decidir el mecanismo (opción simple: pasar un `Binding<FintrolTab>`/`Binding<FintrolSection?>` a `HomeView`, en vez de dejar `selection` totalmente privado; alternativa: una notificación/`@Observable` de navegación compartido si el patrón se repite en otro lado). Esto es la única pieza estructural real de este cambio — el resto es una pantalla nueva más un reordenamiento de enum.
+5. `HomeView.swift` es un archivo nuevo (`Apps/Fintrol/Fintrol/Features/Home/HomeView.swift`, siguiendo el patrón de carpeta por feature ya establecido).
+
+---
+
 ## Decisiones registradas
 
 | Fecha | Decisión | Razón |
@@ -964,6 +1274,32 @@ Fintrol no tiene una feature de búsqueda en v1 — el volumen de datos de un pr
 | 2026-09-16 | Nueva fila "Historial visible" en Ajustes → Preferencias (`Stepper`, 1–24 meses, default 1) limita cuánto se puede retroceder desde la quincena actual | Decisión del usuario — se combina con el límite existente de "primera quincena materializada": aplica el que esté más cerca de hoy |
 | 2026-09-16 | Línea con `isPaid == true` queda bloqueada (solo "Desmarcar pagado" disponible) y su card cambia a fondo verde tenue (`Color.green.opacity(0.16)` sobre Frost) | Decisión del usuario — tercera excepción documentada al uso de verde en la app (junto a SOBRANTE y la pill "Hoy"), siempre más sutil que el verde sólido del semáforo |
 | 2026-09-16 | Acciones ausentes/deshabilitadas sin toast ni mensaje cuando la línea está bloqueada por `isPaid` | Recomendación de Jonny adoptada — patrón estándar iOS (Mail, Reminders): las acciones que no aplican simplemente no aparecen en swipe/menú/accessibilityActions |
+| 2026-09-17 | Nueva feature v1 "Credit Cards", promovida desde Fase 2 del PRD (plan `glimmering-swinging-bumblebee.md`); séptima fila del hub, sección "EXPENSES", icono `creditcard.fill` | Decisión del usuario tras investigación de Avie sobre fecha de pago óptima y fórmula de pago mínimo |
+| 2026-09-17 | En Quincena, las líneas `.creditCard` de una misma quincena se agrupan en una sola fila "Credit Cards Payments" (suma) en vez de una fila por tarjeta — única fila de Quincena que representa más de una línea de datos | Evita saturar EXPENSES con una fila por tarjeta cuando puede haber varias con pago el mismo período; el desglose vive en el sheet de detalle |
+| 2026-09-17 | La fila "Credit Cards Payments" no lleva swipe/menú de pagado/editar/eliminar — es navegación pura, tocarla abre el sheet | Es la única card-por-línea de Quincena sin esas acciones; el estado pagado real vive por tarjeta dentro del sheet, no en la fila agregada |
+| 2026-09-17 | El sheet de detalle reutiliza `LineItemRow` completo, incluido el bloqueo verde al marcar pagado, sin reinventar el patrón | Consistencia — mismo token `Color.green.opacity(0.16)` y mismo comportamiento ya documentado para toda línea pagada |
+| 2026-09-17 | "Utilización" del Detalle de tarjeta usa su propia escala de un umbral (`.secondary`/`.orange` ≥30%), no el semáforo verde/amarillo/rojo del sobrante | Evita confundir dos significados distintos con la misma paleta de tres colores |
+| 2026-09-17 | Regla de fecha de pago en Ajustes: 3 opciones con explicación en inglés, default "N días antes del corte" (N=5) | Decisión explícita del usuario — única excepción de idioma en toda la app, basada en investigación citada en el plan (reduce el saldo reportado al buró) |
+| 2026-09-17 | Nueva pantalla "Home" reemplaza a Quincena como primer tab (iPhone) / primer ítem de sidebar (Mac); Quincena pasa a segundo lugar. Tab bar de iPhone sube de 4 a 5 | Recomendación de Steve, adoptada por Jonny — Home responde "¿cómo estoy hoy?" más rápido que la Quincena completa, coherente con "se entiende en un vistazo" del STYLE_BRIEF; llena el quinto slot que se había dejado vacío a propósito (2026-09-15) porque hasta ahora no existía una quinta sección real |
+| 2026-09-17 | **Superseded (ver revisión "Header de fecha" más abajo, mismo día):** la fecha grande de Home usa `h1`/`.largeTitle.weight(.bold)` como único elemento del header, sin day-of-week ni año | Era correcto antes de que el usuario compartiera la referencia "Loop Lentz" y pidiera replicar su patrón día+fecha secundaria — reemplazado por la entrada de "Header de fecha" de abajo |
+| 2026-09-17 | **Superseded (ver "SF Symbol inline antes de cada cifra" en § Home, mismo día):** el mensaje dinámico de Home resalta sus valores (`{n}`, `{loanPct}%`, `{cardsDue}`) con accent naranja inline en vez de un ícono/chip aparte; sin header "00 · Home" visible | La mitad "sin header 00 · Home" sigue vigente sin cambio. La mitad "sin ícono/chip aparte" se reemplaza tras la referencia del usuario — ver la entrada de supersede explícito más abajo, que documenta por qué la razón original (ruido de `LineItemRow`) no aplica igual en un párrafo con máximo 3 cifras |
+| 2026-09-17 | La card de Quincena embebida en Home es un componente nuevo de solo lectura (`PeriodPreviewCard`), no la `PeriodView` completa ni un link de texto — reutiliza `SobranteBadge` y el bloque "Next Month" de `SummaryPanel` tal cual | El mockup la muestra como resumen, no como la vista interactiva completa; "Mandar" queda fuera por ser una acción operativa, no un dato de resumen |
+| 2026-09-17 | Header de fecha de Home cambia a día de la semana completo (hero, `h1` Bold) + fecha completa con año en dos líneas secundarias (`p small`, `.secondary`, trailing) — sin punto/dot de acento | Referencia explícita del usuario ("Loop Lentz", comparada contra el Home actual). El día de la semana sí aporta a "¿cómo estoy hoy?" en una app quincenal; el año vuelve porque ahora vive en texto secundario que no compite con el hero. El dot se descarta por romper la regla "el naranja nunca decora" y por ser redundante — Home siempre muestra hoy, no hay otro día del que distinguirse |
+| 2026-09-17 | El mensaje dinámico de Home antepone un SF Symbol inline (`checklist`/`creditcard.fill`/`banknote` según el tipo de cifra) a cada valor resaltado en naranja, vía `Text(Image(systemName:))` concatenado | Supersede explícito de la entrada "sin ícono/chip aparte" del mismo día — la razón original (ruido de `LineItemRow`, hasta 6 símbolos por fila repetidos N veces) no aplica igual a un párrafo único con máximo 3 cifras; refuerza reconocimiento reutilizando los iconos ya asignados a Tarjetas y Préstamos en el hub |
+| 2026-09-17 | Se descarta una fila de stats pequeña bajo el mensaje dinámico (análoga a "steps/hours" de la referencia) | La `PeriodPreviewCard` inmediatamente debajo ya muestra sobrante y próximo mes — una fila adicional sería redundante, no información nueva como sí lo es en la referencia; Fintrol es densa por diseño, no un dashboard minimalista |
+| 2026-09-17 | Espaciado del header de Home ajustado: header→mensaje 12pt→16pt, mensaje→card 24pt→32pt, padding superior del `ScrollView` 12pt→20pt | Referencia explícita del usuario pidiendo "más aire"; ajuste puntual, no adopción del minimalismo extremo de la referencia — el resto del sistema de espaciado de la app no cambia |
+| 2026-09-18 | **Restaurado del mockup original "00 · Home" (frame `81:2`, DEPRECATED):** el fondo del bloque header de Home (fecha + mensaje dinámico, no la card de Quincena) pasa a blanco sólido fijo (`HomeHeaderBackground`, `#FFFFFF`, sin variante Dark), con texto en `HomeHeaderTextPrimary` (`#000000`) y `HomeHeaderTextSecondary` (`#3C3C43` @60%) en vez de `.primary`/`.secondary` dinámico | Excepción deliberada a "Dark por defecto" — el usuario pidió puntualmente recuperar el contraste consciente del mockup original: header claro arriba, card oscura de Quincena abajo, dos tonos en la misma pantalla. `PeriodPreviewCard` no cambia, se queda oscura |
+| 2026-09-18 | Espacio mensaje → card de Quincena en Home sube de 32pt a 48pt | El usuario comparó contra el mockup original y pidió más aire ahí — en el mockup el mensaje termina a media pantalla con un salto grande antes de la card; 32pt ya no comunicaba ese salto con el nuevo header blanco de dos tonos |
+| 2026-09-18 | Fecha secundaria del header de Home pasa de Title Case ("17 de septiembre"/"2026") a ALL CAPS con tracking ("SEPTIEMBRE"/"2026"), reutilizando el token de encabezados de sección ya existente (`p small`/`.caption` Semibold, tracking +0.5, `.textCase(.uppercase)` — mismo de "INCOME"/"EXPENSES" y "Aportado a la fecha") | Restaura el formato del mockup original ("SEPTEMBER"/"2026" en el brief en inglés, localizado a español); no se inventa un token nuevo, se reutiliza el ya usado para mayúsculas con tracking en el resto de la app. El día de la semana hero ("Jueves" solo) no se toca — el usuario lo dejó fuera de este pedido explícitamente |
+| 2026-09-18 | **Revertido:** el mensaje dinámico de Home vuelve a no llevar SF Symbol inline antes de las cifras — se quita `Text(Image(systemName:))`, solo queda el resaltado naranja | El usuario pidió quitar los iconos adoptados el 2026-09-17; la razón original que los había descartado antes de esa adopción (ruido visual) vuelve a aplicar |
+| 2026-09-18 | Todo el párrafo del mensaje dinámico pasa a Semibold (antes solo las cifras resaltadas eran Semibold, el resto Regular); el copy en sí se alarga a 2–4 oraciones por escenario | Más presencia visual y más contexto explicativo por escenario, pedido explícito del usuario |
+| 2026-09-18 | Header de fecha (fila "Jueves" + fecha secundaria) cambia de `HStack(alignment: .firstTextBaseline)` a `HStack(alignment: .center)` | La fecha secundaria centrada verticalmente contra el hero se lee mejor ahora que son dos líneas apiladas, en vez de alinear por la línea base |
+| 2026-09-18 | Espacio header de fecha → mensaje dinámico se duplica de 16pt a 32pt | Más aire arriba del mensaje, pedido explícito del usuario, para que el header respire igual que el salto de 48pt de abajo |
+| 2026-09-18 | Las esquinas superiores redondeadas de 55pt se confirman exclusivas de `PeriodPreviewCard` — el header blanco (fecha + mensaje) va con esquinas rectas arriba | Corrige un error de ubicación de una iteración previa donde el radio se había aplicado al header por accidente; "el roundness va ahí, no donde lo pusiste" (confirmado con el usuario) |
+| 2026-09-18 | El header interno de `PeriodPreviewCard` (título del mes + pill de rango) se centra horizontalmente, con `padding(.top, 38)` y `padding(.bottom, 16)` propios | Mockup de Figma exportado por el usuario — separa visualmente el header de la card del bloque INCOME/EXPENSES de abajo |
+| 2026-09-18 | INCOME/EXPENSES en `PeriodPreviewCard` dejan de ser una fila de texto simple — pasan a ser dos cajas lado a lado con label arriba y monto dentro de un nested-card, mismo padding que "Next Month" | Mockup de Figma exportado por el usuario — iguala la altura visual entre la fila INCOME/EXPENSES y la card "Next Month" |
+| 2026-09-18 | Espacio pill de rango → cajas INCOME/EXPENSES se duplica (+16pt adicionales sobre el spacing base de la card) | Mockup de Figma exportado por el usuario — separa el header centrado del bloque de totales |
+| 2026-09-18 | **Cambio global, no solo Home:** `AppBackgroundSecondary` pasa de `#2A2A2A` a `#000000` puro en dark mode — afecta el fondo de toda card oscura de la app (Home, Quincena, Préstamos, Tarjetas, Inversiones) | Decisión de color del usuario aplicada al color set compartido; todas las menciones de `#2A2A2A` en este documento se actualizaron a `#000000`. Pendiente: refrescar los frames ya sincronizados en Figma distintos de `01 · Home` con el mismo negro |
 
 ---
 
@@ -971,3 +1307,7 @@ Fintrol no tiene una feature de búsqueda en v1 — el volumen de datos de un pr
 
 - [ ] Icono de la app — no se ha diseñado; queda pendiente de una sesión dedicada con Phil.
 - [ ] Inversiones — etapa 2: rendimientos, valor actual del portafolio, precios de mercado en vivo. v1 solo registra la aportación periódica; el diseño de "cuánto vale hoy mi cuenta" no está hecho y necesita decidir fuente de datos (API de precios) antes de poder diseñarse — no es solo una pantalla nueva, tiene las mismas preguntas de integración externa que resolvió el TRD para el tipo de cambio.
+- [ ] Home — idioma del mensaje dinámico: el copy de referencia del usuario está en inglés; confirmar con Steve/Kim si se traduce a español (regla general de la app) o si es un segundo caso de excepción de idioma junto con la regla de fecha de pago de tarjetas. No bloquea el tratamiento tipográfico, que es igual en cualquier idioma.
+- [ ] Home — accesibilidad de los SF Symbols inline del mensaje dinámico: señalado para Sarah en la sección "SF Symbol inline antes de cada cifra" — confirmar en pruebas reales de VoiceOver si la lectura redundante símbolo+número molesta, y si hace falta un `accessibilityLabel` a nivel de bloque que la sobrescriba.
+- [ ] Home — fila de stats pequeña queda descartada para esta revisión, no cerrada para siempre: si aparece un dato financiero nuevo que no viva ya en `PeriodPreviewCard` (ej. racha de quincenas sin deuda), este es el lugar natural para introducirlo.
+- [ ] Home — mecanismo de navegación programática Home → Quincena (qué State/Binding/Observable usa Woz para cambiar el tab/sidebar seleccionado desde `HomeView`) queda como decisión de implementación, no de diseño; señalado en "Ajustes a RootView.swift" de § Home.

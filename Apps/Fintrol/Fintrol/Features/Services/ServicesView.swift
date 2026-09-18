@@ -73,7 +73,7 @@ struct ServicesView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(service.name)
                     .foregroundStyle(.primary)
-                Text("Día \(service.paymentDay) · \(service.homeServiceCategory.rawValue)")
+                Text("Día \(service.paymentDay) · \(service.homeServiceCategory.displayName)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -107,7 +107,6 @@ private struct ServiceEditSheet: View {
     @State private var name: String
     @State private var price: Decimal
     @State private var currency: Currency
-    @State private var paymentDay: Int
     @State private var startDate: Date
     @State private var hasEndDate: Bool
     @State private var endDate: Date
@@ -118,7 +117,6 @@ private struct ServiceEditSheet: View {
         _name = State(initialValue: service?.name ?? "")
         _price = State(initialValue: service?.price ?? 0)
         _currency = State(initialValue: service?.currency ?? .usd)
-        _paymentDay = State(initialValue: service?.paymentDay ?? 1)
         _startDate = State(initialValue: service?.startDate ?? .now)
         _hasEndDate = State(initialValue: service?.endDate != nil)
         _endDate = State(initialValue: service?.endDate ?? .now)
@@ -133,10 +131,9 @@ private struct ServiceEditSheet: View {
                 Section {
                     TextField("Nombre", text: $name)
                     HStack {
-                        TextField("Precio", value: $price, format: .number.precision(.fractionLength(2)))
-                            #if os(iOS)
-                            .keyboardType(.decimalPad)
-                            #endif
+                        // Coordinator (2026-09-17): `LabDecimalField` — centralized fix for
+                        // "0.00 isn't a placeholder, has to be deleted by hand".
+                        LabDecimalField(placeholder: "Precio", value: $price)
                         Picker("Moneda", selection: $currency) {
                             Text("USD").tag(Currency.usd)
                             Text("MXN").tag(Currency.mxn)
@@ -144,10 +141,11 @@ private struct ServiceEditSheet: View {
                         .pickerStyle(.segmented)
                         .frame(width: 140)
                     }
-                    Stepper("Día de pago: \(paymentDay)", value: $paymentDay, in: 1...31)
                 }
 
                 Section {
+                    // El día de pago se deriva del día del mes de "Inicio" — no hay un
+                    // campo separado que pueda desincronizarse (feedback del usuario).
                     DatePicker("Inicio", selection: $startDate, displayedComponents: .date)
                     Toggle("Tiene fecha de fin", isOn: $hasEndDate)
                     if hasEndDate {
@@ -157,7 +155,7 @@ private struct ServiceEditSheet: View {
 
                 Section {
                     Picker("Categoría", selection: $category) {
-                        ForEach(HomeServiceCategory.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+                        ForEach(HomeServiceCategory.allCases, id: \.self) { Text($0.displayName).tag($0) }
                     }
                 }
             }
@@ -171,7 +169,7 @@ private struct ServiceEditSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Guardar") { save() }
-                        .disabled(name.isEmpty || !ValidationRange.amount.contains(price) || !ValidationRange.dayOfMonth.contains(paymentDay))
+                        .disabled(name.isEmpty || !ValidationRange.amount.contains(price))
                 }
             }
         }
@@ -179,18 +177,21 @@ private struct ServiceEditSheet: View {
 
     private func save() {
         let resolvedEndDate = hasEndDate ? endDate : nil
+        // El stepper "Día de pago" se eliminó (feedback del usuario): el día del mes de
+        // "Inicio" es la única fuente de verdad para `paymentDay`.
+        let derivedPaymentDay = Calendar.current.component(.day, from: startDate)
         if let service {
             service.name = name
             service.price = price
             service.currency = currency
-            service.paymentDay = paymentDay
+            service.paymentDay = derivedPaymentDay
             // Normalize at the DatePicker→model boundary (TRD "Decisiones de Swift" —
             // Fechas): every save goes through `civilStartDate`/`civilEndDate`.
             service.civilStartDate = CivilDate(from: startDate, calendar: .current)
             service.civilEndDate = resolvedEndDate.map { CivilDate(from: $0, calendar: .current) }
             service.homeServiceCategory = category
         } else {
-            let newService = Subscription(name: name, price: price, currency: currency, paymentDay: paymentDay, startDate: startDate, endDate: resolvedEndDate, homeServiceCategory: category)
+            let newService = Subscription(name: name, price: price, currency: currency, paymentDay: derivedPaymentDay, startDate: startDate, endDate: resolvedEndDate, homeServiceCategory: category)
             context.insert(newService)
         }
         try? context.save()

@@ -11,6 +11,12 @@ public final class Subscription {
     public var startDate: Date = Date()
     public var endDate: Date?
     public var card: String = ""
+    /// Soft reference to `CreditCard.id` — same pattern as `LineItem.sourceCreditCardID` (no
+    /// `@Relationship`, resolved by querying `CreditCard` by id). Coordinator (2026-09-17):
+    /// user feedback — the "Tarjeta" field becomes a picker over the cards already registered
+    /// in Credit Cards instead of free text. `card: String` stays as the persisted display/
+    /// round-trip value for import/backup — see `SubscriptionsView.save()`.
+    public var creditCardID: UUID?
     public var kindRaw: String = SubscriptionKind.subscription.rawValue
     /// Interpreted against `SubscriptionCategory` when `kind == .subscription`, or
     /// `HomeServiceCategory` when `kind == .service` — one string field, two category sets.

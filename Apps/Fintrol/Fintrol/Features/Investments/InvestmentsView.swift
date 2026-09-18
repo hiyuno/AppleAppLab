@@ -24,7 +24,7 @@ struct InvestmentsView: View {
     }
 
     private func contributedToDate(for item: RecurringItem) -> Decimal {
-        let lines = allPeriods.flatMap { $0.lineItems ?? [] }.filter { $0.sourceRecurringID == item.id && $0.isActive }
+        let lines = allPeriods.flatMap { $0.lineItems ?? [] }.filter { $0.sourceRecurringID == item.id && $0.isActive && $0.isPaid }
         return lines.reduce(Decimal(0)) { partial, line in
             partial + CurrencyConversion.toUSD(amount: line.amount, currency: line.currency, rate: rateStore.currentRate ?? 0)
         }
@@ -135,6 +135,10 @@ private struct InvestmentDetailView: View {
     let item: RecurringItem
     @Query private var allPeriods: [Period]
     @Environment(ExchangeRateStore.self) private var rateStore
+    // Coordinator (2026-09-17): "Editar" in the detail toolbar — same placement/pattern as
+    // `LoanDetailView`/`CreditCardDetailView`, reuses `InvestmentEditSheet` (same form
+    // `InvestmentsView` uses for "Nueva cuenta"/its own "Editar" swipe action).
+    @State private var isPresentingEdit = false
 
     private var lines: [(period: Period, line: LineItem)] {
         allPeriods
@@ -146,9 +150,18 @@ private struct InvestmentDetailView: View {
     }
 
     private var contributedToDate: Decimal {
-        lines.filter { $0.line.isActive }.reduce(Decimal(0)) { partial, entry in
+        lines.filter { $0.line.isActive && $0.line.isPaid }.reduce(Decimal(0)) { partial, entry in
             partial + CurrencyConversion.toUSD(amount: entry.line.amount, currency: entry.line.currency, rate: rateStore.currentRate ?? 0)
         }
+    }
+
+    /// Builds a plain `String` (never interpolated straight into `Text(_:)`, which would treat
+    /// it as `LocalizedStringKey` and add locale thousands-grouping to the year, e.g. "2,027")
+    /// so `Text(verbatim:)` can render it untouched: "Sep 1–15, 2026".
+    private func periodLabel(for coordinate: PeriodCoordinate) -> String {
+        let monthName = Calendar.current.shortMonthSymbols[coordinate.month - 1]
+        let dayRange = coordinate.half == .first ? "1–15" : "16–fin"
+        return "\(monthName) \(dayRange), \(coordinate.year)"
     }
 
     var body: some View {
@@ -171,7 +184,7 @@ private struct InvestmentDetailView: View {
                     ForEach(lines, id: \.line.id) { entry in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("\(entry.period.coordinate.year) — \(entry.period.coordinate.month)/\(entry.period.coordinate.half == .first ? "1–15" : "16–fin")")
+                                Text(verbatim: periodLabel(for: entry.period.coordinate))
                                     .font(.body)
                                 if !entry.line.isActive {
                                     Text("Desactivada").font(.caption).foregroundStyle(.secondary)
@@ -205,6 +218,14 @@ private struct InvestmentDetailView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("Editar") { isPresentingEdit = true }
+            }
+        }
+        .sheet(isPresented: $isPresentingEdit) {
+            InvestmentEditSheet(item: item)
+        }
     }
 }
 
@@ -225,7 +246,6 @@ private struct InvestmentEditSheet: View {
     @State private var amount: Decimal
     @State private var currency: Currency
     @State private var frequencyKind: InvestmentFrequencyKind
-    @State private var monthlyDay: Int
     @State private var startDate: Date
     @State private var hasEndDate: Bool
     @State private var endDate: Date
@@ -242,23 +262,22 @@ private struct InvestmentEditSheet: View {
         _isActive = State(initialValue: item?.isActive ?? true)
 
         switch item?.frequency ?? .biweekly {
-        case .monthlyOnDay(let day):
+        case .monthlyOnDay:
             _frequencyKind = State(initialValue: .monthlyOnDay)
-            _monthlyDay = State(initialValue: day)
         default:
             _frequencyKind = State(initialValue: .biweekly)
-            _monthlyDay = State(initialValue: 1)
         }
     }
 
     private var isFormValid: Bool {
-        !accountName.isEmpty && ValidationRange.amount.contains(amount) && ValidationRange.dayOfMonth.contains(monthlyDay)
+        !accountName.isEmpty && ValidationRange.amount.contains(amount)
     }
 
     private var resolvedFrequency: RecurringFrequency {
         switch frequencyKind {
         case .biweekly: .biweekly
-        case .monthlyOnDay: .monthlyOnDay(monthlyDay)
+        // El día de aportación mensual se deriva del día del mes de "Inicio" (feedback del usuario).
+        case .monthlyOnDay: .monthlyOnDay(Calendar.current.component(.day, from: startDate))
         }
     }
 
@@ -268,10 +287,9 @@ private struct InvestmentEditSheet: View {
                 Section {
                     LabTextField(placeholder: "Cuenta (GBM, Cetesdirecto…)", text: $accountName, config: PatternConfig(accentColor: .accentColor))
                     HStack {
-                        TextField("Aportación", value: $amount, format: .number.precision(.fractionLength(2)))
-                            #if os(iOS)
-                            .keyboardType(.decimalPad)
-                            #endif
+                        // Coordinator (2026-09-17): `LabDecimalField` — centralized fix for
+                        // "0.00 isn't a placeholder, has to be deleted by hand".
+                        LabDecimalField(placeholder: "Aportación", value: $amount)
                         Picker("Moneda", selection: $currency) {
                             Text("USD").tag(Currency.usd)
                             Text("MXN").tag(Currency.mxn)
@@ -285,12 +303,11 @@ private struct InvestmentEditSheet: View {
                     Picker("Frecuencia", selection: $frequencyKind) {
                         ForEach(InvestmentFrequencyKind.allCases) { Text($0.rawValue).tag($0) }
                     }
-                    if frequencyKind == .monthlyOnDay {
-                        Stepper("Día del mes: \(monthlyDay)", value: $monthlyDay, in: 1...31)
-                    }
                 }
 
                 Section {
+                    // El día de aportación mensual se deriva del día del mes de "Inicio" — no
+                    // hay un campo separado que pueda desincronizarse (feedback del usuario).
                     DatePicker("Inicio", selection: $startDate, displayedComponents: .date)
                     Toggle("Tiene fecha de fin", isOn: $hasEndDate)
                     if hasEndDate {

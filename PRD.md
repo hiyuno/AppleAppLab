@@ -123,6 +123,19 @@ Esta sección traduce el comportamiento de la hoja de cálculo actual a reglas e
 - **Fuera de v1 explícitamente:** rendimientos, precios de mercado o valor actual de la inversión — v1 solo registra cuánto se ha aportado, no cuánto vale hoy. Etapa 2 añade "valor actual manual" (captura a mano) y más adelante control completo (precios, rendimiento).
 - *Criterio de aceptación:* inversión GBM de $300 cada quincena desde el 1 de septiembre genera una línea de $300 en la quincena 1–15 de septiembre y otra de $300 en la quincena 16–30; tras materializarse la primera quincena, "aportado a la fecha" para GBM muestra $300.
 
+### Tarjetas de crédito
+
+- Una tarjeta tiene: nombre, saldo actual, APR, límite de crédito, día de corte (1–31), día de pago (1–31), pago esperado (opcional — si no se fija, la app usa el mínimo sugerido cada quincena como default editable).
+- **Interés mensual sobre saldo revolvente**, mismo mecanismo que un Préstamo en modo "Hasta liquidar": interés = saldo × APR/12, calculado al cierre de cada mes.
+- **Pago mínimo sugerido** = `MAX($25, 1% del saldo + interés del mes)`, editable por el usuario cada quincena (fórmula típica de emisores como Chase, confirmada por Experian/NerdWallet).
+- **Regla de fecha de pago — preferencia GLOBAL** (una sola, aplica a todas las tarjetas), configurable en Ajustes → Preferencias, con 3 opciones y su explicación corta en inglés en la UI:
+  - **"En la fecha de pago"** — *"Pay on the due date you were given."*
+  - **"En la fecha de corte"** — *"Pay right on your statement closing date."*
+  - **"N días antes del corte"** (default: **5 días**) — *"Pay a few days before your statement closes — this is what we recommend."* Es el default porque optimiza dos cosas a la vez: el buró de crédito reporta el saldo **al corte**, así que pagar antes lo reduce antes de ese reporte (mejor utilización/score); y cae con margen dentro del grace period legal antes del due date (Reg. Z exige mínimo 21 días entre corte y pago), evitando intereses. Fuente: NerdWallet, Capital One, Chase, Experian, CFPB Reg. Z.
+- Cada pago cae en la quincena que corresponde según la fecha resultante de aplicar la regla activa sobre el día de corte de la tarjeta.
+- **Fila agregada "Credit Cards Payments" en EXPENSES:** suma visual de todas las líneas de tarjeta con pago en esa quincena. La agregación es **solo visual** — cada tarjeta mantiene su propia línea real por debajo (origen `"tarjeta"`), con su propio estado "cuenta"/"pagado" y su propia edición manual. Tocar la fila agregada abre un sheet con el desglose por tarjeta (monto sugerido vs. a pagar, saldo restante tras el pago, fecha de corte/pago de esa tarjeta); cada línea del sheet se puede editar y marcar pagado individualmente.
+- *Criterio de aceptación (ejemplo verificable):* tarjeta con saldo $2,000, APR 24.99%, día de corte 15, regla activa "5 días antes del corte" → fecha de pago calculada = día 10 → el pago cae en la quincena que contiene el día 10 (la quincena del 1–15).
+
 ### Suscripciones (Services List)
 
 - Lista separada de servicios/suscripciones: nombre, precio, moneda, día de pago (1–31), fecha de inicio, fecha de fin (opcional), tarjeta de pago, categoría (Tools, Entertainment, Apartment, Work, Personal, Hobby, Investment).
@@ -157,6 +170,7 @@ En orden de prioridad. Todas para 1.0 — review (no hay features que requieran 
 | 10 | Bloqueo biométrico opcional (Face ID / Touch ID) | Datos financieros personales — el usuario quiere poder proteger el acceso sin que sea obligatorio | Switch "Bloquear con Face ID / Touch ID" en Ajustes, apagado por defecto. Al activarlo, la app pide autenticación local (Face ID / Touch ID / contraseña del dispositivo) al abrir y al volver de background tras N segundos de inactividad (N sugerido: 60 s, valor final a decisión de Jonny/Woz). Con el switch activo, la app no muestra montos hasta autenticar exitosamente; si la autenticación falla, se muestra una pantalla de bloqueo con botón "Reintentar" |
 | 11 | Préstamos (Loans): amortización estándar + modo "Hasta liquidar" (revolving) | Reemplaza el cálculo manual de Upstart 1/2 (estándar) y de "Ada" (revolving) en la hoja, y da visibilidad real de saldo/interés restante | Estándar: préstamo de $10,000 USD, APR 12%, mensual, 24 meses calcula pago mensual ≈ $470.73, primer pago con interés $100.00 / capital $370.73 / saldo $9,629.27 (±$0.01), saldo $0.00 en el pago #24. Revolving: préstamo de $824, APR 26.2%, pago esperado $200/quincena calcula interés del primer mes ≈ $17.99 (±$0.01), termina en el primer período con saldo ≤ 0 (último pago ajustado), avisa si el pago esperado ≤ interés mensual y proyecta máx. 10 años. Ambos modos: cada pago genera su línea en la quincena correcta según día de pago, respeta "edición manual gana", y el detalle muestra saldo restante, pagado a la fecha, interés total, fecha de fin y próximo pago |
 | 12 | Inversiones (aportaciones recurrentes) | Reemplaza el cálculo manual de aportaciones a GBM/Webull/crypto en la hoja; solo aportaciones, sin rendimientos ni valor de mercado en v1 | Aportación GBM de $300 cada quincena desde el 1 de sep. genera una línea de EGRESO de $300 (origen `"inversión"`) en la quincena 1–15 y otra en 16–30, respetando "edición manual gana" y el encadenado; la pantalla muestra "aportado a la fecha" = $300 tras materializarse la primera quincena, y el total general sumando todas las cuentas activas |
+| 13 | Tarjetas de crédito (interés revolvente, pago mínimo sugerido, regla de fecha de pago global, fila agregada "Credit Cards Payments") | Promovida de Fase 2 a v1 — el usuario la necesita ahora para reemplazar el manejo manual de sus tarjetas | Tarjeta con saldo $2,000, APR 24.99%, día de corte 15, regla global "5 días antes del corte" → la fecha de pago calculada es el día 10, y el pago cae en la quincena 1–15; la fila "Credit Cards Payments" suma todas las tarjetas con pago en esa quincena (agregación solo visual, cada tarjeta mantiene su línea real); tocarla abre un sheet con desglose editable por tarjeta; el pago mínimo sugerido por defecto es `MAX($25, 1% del saldo + interés del mes)`, editable cada quincena |
 
 ---
 
@@ -164,7 +178,6 @@ En orden de prioridad. Todas para 1.0 — review (no hay features que requieran 
 
 Explícitamente descartadas para V1 (etapa 2, roadmap futuro — no se diseñan ni desarrollan ahora):
 
-- **Tarjetas de crédito** (saldos, APR, intereses, cálculo de Deuda Total) — espera a etapa 2; añade complejidad de cálculo de intereses compuestos que no es necesaria para el core loop quincenal.
 - **Goals / presupuesto por categoría** — espera a que el core de quincenas + recurrentes esté validado en uso real antes de añadir una capa de metas.
 - **Control de inversiones completo** (rendimientos, precios de mercado, portafolios) — v1 solo registra aportaciones recurrentes (feature #12); "valor actual manual" llega en etapa 2, control completo más adelante.
 - **Importación del histórico 2022–2025 desde la hoja de cálculo** — el usuario decidió arrancar desde cero en 2026; importar el histórico es trabajo adicional de parsing/mapeo que no bloquea el valor core.
@@ -177,9 +190,9 @@ Explícitamente descartadas para V1 (etapa 2, roadmap futuro — no se diseñan 
 
 - **Quincena** — pantalla principal, una por corte (15 / fin de mes). Lista INCOME, lista EXPENSES, totales, sobrante grande con color, "Mandar", navegación a quincena anterior/siguiente (incluye quincenas futuras generadas por recurrencia, hacia años adelante).
 - **Suscripciones (Services List)** — lista de servicios con precio, día de pago, categoría, tarjeta, vigencia. Alta/edición/baja.
-- **Recurrentes y pagos** (hub) — tres secciones: **Recurrentes** (ingresos/egresos simples, con monto/frecuencia/fecha inicio-fin, alta/edición/baja), **Préstamos** (lista de préstamos activos, incluye Upstart 1/2 en modo estándar y "Ada" en modo "Hasta liquidar"; detalle por préstamo con resumen — saldo restante, pagado a la fecha, interés total, fecha de fin, próximo pago — y tabla de amortización período a período; los pagos marcados "pagado" en su quincena se reflejan en el avance del préstamo), e **Inversiones** (lista de cuentas con aportación recurrente — GBM, Webull, crypto…; muestra "aportado a la fecha" por cuenta y total general, sin rendimientos ni valor actual en v1).
+- **Recurrentes y pagos** (hub) — cuatro secciones: **Recurrentes** (ingresos/egresos simples, con monto/frecuencia/fecha inicio-fin, alta/edición/baja), **Préstamos** (lista de préstamos activos, incluye Upstart 1/2 en modo estándar y "Ada" en modo "Hasta liquidar"; detalle por préstamo con resumen — saldo restante, pagado a la fecha, interés total, fecha de fin, próximo pago — y tabla de amortización período a período; los pagos marcados "pagado" en su quincena se reflejan en el avance del préstamo), **Inversiones** (lista de cuentas con aportación recurrente — GBM, Webull, crypto…; muestra "aportado a la fecha" por cuenta y total general, sin rendimientos ni valor actual en v1), y **Tarjetas de crédito** (lista de tarjetas; detalle por tarjeta con saldo actual, límite, % utilización, interés acumulado, próximo pago y tabla real vs. proyectado).
 - **Overview** — resumen mensual (dos quincenas) y anual, solo lectura.
-- **Ajustes** — tipo de cambio (automático + override manual), moneda por defecto, switch de bloqueo biométrico (Face ID / Touch ID), Preferencias → "Historial visible" (stepper/picker de meses hacia atrás, 1–24, default 1), y accesos a Recurrentes/Suscripciones si no viven como tabs independientes.
+- **Ajustes** — tipo de cambio (automático + override manual), moneda por defecto, switch de bloqueo biométrico (Face ID / Touch ID), Preferencias → "Historial visible" (stepper/picker de meses hacia atrás, 1–24, default 1) y "Regla de fecha de pago de tarjetas" (En la fecha de pago / En la fecha de corte / N días antes del corte, default 5), y accesos a Recurrentes/Suscripciones/Tarjetas si no viven como tabs independientes.
 
 La navegación entre estas pantallas (tabs vs. sidebar, iOS vs. macOS) es decisión de Jonny en fase de diseño, no de este documento.
 
@@ -189,13 +202,13 @@ La navegación entre estas pantallas (tabs vs. sidebar, iOS vs. macOS) es decisi
 
 **Fase 1 — MVP**
 - Meta: reproducir completo el modelo mental de la hoja de cálculo actual en una app nativa con Liquid Glass, con proyección automática.
-- Entregables: features 1–12 de la tabla MVP.
-- Estado final: el usuario puede abandonar la hoja de cálculo por completo — captura su quincena, ve su sobrante encadenado, administra suscripciones y recurrentes, y consulta el overview, todo sincronizado entre iPhone y Mac.
+- Entregables: features 1–13 de la tabla MVP.
+- Estado final: el usuario puede abandonar la hoja de cálculo por completo — captura su quincena, ve su sobrante encadenado, administra suscripciones, recurrentes, préstamos, inversiones y tarjetas de crédito, y consulta el overview, todo sincronizado entre iPhone y Mac.
 
 **Fase 2 — Experiencia completa**
-- Meta: cerrar los huecos que hoy sigue cubriendo manualmente fuera de la app (tarjetas de crédito, metas).
-- Entregables: Tarjetas de crédito (saldos, APR, Deuda Total), Goals/presupuesto por categoría.
-- Estado final: el usuario tiene una vista financiera completa, no solo de flujo de quincena sino de deuda y metas.
+- Meta: cerrar los huecos que quedan fuera de v1 (notificaciones, metas).
+- Entregables: **notificaciones locales de fecha de corte y fecha de pago por tarjeta** (las tarjetas de crédito en sí ya están en v1 — feature #13), Goals/presupuesto por categoría.
+- Estado final: el usuario tiene una vista financiera completa con recordatorios proactivos y metas por categoría.
 
 **Fase 3 — Polish y lanzamiento**
 - Meta: pulir para uso de largo plazo y evaluar si vale la pena abrir a otros usuarios.
@@ -219,6 +232,7 @@ La navegación entre estas pantallas (tabs vs. sidebar, iOS vs. macOS) es decisi
 |-------|----------|-------|
 | 2026-09-15 | App arranca desde cero en 2026, sin importar histórico 2022–2025 | Decisión explícita del usuario |
 | 2026-09-15 | Tarjetas de crédito, Goals, control de inversiones e importación de histórico van a etapa 2 | Reducir alcance del MVP al core de quincena + recurrencia |
+| 2026-09-17 | "Tarjetas de crédito" se promueve de Fase 2 a v1: interés revolvente (mismo mecanismo que Loan "Hasta liquidar"), pago mínimo sugerido `MAX($25, 1% del saldo + interés del mes)`, regla de fecha de pago global con 3 opciones (default "5 días antes del corte"), fila agregada "Credit Cards Payments" con sheet de desglose. Notificaciones de corte/pago quedan en Fase 2 | Decisión explícita del usuario, con investigación citada (NerdWallet/Capital One/Chase/Experian/CFPB Reg. Z) para el default de fecha de pago |
 | 2026-09-15 | Suscripciones se calculan automáticamente por día de pago, sin captura manual por quincena | Decisión explícita del usuario |
 | 2026-09-15 | Tipo de cambio automático vía API con override manual editable | Decisión explícita del usuario |
 | 2026-09-15 | Préstamos (Upstart) e "Ada" se modelan como ingresos/egresos recurrentes genéricos con fecha de fin, no como entidades especiales | Decisión explícita del usuario — simplifica el modelo de datos |

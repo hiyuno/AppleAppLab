@@ -37,9 +37,9 @@ struct SobranteBadge: View {
 
     private var statusText: String {
         switch status {
-        case .positive: "positivo, verde"
-        case .adjusted: "ajustado, amarillo"
-        case .negative: "negativo, rojo"
+        case .positive: String(localized: "sobrante_status_positive_a11y", defaultValue: "positive, green")
+        case .adjusted: String(localized: "sobrante_status_adjusted_a11y", defaultValue: "adjusted, yellow")
+        case .negative: String(localized: "sobrante_status_negative_a11y", defaultValue: "negative, red")
         }
     }
 
@@ -62,7 +62,7 @@ struct SobranteBadge: View {
             // (`.headline`, already Semibold by default), not `.body` + a manual weight
             // override. Visually identical (both render 17pt Semibold), just the correct
             // semantic token per DESIGN_LIQUID.md's closed table.
-            Text("Sobrante")
+            Text(String(localized: "sobrante_label", defaultValue: "Surplus"))
                 .font(.headline)
                 .foregroundStyle(textColor)
 
@@ -89,7 +89,7 @@ struct SobranteBadge: View {
         .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
         .animation(animation, value: sobrante)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Sobrante")
+        .accessibilityLabel(String(localized: "sobrante_label", defaultValue: "Surplus"))
         .accessibilityValue("\(sobrante.currencyString()), \(statusText)")
     }
 }

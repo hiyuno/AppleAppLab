@@ -437,7 +437,27 @@ public enum PeriodCoordinator {
         var imported = 0
         var updated = 0
 
+        // `SubscriptionImportService.mapSubscriptionCategory` still maps against the fixed
+        // `SubscriptionCategory` enum (it's a pure, context-free `Core/Engine` type, same
+        // convention as `ProjectionEngine`/`LoanEngine` — it can't touch SwiftData). Since
+        // categories became user-editable (`SubscriptionCategoryItem`), an import can now name
+        // a category the user has since renamed or deleted — ensure a matching row exists
+        // here, where `context` is available, instead of leaving `categoryRaw` pointing at
+        // nothing (which would only show a fallback icon, never break the import itself).
+        let existingCategories = (try? context.fetch(FetchDescriptor<SubscriptionCategoryItem>())) ?? []
+        var categoryNames = Set(existingCategories.map(\.name))
+        var nextCategorySortOrder = (existingCategories.map(\.sortOrder).max() ?? -1) + 1
+        func ensureCategoryExists(_ name: String) {
+            guard !categoryNames.contains(name) else { return }
+            context.insert(SubscriptionCategoryItem(name: name, iconName: "tag", sortOrder: nextCategorySortOrder))
+            categoryNames.insert(name)
+            nextCategorySortOrder += 1
+        }
+
         for item in items {
+            if item.kind == .subscription {
+                ensureCategoryExists(item.subscriptionCategory.rawValue)
+            }
             if let match = byName[item.name] {
                 match.price = item.amount
                 match.currency = item.currency
@@ -519,6 +539,15 @@ public enum PeriodCoordinator {
             if let existingLine {
                 guard !existingLine.isManuallyEdited else { continue }
                 if let generated {
+                    // Bug (coordinator, 2026-09-17): every OTHER field from `generated` was
+                    // copied here except `kind` — editing a loan's `direction` after lines
+                    // were already materialized left those existing lines on the old
+                    // Income/Expense `kind` forever (only newly-generated future lines picked
+                    // up the change). `direction` is the only editable field on `Loan` that
+                    // can flip `kind` after creation — `RecurringItem`/`Subscription` have no
+                    // equivalent (checked: `category` doesn't affect `kind`), so this fix is
+                    // loan-specific.
+                    existingLine.kind = generated.kind
                     existingLine.title = generated.title
                     existingLine.amount = generated.amount
                     existingLine.currency = generated.currency
@@ -533,6 +562,61 @@ public enum PeriodCoordinator {
                 let newLine = LineItem(
                     kind: generated.kind, title: generated.title, amount: generated.amount, currency: generated.currency,
                     sortOrder: nextOrder, origin: generated.origin, sourceLoanID: generated.sourceLoanID,
+                    exchangeRateSnapshot: generated.currency == .mxn ? exchangeRate : nil, period: period
+                )
+                context.insert(newLine)
+                period.lineItems?.append(newLine)
+                if earliestTouched == nil { earliestTouched = period }
+            }
+        }
+
+        try? context.save()
+        if let earliestTouched {
+            recomputeForward(after: earliestTouched, context: context, exchangeRate: exchangeRate)
+            try? context.save()
+        }
+    }
+
+    /// Clone of `reprojectLoan` (TRD "Credit Cards", 2026-09-17) — same pattern: find the
+    /// existing line by `sourceCreditCardID`, respect `isManuallyEdited`, create/update/
+    /// retire, finish with `recomputeForward`. The one real difference: a card's quincena
+    /// isn't derived from a fixed frequency, it's derived from `cutoffDay`/`paymentDay` plus
+    /// `dateRule` — a plain parameter, never read from `@AppStorage` inside `Core/` (same
+    /// pattern as `navigableLowerBound(context:monthsBack:)`).
+    public static func reprojectCreditCard(item: CreditCard, context: ModelContext, exchangeRate: Decimal, dateRule: CreditCardPaymentDateRule) {
+        let snapshot = CreditCardSnapshot(
+            id: item.id, name: item.name, balance: item.balance, apr: item.apr, creditLimit: item.creditLimit,
+            cutoffDay: item.cutoffDay, paymentDay: item.paymentDay, expectedPayment: item.expectedPayment, isActive: item.isActive
+        )
+        let allPeriods = ((try? context.fetch(FetchDescriptor<Period>())) ?? []).sorted { $0.coordinate < $1.coordinate }
+        guard !allPeriods.isEmpty else { return }
+
+        var earliestTouched: Period?
+
+        for period in allPeriods {
+            dedupeLines(in: period, context: context, matching: { $0.sourceCreditCardID == item.id })
+            let existingLine = (period.lineItems ?? []).first { $0.sourceCreditCardID == item.id }
+            let realPayment = (existingLine?.isManuallyEdited ?? false) ? existingLine?.amount : nil
+            let generated = CreditCardEngine.generatedLine(for: period.coordinate, card: snapshot, dateRule: dateRule, realPayment: realPayment)
+
+            if let existingLine {
+                guard !existingLine.isManuallyEdited else { continue }
+                if let generated {
+                    existingLine.kind = generated.kind
+                    existingLine.title = generated.title
+                    existingLine.amount = generated.amount
+                    existingLine.currency = generated.currency
+                    existingLine.exchangeRateSnapshot = generated.currency == .mxn ? exchangeRate : nil
+                } else {
+                    period.lineItems?.removeAll { $0.id == existingLine.id }
+                    context.delete(existingLine)
+                }
+                if earliestTouched == nil { earliestTouched = period }
+            } else if let generated {
+                let nextOrder = ((period.lineItems ?? []).map(\.sortOrder).max() ?? -1) + 1
+                let newLine = LineItem(
+                    kind: generated.kind, title: generated.title, amount: generated.amount, currency: generated.currency,
+                    sortOrder: nextOrder, origin: generated.origin, sourceCreditCardID: generated.sourceCreditCardID,
                     exchangeRateSnapshot: generated.currency == .mxn ? exchangeRate : nil, period: period
                 )
                 context.insert(newLine)
@@ -577,6 +661,14 @@ public enum PeriodCoordinator {
         context.delete(item)
         try? context.save()
         purgeLines(context: context, exchangeRate: exchangeRate) { $0.sourceLoanID == id }
+    }
+
+    /// Same fix, for `CreditCard` (TRD "Credit Cards", 2026-09-17).
+    public static func deleteCreditCard(_ item: CreditCard, context: ModelContext, exchangeRate: Decimal) {
+        let id = item.id
+        context.delete(item)
+        try? context.save()
+        purgeLines(context: context, exchangeRate: exchangeRate) { $0.sourceCreditCardID == id }
     }
 
     /// `Subscription` has no per-item generated line — every subscription of a `kind` feeds
@@ -639,10 +731,17 @@ public enum PeriodCoordinator {
     private static func purgeOrphanLines(in period: Period, context: ModelContext, exchangeRate: Decimal) {
         let existingRecurringIDs = Set(((try? context.fetch(FetchDescriptor<RecurringItem>())) ?? []).map(\.id))
         let existingLoanIDs = Set(((try? context.fetch(FetchDescriptor<Loan>())) ?? []).map(\.id))
+        // Coordinator (2026-09-17, "Credit Cards"): extended per the explicitly flagged risk —
+        // without this, deleting a card leaves orphaned `LineItem`s that no `reproject*` ever
+        // cleans up again (`purgeLines` inside `deleteCreditCard` handles the normal-deletion
+        // path; this whole-store sweep is the belt-and-suspenders catch-all for anything that
+        // bypassed it).
+        let existingCreditCardIDs = Set(((try? context.fetch(FetchDescriptor<CreditCard>())) ?? []).map(\.id))
 
         let orphans = (period.lineItems ?? []).filter { line in
             if let sourceID = line.sourceRecurringID { return !existingRecurringIDs.contains(sourceID) }
             if let loanID = line.sourceLoanID { return !existingLoanIDs.contains(loanID) }
+            if let cardID = line.sourceCreditCardID { return !existingCreditCardIDs.contains(cardID) }
             return false
         }
         guard !orphans.isEmpty else { return }
@@ -754,15 +853,118 @@ public enum PeriodCoordinator {
             .reduce(Decimal(0)) { $0 + $1.amount }
     }
 
-    /// "Fecha del último pago" — the latest `paidAt` among that loan's `isPaid == true`
-    /// lines, or `nil` if none are marked paid yet.
-    public static func loanLastPaymentDate(loanID: UUID, context: ModelContext) -> CivilDate? {
+    /// The most recently confirmed-paid `LineItem` for this loan (by `paidAt`), or `nil` if
+    /// none are marked paid yet — single source both `loanLastPaymentDate` and
+    /// `loanLastPaymentAmount` read from, so neither re-implements the same filter/sort.
+    private static func lastPaidLine(loanID: UUID, context: ModelContext) -> LineItem? {
         let periods = (try? context.fetch(FetchDescriptor<Period>())) ?? []
         return periods
             .flatMap { $0.lineItems ?? [] }
-            .filter { $0.sourceLoanID == loanID && $0.isPaid }
-            .compactMap(\.paidAt)
-            .max()
+            .filter { $0.sourceLoanID == loanID && $0.isPaid && $0.paidAt != nil }
+            .max { $0.paidAt! < $1.paidAt! }
+    }
+
+    /// "Fecha del último pago" — the latest `paidAt` among that loan's `isPaid == true`
+    /// lines, or `nil` if none are marked paid yet.
+    public static func loanLastPaymentDate(loanID: UUID, context: ModelContext) -> CivilDate? {
+        lastPaidLine(loanID: loanID, context: context)?.paidAt
+    }
+
+    /// "Último Pago $X" (LoansView, 2026-09-17, DESIGN_LIQUID.md § Préstamos lista) — the
+    /// amount of that same most-recently-paid line, not the cumulative `loanPaidToDate`.
+    public static func loanLastPaymentAmount(loanID: UUID, context: ModelContext) -> Decimal? {
+        lastPaidLine(loanID: loanID, context: context)?.amount
+    }
+
+    // MARK: - Credit card progress (TRD "Credit Cards", 2026-09-17 — clones of the Loan versions)
+
+    public static func creditCardPaidToDate(creditCardID: UUID, context: ModelContext) -> Decimal {
+        let periods = (try? context.fetch(FetchDescriptor<Period>())) ?? []
+        return periods
+            .flatMap { $0.lineItems ?? [] }
+            .filter { $0.sourceCreditCardID == creditCardID && $0.isPaid }
+            .reduce(Decimal(0)) { $0 + $1.amount }
+    }
+
+    private static func lastPaidCreditCardLine(creditCardID: UUID, context: ModelContext) -> LineItem? {
+        let periods = (try? context.fetch(FetchDescriptor<Period>())) ?? []
+        return periods
+            .flatMap { $0.lineItems ?? [] }
+            .filter { $0.sourceCreditCardID == creditCardID && $0.isPaid && $0.paidAt != nil }
+            .max { $0.paidAt! < $1.paidAt! }
+    }
+
+    public static func creditCardLastPaymentDate(creditCardID: UUID, context: ModelContext) -> CivilDate? {
+        lastPaidCreditCardLine(creditCardID: creditCardID, context: context)?.paidAt
+    }
+
+    public static func creditCardLastPaymentAmount(creditCardID: UUID, context: ModelContext) -> Decimal? {
+        lastPaidCreditCardLine(creditCardID: creditCardID, context: context)?.amount
+    }
+
+    // MARK: - Home insight signals (feature "Home", 2026-09-17)
+
+    /// Bridges live SwiftData into `HomeInsightContext` — the pure struct
+    /// `HomeInsightEngine.message(for:)` consumes. Every derived number reuses an existing
+    /// formula (`loanPaidToDate`, `CreditCardEngine.utilizationLevel`, `CarryOverEngine.
+    /// sobrante`) rather than a second one; see `HomeInsightContext`'s doc comments for the
+    /// two judgment calls (`hasOtherExpenseLines`, worst-card utilization) this makes.
+    public static func homeInsightContext(
+        for period: Period,
+        loans: [Loan],
+        creditCards: [CreditCard],
+        context: ModelContext,
+        exchangeRate: Decimal
+    ) -> HomeInsightContext {
+        let activeLines = (period.lineItems ?? []).filter(\.isActive)
+        let pendingCount = activeLines.filter { $0.kind == .expense && $0.origin != .creditCard && !$0.isPaid }.count
+        let creditCardsDueCount = activeLines.filter { $0.origin == .creditCard && !$0.isPaid }.count
+        let otherExpenseLinesCount = activeLines.filter { $0.kind == .expense && $0.origin != .creditCard }.count
+
+        let activeLoans = loans.filter(\.isActive)
+        let activeCards = creditCards.filter(\.isActive)
+        let hasAnyDebt = !activeLoans.isEmpty || !activeCards.isEmpty
+
+        let range = PeriodDateEngine.dateRange(for: period.coordinate)
+        let justPaidOffLoanName = loans.first { loan in
+            guard !loan.isActive else { return false }
+            guard let lastPaymentDate = loanLastPaymentDate(loanID: loan.id, context: context) else { return false }
+            return lastPaymentDate >= range.start && lastPaymentDate <= range.end
+        }?.name
+
+        let loanProgressPercent: Int = {
+            guard !activeLoans.isEmpty else { return 0 }
+            let fractions = activeLoans.map { loan -> Double in
+                guard loan.principal > 0 else { return 0 }
+                let paid = loanPaidToDate(loanID: loan.id, context: context)
+                let fraction = paid / loan.principal
+                return max(0, min(1, Double(truncating: fraction as NSDecimalNumber)))
+            }
+            let average = fractions.reduce(0, +) / Double(fractions.count)
+            return Int((average * 100).rounded())
+        }()
+
+        let creditUtilizationLevel: CreditCardEngine.UtilizationLevel = {
+            let levels = activeCards.filter { $0.balance > 0 }.map {
+                CreditCardEngine.utilizationLevel(balance: $0.balance, creditLimit: $0.creditLimit)
+            }
+            if levels.contains(.high) { return .high }
+            if levels.contains(.medium) { return .medium }
+            return .low
+        }()
+
+        let surplus = CarryOverEngine.sobrante(for: snapshots(of: period), exchangeRate: exchangeRate)
+
+        return HomeInsightContext(
+            pendingCount: pendingCount,
+            creditCardsDueCount: creditCardsDueCount,
+            hasAnyDebt: hasAnyDebt,
+            hasOtherExpenseLines: otherExpenseLinesCount > 0,
+            justPaidOffLoanName: justPaidOffLoanName,
+            loanProgressPercent: loanProgressPercent,
+            creditUtilizationLevel: creditUtilizationLevel,
+            surplus: surplus
+        )
     }
 
     // MARK: - Helpers

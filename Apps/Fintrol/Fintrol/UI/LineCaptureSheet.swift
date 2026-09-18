@@ -32,13 +32,21 @@ struct LineCaptureSheet: View {
         self.onSave = onSave
         _title = State(initialValue: editingLine?.title ?? "")
         // Starts blank (placeholder "0.00") instead of pre-filled with "0" — ya corregido
-        // antes (bug de concatenación en el primer keystroke), no romperlo.
-        _amountText = State(initialValue: (editingLine.map { $0.amount == 0 ? "" : $0.amount.twoDecimalString }) ?? "")
+        // antes (bug de concatenación en el primer keystroke), no romperlo. Grouped up front
+        // (coordinator, 2026-09-17) so editing an existing large amount already shows commas
+        // before the user types anything — `.onChange` alone wouldn't fire for this initial
+        // value.
+        let initialAmountText = (editingLine.map { $0.amount == 0 ? "" : $0.amount.twoDecimalString }) ?? ""
+        _amountText = State(initialValue: LabDecimalField.groupedText(forDigitsOnly: initialAmountText))
         _currency = State(initialValue: editingLine?.currency ?? .usd)
     }
 
     private var amount: Decimal {
-        Decimal(string: amountText, locale: Locale(identifier: "en_US_POSIX")) ?? 0
+        // Coordinator (2026-09-17): `amountText` now carries thousands-grouping commas typed
+        // live — strip them before parsing so the underlying `Decimal` is never affected by
+        // the display formatting (same digits-only-then-parse approach as `LabDecimalField`).
+        let digitsOnly = amountText.filter { $0.isNumber || $0 == "." }
+        return Decimal(string: digitsOnly, locale: Locale(identifier: "en_US_POSIX")) ?? 0
     }
 
     private var isTitleEditable: Bool {
@@ -71,6 +79,7 @@ struct LineCaptureSheet: View {
         case .loan: return "Generado por: préstamo"
         case .investment: return "Generado por: inversión"
         case .carryOver: return "Generado por: quincena anterior"
+        case .creditCard: return "Generado por: tarjeta de crédito"
         }
     }
 
@@ -112,6 +121,16 @@ struct LineCaptureSheet: View {
                         .disabled(!isTitleEditable)
                         .focused($focusedField, equals: .amount)
                         .accessibilityHint(carryOverHint ?? "")
+                        // Coordinator (2026-09-17): thousands grouping while typing, reusing
+                        // `LabDecimalField`'s exact grouping logic (not a second formula) —
+                        // this field already avoided the "0.00 placeholder trap" via its own
+                        // String-bound `amountText` (empty when the line's amount is 0), so it
+                        // only needed the grouping half of the two asks.
+                        .onChange(of: amountText) { _, newValue in
+                            let digitsOnly = newValue.filter { $0.isNumber || $0 == "." }
+                            let grouped = LabDecimalField.groupedText(forDigitsOnly: digitsOnly)
+                            if grouped != newValue { amountText = grouped }
+                        }
 
                     Picker("Moneda", selection: $currency) {
                         Text("USD").tag(Currency.usd)

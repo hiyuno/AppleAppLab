@@ -345,6 +345,34 @@ struct PeriodCoordinatorTests {
         #expect(matches.count == 1, "two calls must not duplicate the loan's line")
     }
 
+    @Test("Editing a loan's direction after its line is already materialized updates that existing line's kind, not just future ones")
+    func reprojectLoanUpdatesKindOnDirectionChange() throws {
+        let context = try makeContext()
+        let coordinate = PeriodCoordinate(year: 2026, month: 1, half: .second)
+        let period = PeriodCoordinator.materializeIfNeeded(coordinate: coordinate, context: context, recurringItems: [], subscriptions: [], exchangeRate: 18)
+
+        let loan = Loan(name: "Ada", direction: .borrowed, principal: 5000, currency: .usd, apr: Decimal(string: "0.1")!, startDate: CivilDate(year: 2026, month: 1, day: 20).date(calendar: .current), termMonths: 12, frequency: .monthly(day: 20))
+        context.insert(loan)
+        try context.save()
+
+        PeriodCoordinator.reprojectLoan(item: loan, context: context, exchangeRate: 18)
+
+        let lineBefore = (period.lineItems ?? []).first { $0.sourceLoanID == loan.id }
+        #expect(lineBefore?.kind == .expense, "borrowed ⇒ Fintrol pays it back ⇒ expense")
+
+        // Bug (coordinator, 2026-09-17): flip direction AFTER the line already exists in a
+        // materialized period — before the fix, `reprojectLoan` updated title/amount/currency
+        // but never `kind`, so this line stayed .expense forever while only brand-new future
+        // lines would have picked up .income.
+        loan.direction = .lent
+        try context.save()
+        PeriodCoordinator.reprojectLoan(item: loan, context: context, exchangeRate: 18)
+
+        let matches = (period.lineItems ?? []).filter { $0.sourceLoanID == loan.id }
+        #expect(matches.count == 1, "still exactly one line for this loan — updated in place, not duplicated")
+        #expect(matches.first?.kind == .income, "lent ⇒ someone pays Fintrol back ⇒ income — the EXISTING line must flip too")
+    }
+
     // MARK: - isActive / isPaid (swipe leading/trailing, replaces the old per-row toggles)
 
     @Test("Deactivating a WALO-like line in Sep 1-15 lowers its TOTAL INCOME and Sep 16-30's Latest Month; reactivating restores both exactly")

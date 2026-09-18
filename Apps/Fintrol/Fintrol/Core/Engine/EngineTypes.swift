@@ -137,8 +137,10 @@ public struct GeneratedLine: Sendable, Hashable {
     public let isHomeService: Bool
     /// See `LineItem.sourceLoanID` — only meaningful when `origin == .loan`.
     public let sourceLoanID: UUID?
+    /// See `LineItem.sourceCreditCardID` — only meaningful when `origin == .creditCard`.
+    public let sourceCreditCardID: UUID?
 
-    public init(kind: LineKind, title: String, amount: Decimal, currency: Currency, origin: LineOrigin, sourceRecurringID: UUID?, isHomeService: Bool = false, sourceLoanID: UUID? = nil) {
+    public init(kind: LineKind, title: String, amount: Decimal, currency: Currency, origin: LineOrigin, sourceRecurringID: UUID?, isHomeService: Bool = false, sourceLoanID: UUID? = nil, sourceCreditCardID: UUID? = nil) {
         self.kind = kind
         self.title = title
         self.amount = amount
@@ -147,6 +149,33 @@ public struct GeneratedLine: Sendable, Hashable {
         self.sourceRecurringID = sourceRecurringID
         self.isHomeService = isHomeService
         self.sourceLoanID = sourceLoanID
+        self.sourceCreditCardID = sourceCreditCardID
+    }
+}
+
+/// Plain, `Sendable` snapshot of a `CreditCard` for pure engine functions — mirrors
+/// `LoanSnapshot`'s role for `Loan`.
+public struct CreditCardSnapshot: Sendable, Hashable {
+    public let id: UUID
+    public let name: String
+    public let balance: Decimal
+    public let apr: Decimal
+    public let creditLimit: Decimal
+    public let cutoffDay: Int
+    public let paymentDay: Int
+    public let expectedPayment: Decimal?
+    public let isActive: Bool
+
+    public init(id: UUID, name: String, balance: Decimal, apr: Decimal, creditLimit: Decimal, cutoffDay: Int, paymentDay: Int, expectedPayment: Decimal?, isActive: Bool) {
+        self.id = id
+        self.name = name
+        self.balance = balance
+        self.apr = apr
+        self.creditLimit = creditLimit
+        self.cutoffDay = cutoffDay
+        self.paymentDay = paymentDay
+        self.expectedPayment = expectedPayment
+        self.isActive = isActive
     }
 }
 
