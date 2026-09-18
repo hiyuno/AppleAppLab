@@ -472,7 +472,7 @@ Es la pieza con mayor retorno de toda la submission, y hay señales de que una i
 
 ### 5. Si algo sale mal — expedited review y llamada con Apple
 
-- **Expedited review** se puede pedir sin dar razón. Aplica a bug crítico en producción (solo follow-ups), eventos (un Shipaton, un lanzamiento con fecha), marketing. Un momento viral antes del lanzamiento inicial no está en la lista oficial pero es legítimo intentarlo.
+- **Expedited review**: solo por bug crítico en producción (follow-ups), fix de seguridad, o lanzamiento con fecha real y verificable (un evento, un Shipaton). **No por "marketing" ni por un momento viral**: Apple lo niega y puede marcar la cuenta (`Research/aso/00-index.md` §7). Se pide una vez, con la razón concreta.
 - **Pedir una llamada** con App Review: casi nadie lo hace y parece ponerte en una cola aparte. Es la salida al loop *rechazo → fix → rechazo por otra razón*: en la llamada (o en la primera respuesta) **pide todas las razones de rechazo de una vez**.
 - Apelar: constructivo, citando guideline y evidencia. Quejarse no sirve.
 
@@ -548,7 +548,7 @@ Phil (checklist de submit de APPSTORE.md, punto por punto, con el usuario; con a
 → Phil: Submit for Review · phased release · anota fecha y build en el historial
    con asc: `asc publish appstore --app <id> --ipa <ruta> --version <x.y.z> --submit --confirm` — el `--confirm` se escribe SOLO después del "envíalo"; nunca en un dry-run previo · luego `asc status --app <id> --watch`
 → Mientras está en review: Phil monitorea; si llega un rechazo → `/app-store-ready rejected` con el mensaje pegado
-→ Si hay razón legítima (bug crítico en producción, evento con fecha, campaña de marketing): Phil propone expedited review — no hace falta justificarla
+→ Si hay razón legítima (bug crítico en producción, fix de seguridad, evento con fecha real): Phil propone expedited review con esa razón — nunca por marketing
 → Segundo rechazo por razón distinta: Phil pide todas las razones de una vez y propone una llamada con App Review (cola aparte)
 ```
 

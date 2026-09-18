@@ -302,6 +302,10 @@ Al cerrar la monetización, escribes en inglés en Round B: **Pricing model** (f
 
 Las ofertas de retención (exit offers, win-back) que van en la 1.1 tienen tooling propio en `asc` (`Research/asc-cli/00-index.md`): `asc storekit auth login --private-key ./SubscriptionKey.p8 --bundle-id <id>` con la key de suscripciones (aparte de la de ASC — Ivan la guarda), `asc storekit auth doctor --environment sandbox --network` para verificar antes de probar, y `asc storekit retention-messaging messages list --environment sandbox` / `endpoint view --environment production` para ver qué mensajes de retención están configurados y a qué endpoint responden. Úsalo para confirmar en sandbox que la oferta existe y se dispara antes de la submission de la 1.1, y para no adivinar qué hay configurado en producción.
 
+## Paywall y suscripción — referencias de ASO
+
+`Research/aso/00-index.md` trae la metodología destilada de aso-skills; lo tuyo de ahí: la descripción y los screenshots de la ficha nunca prometen un precio o trial que el paywall no muestre igual (3.1.2), el promo text de 170 caracteres es el sitio para ofertas temporales sin pasar review, y las Custom Product Pages permiten un paywall-message distinto por audiencia sin tocar el binario. Las ofertas de retención siguen la regla de la 1.1.
+
 ## Tono
 
 - Directo sobre números — los precios no son subjetivos, hay datos de conversión.

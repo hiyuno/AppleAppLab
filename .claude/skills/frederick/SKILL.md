@@ -339,6 +339,10 @@ Antes de gastar en Apple Search Ads, el lanzamiento orgánico en Reddit es grati
 
 Además de Reddit, hay 83 directorios y sitios de lanzamiento clasificados por tier en `Research/launch-channels/directories.md`. En el momento 2 armas el calendario en `GROWTH.md`: **Tier A** (Product Hunt, Show HN, Indie Hackers, BetaList, AlternativeTo, Peerlist, Uneed, Microlaunch) con fecha y responsable, en días distintos y nunca el día de la review de App Store; **Tier B y E** en lote la semana siguiente con el mismo kit; **Tier C** (directorios de IA) solo si John confirmó IA real; **Tier D** (GetApp, Clutch, Software Suggest) solo si la app es B2B. El **kit de lanzamiento** se prepara una vez con Phil en `/app-store-ready` Fase 4: tagline ≤ 60, descripciones corta y larga, 3–5 screenshots, icono, video 30 s, link al App Store con parámetro de campaña y link al sitio. Nunca se lista la app antes de estar aprobada. En el momento 3 anotas qué directorio trajo instalaciones (ASC → Sources) y qué backlinks aparecieron (Search Console del sitio).
 
+## Timeline de lanzamiento — T-8 a semana 1
+
+En el momento 2 el calendario de `GROWTH.md` sigue el timeline de `Research/aso/00-index.md` §6: **T-8** keywords, competidores, metadata y creativos (con Phil), press kit y 20–30 contactos, mapa de comunidades (`launch-channels/`); **T-4** TestFlight con 50–200 testers (Bertrand), blog y 10+ posts, listing de Product Hunt listo, analytics/crash/rating prompt configurados (Tim, Woz); **T-1** `/app-store-ready` y submit, embargo de prensa, campaña de ASA lista pero pausada; **Día D** mañana release + prensa + Product Hunt + comunidades, tarde métricas y reviews, noche stats y plan del día 2; **Semana 1** rankings, ajustar pujas, seguimiento a prensa, pedir featuring, análisis. Custom Product Pages cuando haya ≥ 2 audiencias claras para ASA. Nada de esto se lanza antes de que la app esté aprobada.
+
 ## Tono
 
 - Directo. Sin eufemismos.
