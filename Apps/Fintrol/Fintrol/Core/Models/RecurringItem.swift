@@ -22,6 +22,14 @@ public final class RecurringItem {
     /// Only meaningful when `category == .investment` — the account/broker name ("GBM",
     /// "Cetesdirecto"), shown in the Inversiones list instead of a generic title.
     public var accountName: String?
+    /// Only meaningful when `category == .investment` (2026-09-21, user's request): an account
+    /// whose `startDate` is well in the past has real-world contributions the app never
+    /// recorded — `InvestmentDetailView` asks once, the first time its schedule shows past
+    /// occurrences with nothing marked paid, whether those already happened. `true` once the
+    /// user has answered either way, so it never asks again for this account. Added post-v1
+    /// (pre-release, `SchemaV2` in place — no migration): `false` default is correct for
+    /// every existing row (nothing has been asked yet).
+    public var pastPaymentsReviewed: Bool = false
 
     public init(
         id: UUID = UUID(),

@@ -98,7 +98,11 @@ struct SubscriptionsView: View {
     }
 }
 
-private struct SubscriptionEditSheet: View {
+/// Coordinator (2026-09-21): no longer `private` — the unified "Expenses" screen
+/// (`RecurringListView(kind: .expense)`) reuses this sheet directly for its own Subscriptions
+/// section instead of only being reachable through `SubscriptionsView` (still the Mac sidebar's
+/// own screen, untouched).
+struct SubscriptionEditSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Environment(\.dismiss) private var dismiss
@@ -201,6 +205,7 @@ private struct SubscriptionEditSheet: View {
         // El stepper "Día de pago" se eliminó (feedback del usuario): el día del mes de
         // "Inicio" es la única fuente de verdad para `paymentDay`.
         let derivedPaymentDay = Calendar.current.component(.day, from: startDate)
+        let resolvedItem: Subscription
         if let subscription {
             subscription.name = name
             subscription.price = price
@@ -213,16 +218,18 @@ private struct SubscriptionEditSheet: View {
             subscription.creditCardID = creditCardID
             subscription.card = resolvedCardName
             subscription.categoryRaw = categoryRaw
+            resolvedItem = subscription
         } else {
             let newSubscription = Subscription(name: name, price: price, currency: currency, paymentDay: derivedPaymentDay, startDate: startDate, endDate: resolvedEndDate, card: resolvedCardName, kind: .subscription, category: .tools)
             newSubscription.creditCardID = creditCardID
             newSubscription.categoryRaw = categoryRaw
             context.insert(newSubscription)
+            resolvedItem = newSubscription
         }
         try? context.save()
-        // Bug fixed (Avie): recompute the combined "Payments" line across every
+        // Bug fixed (Avie): recompute this subscription's own line across every
         // already-materialized quincena, then propagate the carry-over chain.
-        PeriodCoordinator.reprojectSubscription(kind: .subscription, context: context, exchangeRate: rateStore.currentRate ?? 0)
+        PeriodCoordinator.reprojectSubscription(item: resolvedItem, context: context, exchangeRate: rateStore.currentRate ?? 0)
         dismiss()
     }
 }

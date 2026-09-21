@@ -73,6 +73,7 @@ public enum BackupService {
         public var kindRaw: String
         public var categoryRaw: String
         public var isActive: Bool
+        public var isBiweekly: Bool = false
     }
 
     public struct LoanDTO: Codable {
@@ -141,7 +142,7 @@ public enum BackupService {
             SubscriptionDTO(
                 id: $0.id, name: $0.name, price: $0.price, currencyRaw: $0.currencyRaw, paymentDay: $0.paymentDay,
                 startDate: $0.startDate, endDate: $0.endDate, card: $0.card, kindRaw: $0.kindRaw,
-                categoryRaw: $0.categoryRaw, isActive: $0.isActive
+                categoryRaw: $0.categoryRaw, isActive: $0.isActive, isBiweekly: $0.isBiweekly
             )
         }
 
@@ -290,6 +291,7 @@ public enum BackupService {
             item.kindRaw = dto.kindRaw
             item.categoryRaw = dto.categoryRaw
             item.isActive = dto.isActive
+            item.isBiweekly = dto.isBiweekly
         }
 
         replace(Loan.self, with: backup.loans, context: context, count: &summary.loans) { dto, existing in

@@ -14,12 +14,15 @@ struct SobranteBadge: View {
     // Adjusted/negative are unchanged (`.yellow`/`.red` from mockup round 4).
     private static let positiveBackground = Color(red: 0x00 / 255.0, green: 0x63 / 255.0, blue: 0x38 / 255.0) // #006338
     private static let positiveText = Color(red: 0x01 / 255.0, green: 0xF9 / 255.0, blue: 0x8E / 255.0) // #01F98E
+    // Coordinator (2026-09-21, tokens update): danger moved from system `.red` (#FF3B30) to the
+    // Figma token's `Semantic/Danger Red` (#DB281E), same pass that updated the green above.
+    private static let negativeBackground = Color(red: 0xDB / 255.0, green: 0x28 / 255.0, blue: 0x1E / 255.0) // #DB281E
 
     private var color: Color {
         switch status {
         case .positive: Self.positiveBackground
         case .adjusted: .yellow
-        case .negative: .red
+        case .negative: Self.negativeBackground
         }
     }
 

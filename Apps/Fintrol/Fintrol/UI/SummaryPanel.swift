@@ -11,21 +11,45 @@ import SwiftUI
 struct SummaryPanel: View {
     let mandar: Decimal
     let nextMonth: Decimal
+    /// Woz (`revealProgress` unification, 2026-09-20): drives ONLY the "To Send"/Mandar row's
+    /// opacity — `NextMonthCard` above it is unaffected. `1` by default so the normal
+    /// standalone `PeriodView()` call site is unaffected; `PeriodView` embedded inside
+    /// `HomeView` passes its own `revealProgress` here directly, since Mandar is explicitly an
+    /// operational action that shouldn't appear at all in the compact preview state (user's
+    /// explicit decision — see `PeriodView`'s doc comments).
+    var mandarOpacity: CGFloat = 1
+    /// Settings → Preferencias → "Mostrar próximo mes" (`HomeView.showNextMonthOnPreviewCard`).
+    /// `true` by default — the standalone `PeriodView()` tab always showed `NextMonthCard`
+    /// regardless of this setting before the `revealProgress` unification (2026-09-20); now that
+    /// there's only one `PeriodView` instance, `HomeView` threads its own read of the setting
+    /// through here so the toggle keeps affecting the embedded preview the same way it always
+    /// did, without changing the standalone tab's own always-true default.
+    var showNextMonth: Bool = true
+
+    // Coordinator (2026-09-21, user's explicit request): "To Send"/Mandar hidden for now — a
+    // named toggle, not a deletion, so the row (and `mandar`/`mandarOpacity` plumbing feeding
+    // it) comes back with a one-line flip whenever it's wanted again.
+    private let showMandar = false
 
     var body: some View {
         // Coordinator (2026-09-17): "Mandar" moves to AFTER "Next Month" (was between SOBRANTE
         // and Next Month, i.e. first in this column — now last).
         VStack(alignment: .leading, spacing: 8) {
-            NextMonthCard(nextMonth: nextMonth)
+            if showNextMonth {
+                NextMonthCard(nextMonth: nextMonth)
+            }
 
-            // Coordinator (2026-09-17, corrected — restored with the right value): loose
-            // titles need an extra indent past the screen's outer padding to align with the
-            // text INSIDE cards (their own internal padding starts further in than the card's
-            // outer edge) — same +8pt as "TOTAL INCOME"/"TOTAL EXPENSES" and the section
-            // headers in `PeriodView.swift`, not the +16pt this row carried before (that
-            // overshot past the card-text alignment point).
-            row(title: String(localized: "summary_send_label", defaultValue: "To Send"), value: mandar.currencyString() + " USD")
-                .padding(.horizontal, 8)
+            if showMandar {
+                // Coordinator (2026-09-17, corrected — restored with the right value): loose
+                // titles need an extra indent past the screen's outer padding to align with the
+                // text INSIDE cards (their own internal padding starts further in than the card's
+                // outer edge) — same +8pt as "TOTAL INCOME"/"TOTAL EXPENSES" and the section
+                // headers in `PeriodView.swift`, not the +16pt this row carried before (that
+                // overshot past the card-text alignment point).
+                row(title: String(localized: "summary_send_label", defaultValue: "To Send"), value: mandar.currencyString() + " USD")
+                    .padding(.horizontal, 8)
+                    .opacity(mandarOpacity)
+            }
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(String(localized: "summary_panel_a11y", defaultValue: "Summary panel"))
@@ -35,12 +59,12 @@ struct SummaryPanel: View {
         HStack {
             Text(title)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color("TextSecondary"))
             Spacer()
             Text(value)
                 .font(.body.weight(isSecondary ? .regular : .semibold))
                 .monospacedDigit()
-                .foregroundStyle(isSecondary ? .secondary : .primary)
+                .foregroundStyle(isSecondary ? Color("TextSecondary") : .primary)
         }
     }
 }
@@ -62,12 +86,15 @@ struct NextMonthCard: View {
     // neither background nor text is pure white/green. Adjusted/negative unchanged.
     private static let positiveBackground = Color(red: 0x00 / 255.0, green: 0x63 / 255.0, blue: 0x38 / 255.0) // #006338
     private static let positiveText = Color(red: 0x01 / 255.0, green: 0xF9 / 255.0, blue: 0x8E / 255.0) // #01F98E
+    // Coordinator (2026-09-21, tokens update): danger moved from system `.red` (#FF3B30) to the
+    // Figma token's `Semantic/Danger Red` (#DB281E), same pass that updated the green above.
+    private static let negativeBackground = Color(red: 0xDB / 255.0, green: 0x28 / 255.0, blue: 0x1E / 255.0) // #DB281E
 
     private var nextMonthColor: Color {
         switch nextMonthStatus {
         case .positive: Self.positiveBackground
         case .adjusted: .yellow
-        case .negative: .red
+        case .negative: Self.negativeBackground
         }
     }
 

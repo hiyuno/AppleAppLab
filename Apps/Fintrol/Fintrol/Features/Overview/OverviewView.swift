@@ -20,7 +20,7 @@ struct OverviewView: View {
 
     private var subscriptionSnapshots: [SubscriptionSnapshot] {
         subscriptions.map {
-            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind, isActive: $0.isActive)
+            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind, isActive: $0.isActive, isBiweekly: $0.isBiweekly)
         }
     }
 
@@ -58,9 +58,14 @@ struct OverviewView: View {
         .navigationTitle("Overview")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
+                // Coordinator (2026-09-21): the default toolbar `Picker` (no `.pickerStyle`) gets
+                // wrapped in a full-width glass capsule by the system's Liquid Glass toolbar
+                // rendering — `.fixedSize()` forces it back to hugging its own label ("2026"),
+                // matching the user's ask, instead of stretching across the toolbar.
                 Picker("Año", selection: $selectedYear) {
                     ForEach(availableYears, id: \.self) { Text(String($0)).tag($0) }
                 }
+                .fixedSize()
             }
         }
     }

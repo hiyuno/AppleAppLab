@@ -29,6 +29,37 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            // Coordinator (2026-09-21, user's request): moved to the very top of Ajustes —
+            // Income/Expenses/Loans/Investments are what people reach for most, ahead of general
+            // Preferencias. Also renamed from "Recurring Income"/"Recurring Payments" to the
+            // simpler "Income"/"Expenses" (Expenses now also holds Services/Subscriptions
+            // inline, so "Recurring Payments" no longer described it precisely anyway).
+            Section("Recurrentes") {
+                NavigationLink {
+                    RecurringListView(kind: .income)
+                } label: {
+                    Text("Income")
+                }
+
+                NavigationLink {
+                    RecurringListView(kind: .expense)
+                } label: {
+                    Text("Expenses")
+                }
+
+                NavigationLink {
+                    LoansView()
+                } label: {
+                    Text("Loans")
+                }
+
+                NavigationLink {
+                    InvestmentsView()
+                } label: {
+                    Text("Investments")
+                }
+            }
+
             Section("Preferencias") {
                 HStack {
                     Text("Moneda base")
@@ -77,6 +108,11 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
 
+                // Home → tarjeta de previsualización de la quincena (2026-09-19): controla si
+                // `NextMonthCard` aparece ahí. La card "hug content" se achica sola cuando se
+                // desactiva — no hace falta más lógica que ocultar la fila.
+                Toggle("Mostrar próximo mes", isOn: $showNextMonthOnPreviewCard)
+
                 HStack {
                     Image(systemName: iCloudStatusIcon)
                         .foregroundStyle(.secondary)
@@ -110,6 +146,15 @@ struct SettingsView: View {
             // Coordinator (2026-09-17): own section, out of "Preferencias" — room for more
             // card-specific settings later without crowding the general prefs section.
             Section("Credit Cards") {
+                // Coordinator (2026-09-21): entry point into `CreditCardsView` itself, moved here
+                // from the deleted `RecurringHubView` — sits above the payment-date-rule setting
+                // since it's the more common destination.
+                NavigationLink {
+                    CreditCardsView()
+                } label: {
+                    Text("Credit Cards")
+                }
+
                 // TRD "Credit Cards" (2026-09-17): global preference, applies to every card —
                 // read only here/`PeriodView` and passed as a plain parameter into
                 // `reprojectCreditCard`, never read from `@AppStorage` inside `Core/`.
@@ -180,6 +225,7 @@ struct SettingsView: View {
             // just hidden at runtime. iOS-only per spec (no haptics API on macOS).
             #if os(iOS) && DEBUG
             Section("Developer Tools") {
+                Toggle("HUD Panel", isOn: $isDebugHUDVisible)
                 NavigationLink {
                     DeveloperVibrationsView()
                 } label: {
@@ -297,8 +343,18 @@ struct SettingsView: View {
 
     @AppStorage("fintrol.appearance") private var appearanceRaw: String = AppAppearance.system.rawValue
     @AppStorage("fintrol.historyMonthsBack") private var historyMonthsBack = 1
+    @AppStorage("fintrol.showNextMonthOnPreviewCard") private var showNextMonthOnPreviewCard = true
     @AppStorage("fintrol.creditCardPaymentDateRuleKind") private var creditCardDateRuleKind = 2
     @AppStorage("fintrol.creditCardPaymentDateRuleDays") private var creditCardDateRuleDays = 5
+    #if os(iOS) && DEBUG
+    /// Coordinator (2026-09-21, user's request): the Home→Quincena drag debug HUD
+    /// (`GestureDebugHUD`, `RootView.swift`) kept covering real content (Overview's year
+    /// picker, Home's settings gear) whenever it was visible — same `@AppStorage` key
+    /// `RootView` reads to gate rendering it at all, so this toggle and that render site can
+    /// never drift out of sync. `false` by default: the HUD stays hidden until explicitly
+    /// turned on here, not shown on every DEBUG launch like before.
+    @AppStorage("fintrol.debugHUDVisible") private var isDebugHUDVisible = false
+    #endif
 
     private var creditCardDateRuleSummary: String {
         switch creditCardDateRuleKind {

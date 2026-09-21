@@ -34,6 +34,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/link-todocky <code>` | — | Cierra el enlace inverso repo ↔ proyecto de Todocky con el código de "Copy project number" (un solo uso); guarda el `projectId` en `.claude/todocky-link.json`; con eso "Implement with Claude" funciona desde Todocky. Requiere el MCP de Todocky. El enlace directo (repo → tablero, tasks por etapa) lo hace Steve solo, §0.5 |
 | `/global-fix` | — | Rutina para bugs que no caen con una revisión pequeña — reproduce y test rojo primero; Avie mapea el flujo completo y falsa todas las causas con evidencia; Woz corrige la raíz, un commit por causa; Bertrand verifica con la reproducción y regresión; pasada aparte de simplificación que deja solo lo necesario; documenta en `PROJECT_LEARNINGS.md`. `auto` corre todo sin checkpoints |
 | `/update-feature` | — | Sparkle — actualizaciones automáticas fuera del App Store |
+| `/update-ui <pantalla o screenshot>` | — | Rutina de paridad UI↔Figma — compara colores, padding, alineación, tipografía y radios de una pantalla (o un fragmento, por screenshot) contra su frame en Figma y corrige el código; sin plan por etapas, Woz aplica directo salvo que el fix sea estructural |
 
 ## Cómo trabajar
 
@@ -62,6 +63,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **La app va a tener sitio web (web-lab)** → `/app-web-intake` (crea y mantiene `app-web-intake.md` en la raíz mientras se construye la app; `status` dice qué falta y quién lo llena; `prelaunch` hace las preguntas del foro)
 - **Pegas un código de Todocky, "enlaza este repo a Todocky", "Implement with Claude no funciona"** → `/link-todocky <code>` (requiere el MCP de Todocky conectado; el código se copia desde "Copy project number" y es de un solo uso)
 - **"Ya lo arreglé tres veces y vuelve", bug intermitente, varias causas, "nadie sabe cómo debería funcionar esto"** → `/global-fix <error>` (reproducir + test rojo → mapa del flujo → todas las causas falsadas → fix por causa → verificación → simplificación → `PROJECT_LEARNINGS.md`; `auto` sin checkpoints). Un bug simple sigue en el flujo normal Avie → Woz → Bertrand
+- **"Revisa/actualiza esta pantalla completa contra Figma: colores, padding, alineación", pegar un screenshot de una parte y pedir que quede igual al diseño** → `/update-ui <pantalla>` (o `/update-ui` + screenshot del fragmento) — audita colores, spacing, alineación, tipografía y radios contra el frame de Figma y corrige directo, sin plan por etapas
 
 ## Flujo estándar
 

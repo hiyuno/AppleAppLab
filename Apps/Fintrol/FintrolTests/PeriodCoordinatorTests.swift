@@ -210,7 +210,9 @@ struct PeriodCoordinatorTests {
 
         let line = (period.lineItems ?? []).first { $0.origin == .subscription && !$0.isHomeService }
         #expect(line?.amount == 15)
-        #expect(line?.title == "Payments 1–15")
+        // Coordinator (2026-09-21, per-item refactor): each subscription gets its own line now
+        // (title = the subscription's own name), not one combined "Payments 1–15" sum.
+        #expect(line?.title == "Netflix")
     }
 
     @Test("Editing a subscription's price respects a manually-edited combined line")

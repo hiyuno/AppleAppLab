@@ -128,31 +128,105 @@ struct InvestmentsView: View {
     }
 }
 
-/// Real (materialized, not manually-zeroed) vs. projected — the account's simple "history".
-/// `.investment` lines are never balance-tracked like a `Loan` (no principal/interest), so
-/// this just lists what's been materialized so far, most recent first.
+/// One row of the account's full contribution schedule — either backed by a real, materialized
+/// `LineItem` (`sourceRecurringID == item.id`) or, when that quincena has never been visited/
+/// materialized, purely computed for display (2026-09-21, user's request: the old version only
+/// ever listed whatever `Period`s already existed in the store, so an account started years ago
+/// showed a handful of rows instead of its whole history through its own end date).
+private struct InvestmentScheduleRow {
+    let coordinate: PeriodCoordinate
+    let amount: Decimal
+    let currency: Currency
+    let isActive: Bool
+    let isPaid: Bool
+    let isManuallyEdited: Bool
+}
+
+/// Real (materialized) vs. projected — the account's full contribution schedule, computed for
+/// every quincena from its own `startDate` through `endDate` (or a year past today if it has
+/// none), independent of which quincenas happen to be materialized in the store — same idea as
+/// `LoanDetailView`'s `LoanEngine.schedule`, just for a recurring contribution instead of an
+/// amortization table. Sorted oldest → newest (user's explicit request).
 private struct InvestmentDetailView: View {
+    // Coordinator (2026-09-21, user's request): same "hecha" green as `LineItemRow`'s paid
+    // rows elsewhere in the app — same source hex, not a separate color for this screen.
+    private static let paidRowBackground = Color(red: 0x00 / 255.0, green: 0x63 / 255.0, blue: 0x38 / 255.0)
+    private static let paidRowTextColor = Color(red: 0x14 / 255.0, green: 0x33 / 255.0, blue: 0x2B / 255.0)
+
     let item: RecurringItem
+    @Environment(\.modelContext) private var context
     @Query private var allPeriods: [Period]
+    @Query(sort: \RecurringItem.title) private var allRecurringItems: [RecurringItem]
+    @Query(sort: \Subscription.name) private var allSubscriptions: [Subscription]
     @Environment(ExchangeRateStore.self) private var rateStore
     // Coordinator (2026-09-17): "Editar" in the detail toolbar — same placement/pattern as
     // `LoanDetailView`/`CreditCardDetailView`, reuses `InvestmentEditSheet` (same form
     // `InvestmentsView` uses for "Nueva cuenta"/its own "Editar" swipe action).
     @State private var isPresentingEdit = false
+    @State private var isPresentingPastPaymentsConfirm = false
 
-    private var lines: [(period: Period, line: LineItem)] {
-        allPeriods
-            .sorted { $0.coordinate > $1.coordinate }
-            .compactMap { period in
-                guard let line = (period.lineItems ?? []).first(where: { $0.sourceRecurringID == item.id }) else { return nil }
-                return (period, line)
+    private var effectiveRate: Decimal { rateStore.currentRate ?? 0 }
+
+    private var recurringSnapshot: RecurringItemSnapshot {
+        RecurringItemSnapshot(id: item.id, kind: item.kind, title: item.title, amount: item.amount, currency: item.currency, frequency: item.frequency, startDate: item.civilStartDate, endDate: item.civilEndDate, isActive: item.isActive, category: item.category)
+    }
+
+    private var recurringSnapshots: [RecurringItemSnapshot] {
+        allRecurringItems.map {
+            RecurringItemSnapshot(id: $0.id, kind: $0.kind, title: $0.title, amount: $0.amount, currency: $0.currency, frequency: $0.frequency, startDate: $0.civilStartDate, endDate: $0.civilEndDate, isActive: $0.isActive, category: $0.category)
+        }
+    }
+
+    private var subscriptionSnapshots: [SubscriptionSnapshot] {
+        allSubscriptions.map {
+            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind, isActive: $0.isActive, isBiweekly: $0.isBiweekly)
+        }
+    }
+
+    private var todayCoordinate: PeriodCoordinate { PeriodDateEngine.coordinate(containing: CivilDate.today()) }
+
+    /// No end date on the account → project a year (24 quincenas) past whichever is later,
+    /// today or the account's own start, instead of an unbounded list.
+    private var horizonCoordinate: PeriodCoordinate {
+        if let end = item.civilEndDate { return PeriodDateEngine.coordinate(containing: end) }
+        var coordinate = max(todayCoordinate, PeriodDateEngine.coordinate(containing: item.civilStartDate))
+        for _ in 0..<24 { coordinate = coordinate.next }
+        return coordinate
+    }
+
+    private func materializedLine(for coordinate: PeriodCoordinate) -> LineItem? {
+        guard let period = allPeriods.first(where: { $0.coordinate == coordinate }) else { return nil }
+        return (period.lineItems ?? []).first(where: { $0.sourceRecurringID == item.id })
+    }
+
+    private var scheduleRows: [InvestmentScheduleRow] {
+        ProjectionEngine.occurrenceCoordinates(for: recurringSnapshot, through: horizonCoordinate)
+            .map { coordinate in
+                if let line = materializedLine(for: coordinate) {
+                    return InvestmentScheduleRow(coordinate: coordinate, amount: line.amount, currency: line.currency, isActive: line.isActive, isPaid: line.isPaid, isManuallyEdited: line.isManuallyEdited)
+                }
+                let generated = ProjectionEngine.generateRecurringLines(for: coordinate, recurringItems: [recurringSnapshot]).first
+                return InvestmentScheduleRow(coordinate: coordinate, amount: generated?.amount ?? item.amount, currency: generated?.currency ?? item.currency, isActive: true, isPaid: false, isManuallyEdited: false)
             }
+            .sorted { $0.coordinate < $1.coordinate }
     }
 
     private var contributedToDate: Decimal {
-        lines.filter { $0.line.isActive && $0.line.isPaid }.reduce(Decimal(0)) { partial, entry in
-            partial + CurrencyConversion.toUSD(amount: entry.line.amount, currency: entry.line.currency, rate: rateStore.currentRate ?? 0)
+        scheduleRows.filter { $0.isActive && $0.isPaid }.reduce(Decimal(0)) { partial, row in
+            partial + CurrencyConversion.toUSD(amount: row.amount, currency: row.currency, rate: effectiveRate)
         }
+    }
+
+    /// Coordinator (2026-09-21, user's request — "hay que preguntar si se han hecho todos los
+    /// pagos"): an account started well before today has real-world contributions this app
+    /// never recorded. Offered once (`item.pastPaymentsReviewed` gates it for good, whichever
+    /// way the user answers) whenever there's at least one past, unpaid row to ask about.
+    private var unconfirmedPastRows: [InvestmentScheduleRow] {
+        scheduleRows.filter { $0.coordinate <= todayCoordinate && !$0.isPaid }
+    }
+
+    private var shouldOfferPastPaymentsReview: Bool {
+        !item.pastPaymentsReviewed && item.civilStartDate < CivilDate.today() && !unconfirmedPastRows.isEmpty
     }
 
     /// Builds a plain `String` (never interpolated straight into `Text(_:)`, which would treat
@@ -162,6 +236,50 @@ private struct InvestmentDetailView: View {
         let monthName = Calendar.current.shortMonthSymbols[coordinate.month - 1]
         let dayRange = coordinate.half == .first ? "1–15" : "16–fin"
         return "\(monthName) \(dayRange), \(coordinate.year)"
+    }
+
+    private func stateLabel(for row: InvestmentScheduleRow) -> String {
+        if !row.isActive { return "Desactivada" }
+        if row.isPaid { return "Hecha" }
+        if row.isManuallyEdited { return "Editada" }
+        return "Proyectada"
+    }
+
+    /// Materializes `coordinate` if needed — via `forceMaterialize`, not `materializeIfNeeded`,
+    /// since a row here can predate whatever the user has already browsed to in Quincena
+    /// (`materializeIfNeeded` would silently clamp that to the existing anchor instead of
+    /// creating the real period) — and toggles this account's own line's `isPaid`, same
+    /// semantics as `LineItemRow`'s swipe-trailing "marcar pagado".
+    private func togglePaid(for coordinate: PeriodCoordinate) {
+        let period = PeriodCoordinator.forceMaterialize(coordinate: coordinate, context: context, recurringItems: recurringSnapshots, subscriptions: subscriptionSnapshots, exchangeRate: effectiveRate)
+        guard let line = (period.lineItems ?? []).first(where: { $0.sourceRecurringID == item.id }) else { return }
+        line.isPaid.toggle()
+        line.paidAt = line.isPaid ? CivilDate.today() : nil
+        line.isManuallyEdited = true
+        try? context.save()
+        PeriodCoordinator.recomputeForward(after: period, context: context, exchangeRate: effectiveRate)
+        try? context.save()
+    }
+
+    private func markPastRowsAsPaid() {
+        let rows = unconfirmedPastRows
+        guard let earliestCoordinate = rows.map(\.coordinate).min() else { return }
+        // Ascending order (oldest → newest, same as `rows` itself) so each new period's own
+        // carry-over lookup finds its already-created predecessor — see `forceMaterialize`'s
+        // doc comment.
+        for row in rows {
+            let period = PeriodCoordinator.forceMaterialize(coordinate: row.coordinate, context: context, recurringItems: recurringSnapshots, subscriptions: subscriptionSnapshots, exchangeRate: effectiveRate)
+            guard let line = (period.lineItems ?? []).first(where: { $0.sourceRecurringID == item.id }) else { continue }
+            line.isPaid = true
+            line.paidAt = CivilDate.today()
+            line.isManuallyEdited = true
+        }
+        item.pastPaymentsReviewed = true
+        try? context.save()
+        if let earliestPeriod = PeriodCoordinator.fetchPeriod(coordinate: earliestCoordinate, context: context) {
+            PeriodCoordinator.recomputeForward(after: earliestPeriod, context: context, exchangeRate: effectiveRate)
+            try? context.save()
+        }
     }
 
     var body: some View {
@@ -181,32 +299,39 @@ private struct InvestmentDetailView: View {
                 .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(.ultraThinMaterial.opacity(0.5)))
 
                 LazyVStack(spacing: 0) {
-                    ForEach(lines, id: \.line.id) { entry in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(verbatim: periodLabel(for: entry.period.coordinate))
-                                    .font(.body)
-                                if !entry.line.isActive {
-                                    Text("Desactivada").font(.caption).foregroundStyle(.secondary)
-                                } else if entry.line.isManuallyEdited {
-                                    Text("Editada").font(.caption).foregroundStyle(.secondary)
-                                } else {
-                                    Text("Proyectada").font(.caption).foregroundStyle(.secondary)
+                    ForEach(scheduleRows, id: \.coordinate) { row in
+                        Button {
+                            togglePaid(for: row.coordinate)
+                        } label: {
+                            HStack {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(verbatim: periodLabel(for: row.coordinate))
+                                        .font(.body)
+                                        .foregroundStyle(row.isPaid ? Self.paidRowTextColor : .primary)
+                                    Text(stateLabel(for: row))
+                                        .font(.caption)
+                                        .foregroundStyle(row.isPaid ? Self.paidRowTextColor : .secondary)
                                 }
+                                Spacer()
+                                Text(row.amount.currencyString(currency: row.currency))
+                                    .monospacedDigit()
+                                    .foregroundStyle(row.isPaid ? Self.paidRowTextColor : .primary)
+                                    .strikethrough(!row.isActive || row.isPaid)
                             }
-                            Spacer()
-                            Text(entry.line.amount.currencyString(currency: entry.line.currency))
-                                .monospacedDigit()
-                                .strikethrough(!entry.line.isActive)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(row.isPaid ? Self.paidRowBackground : .clear)
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .contentShape(Rectangle())
                         }
-                        .padding(.vertical, 8)
+                        .buttonStyle(.plain)
                         .accessibilityElement(children: .combine)
                         // A11Y #27 (Sarah): `.combine` alone only concatenates the child texts
                         // in visual order — an explicit `.accessibilityValue` makes the state
-                        // ("desactivada"/"editada"/"proyectada") unambiguous regardless of
-                        // layout order.
-                        .accessibilityValue(entry.line.isActive ? (entry.line.isManuallyEdited ? "editada" : "proyectada") : "desactivada")
-                        if entry.line.id != lines.last?.line.id { Divider() }
+                        // unambiguous regardless of layout order.
+                        .accessibilityValue(stateLabel(for: row))
+                        .accessibilityHint(row.isPaid ? "Doble toque para desmarcar como hecha" : "Doble toque para marcar como hecha")
+                        if row.coordinate != scheduleRows.last?.coordinate { Divider() }
                     }
                 }
                 .padding(16)
@@ -225,6 +350,21 @@ private struct InvestmentDetailView: View {
         }
         .sheet(isPresented: $isPresentingEdit) {
             InvestmentEditSheet(item: item)
+        }
+        .onAppear {
+            if shouldOfferPastPaymentsReview { isPresentingPastPaymentsConfirm = true }
+        }
+        .confirmationDialog(
+            "¿Ya hiciste las \(unconfirmedPastRows.count) aportaciones anteriores, desde \(unconfirmedPastRows.first.map { periodLabel(for: $0.coordinate) } ?? "")?",
+            isPresented: $isPresentingPastPaymentsConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Sí, márcalas como hechas") { markPastRowsAsPaid() }
+            Button("No, están pendientes") {
+                item.pastPaymentsReviewed = true
+                try? context.save()
+            }
+            Button("Preguntar después", role: .cancel) {}
         }
     }
 }
@@ -289,7 +429,7 @@ private struct InvestmentEditSheet: View {
                     HStack {
                         // Coordinator (2026-09-17): `LabDecimalField` — centralized fix for
                         // "0.00 isn't a placeholder, has to be deleted by hand".
-                        LabDecimalField(placeholder: "Aportación", value: $amount)
+                        LabDecimalField(placeholder: "$100", value: $amount)
                         Picker("Moneda", selection: $currency) {
                             Text("USD").tag(Currency.usd)
                             Text("MXN").tag(Currency.mxn)

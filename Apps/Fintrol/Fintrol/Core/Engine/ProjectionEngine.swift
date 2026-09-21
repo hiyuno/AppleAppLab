@@ -49,6 +49,63 @@ public enum ProjectionEngine {
         return lines
     }
 
+    /// Coordinator (2026-09-21, user's request — Investments detail was only ever listing
+    /// quincenas the user had actually visited/materialized in `Period`, so an account started
+    /// years ago showed a handful of rows instead of its whole history, and never showed
+    /// future rows past whatever the user had navigated to either): every `PeriodCoordinate`
+    /// from `item`'s own start through `endCoordinate` (inclusive) at which it fires, computed
+    /// purely from its frequency/vigencia — same "full deterministic table" idea as
+    /// `LoanEngine.schedule`, just expressed as coordinates instead of installments, with zero
+    /// dependency on which quincenas happen to exist in the store. Reuses
+    /// `generateRecurringLines` per-coordinate instead of re-deriving the frequency rules.
+    public static func occurrenceCoordinates(
+        for item: RecurringItemSnapshot,
+        through endCoordinate: PeriodCoordinate
+    ) -> [PeriodCoordinate] {
+        guard item.isActive else { return [] }
+        var coordinate = PeriodDateEngine.coordinate(containing: item.startDate)
+        guard coordinate <= endCoordinate else { return [] }
+
+        var result: [PeriodCoordinate] = []
+        while coordinate <= endCoordinate {
+            if !generateRecurringLines(for: coordinate, recurringItems: [item]).isEmpty {
+                result.append(coordinate)
+            }
+            coordinate = coordinate.next
+        }
+        return result
+    }
+
+    /// Coordinator (2026-09-21, user's request — breakdown sheet for the "Essentials"/
+    /// "Payments"/"Servicios" aggregate rows, mirroring "Credit Cards Payments"): the exact set
+    /// of `Subscription`s that make up `generateSubscriptionLine`'s combined total for
+    /// `coordinate`/`kind` — extracted out of that function (which now just calls this and sums
+    /// the result) so a breakdown UI can show the same list instead of re-deriving the filter.
+    public static func contributingSubscriptions(
+        for coordinate: PeriodCoordinate,
+        subscriptions: [SubscriptionSnapshot],
+        kind: SubscriptionKind
+    ) -> [SubscriptionSnapshot] {
+        let range = PeriodDateEngine.dateRange(for: coordinate)
+        let isFirstHalf = coordinate.half == .first
+
+        return subscriptions.filter { subscription in
+            guard subscription.isActive else { return false }
+            guard subscription.kind == kind else { return false }
+            // Same fix as generateRecurringLines' .monthlyOnDay case: vigencia against the
+            // whole quincena `range`, not the single `occurrence` day (Bug 2 — "Luz").
+            guard isVigente(startDate: subscription.startDate, endDate: subscription.endDate, in: range) else { return false }
+            // "Cada quincena" (2026-09-21): fires in BOTH halves while vigente — `paymentDay`'s
+            // half no longer gates it, unlike the default "cada mes" behavior below.
+            if subscription.isBiweekly {
+                return true
+            }
+            guard (subscription.paymentDay <= 15) == isFirstHalf else { return false }
+            let occurrence = PeriodDateEngine.date(forDayOfMonth: subscription.paymentDay, in: coordinate)
+            return occurrence >= range.start && occurrence <= range.end
+        }
+    }
+
     /// A single combined "Payments 1–15" / "Payments 16–30" (subscriptions) or "Servicios
     /// 1–15" / "Servicios 16–30" (home services) expense line, summing every `Subscription`
     /// of the matching `kind` whose payment day falls in `coordinate`'s half and is vigente
@@ -60,20 +117,8 @@ public enum ProjectionEngine {
         kind: SubscriptionKind,
         exchangeRate: Decimal
     ) -> GeneratedLine? {
-        let range = PeriodDateEngine.dateRange(for: coordinate)
         let isFirstHalf = coordinate.half == .first
-
-        let active = subscriptions.filter { subscription in
-            guard subscription.isActive else { return false }
-            guard subscription.kind == kind else { return false }
-            guard (subscription.paymentDay <= 15) == isFirstHalf else { return false }
-            let occurrence = PeriodDateEngine.date(forDayOfMonth: subscription.paymentDay, in: coordinate)
-            guard occurrence >= range.start, occurrence <= range.end else { return false }
-            // Same fix as generateRecurringLines' .monthlyOnDay case: vigencia against the
-            // whole quincena `range`, not the single `occurrence` day (Bug 2 — "Luz").
-            return isVigente(startDate: subscription.startDate, endDate: subscription.endDate, in: range)
-        }
-
+        let active = contributingSubscriptions(for: coordinate, subscriptions: subscriptions, kind: kind)
         guard !active.isEmpty else { return nil }
 
         let total = active.reduce(Decimal(0)) { partial, subscription in
@@ -86,8 +131,46 @@ public enum ProjectionEngine {
             title = isFirstHalf ? "Payments 1–15" : "Payments 16–30"
         case .service:
             title = isFirstHalf ? "Servicios 1–15" : "Servicios 16–30"
+        case .essential:
+            title = isFirstHalf ? "Essentials 1–15" : "Essentials 16–30"
         }
-        return GeneratedLine(kind: .expense, title: title, amount: total, currency: .usd, origin: .subscription, sourceRecurringID: nil, isHomeService: kind == .service)
+        // Coordinator (2026-09-21): Essentials gets its own `LineOrigin` (not `.subscription` +
+        // `isHomeService`) — that flag is only binary, and a third kind needs its own tag.
+        let origin: LineOrigin = kind == .essential ? .essential : .subscription
+        return GeneratedLine(kind: .expense, title: title, amount: total, currency: .usd, origin: origin, sourceRecurringID: nil, isHomeService: kind == .service)
+    }
+
+    /// Coordinator (2026-09-21, user's request — "si elimino/edito 'Food' aquí, solo debe
+    /// afectar esta quincena, la definición se queda"): one real `LineItem` per contributing
+    /// `Subscription` per half, mirroring `CreditCardEngine.generatedLine`/
+    /// `generateRevolvingLoanLine` exactly — same vigencia/half-match rule
+    /// `contributingSubscriptions` already encodes, applied to a single subscription instead of
+    /// summing a whole kind. Supersedes `generateSubscriptionLine` for anything that WRITES
+    /// `LineItem`s (materialization/reprojection); that combined-total function stays only for
+    /// in-memory previews (`previewNextMonth`, Overview's `projectedTotals`) that never persist
+    /// a line to edit/delete in the first place.
+    public static func generatedLine(
+        for coordinate: PeriodCoordinate,
+        subscription: SubscriptionSnapshot,
+        exchangeRate: Decimal
+    ) -> GeneratedLine? {
+        guard subscription.isActive else { return nil }
+        let range = PeriodDateEngine.dateRange(for: coordinate)
+        guard isVigente(startDate: subscription.startDate, endDate: subscription.endDate, in: range) else { return nil }
+
+        if !subscription.isBiweekly {
+            let isFirstHalf = coordinate.half == .first
+            guard (subscription.paymentDay <= 15) == isFirstHalf else { return nil }
+            let occurrence = PeriodDateEngine.date(forDayOfMonth: subscription.paymentDay, in: coordinate)
+            guard occurrence >= range.start, occurrence <= range.end else { return nil }
+        }
+
+        let amount = CurrencyConversion.toUSD(amount: subscription.price, currency: subscription.currency, rate: exchangeRate)
+        let origin: LineOrigin = subscription.kind == .essential ? .essential : .subscription
+        return GeneratedLine(
+            kind: .expense, title: subscription.name, amount: amount, currency: .usd, origin: origin,
+            sourceRecurringID: nil, isHomeService: subscription.kind == .service, sourceSubscriptionID: subscription.id
+        )
     }
 
     /// One `GeneratedLine` per loan installment (at most) that falls within `coordinate`'s

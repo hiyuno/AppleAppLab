@@ -26,6 +26,12 @@ public final class LineItem {
     /// (never a "sum" line; the aggregated "Credit Cards Payments" row is presentation-only in
     /// `PeriodView`, grouping by `origin == .creditCard` at render time).
     public var sourceCreditCardID: UUID?
+    /// Same mechanism as `sourceCreditCardID` but for `Subscription` (2026-09-21, user's
+    /// request — "editar/eliminar aquí solo afecta esta quincena, la definición se queda"):
+    /// each contributing `Subscription` gets its own line per period now, instead of one
+    /// combined sum — this is what makes that per-period edit/deactivate/delete possible,
+    /// exactly like `Loan`/`CreditCard` already work.
+    public var sourceSubscriptionID: UUID?
     public var isManuallyEdited: Bool = false
     public var exchangeRateSnapshot: Decimal?
     /// Only meaningful when `origin == .subscription` — distinguishes the combined
@@ -55,6 +61,7 @@ public final class LineItem {
         sourceRecurringID: UUID? = nil,
         sourceLoanID: UUID? = nil,
         sourceCreditCardID: UUID? = nil,
+        sourceSubscriptionID: UUID? = nil,
         isManuallyEdited: Bool = false,
         exchangeRateSnapshot: Decimal? = nil,
         isHomeService: Bool = false,
@@ -73,6 +80,7 @@ public final class LineItem {
         self.sourceRecurringID = sourceRecurringID
         self.sourceLoanID = sourceLoanID
         self.sourceCreditCardID = sourceCreditCardID
+        self.sourceSubscriptionID = sourceSubscriptionID
         self.isManuallyEdited = isManuallyEdited
         self.exchangeRateSnapshot = exchangeRateSnapshot
         self.isHomeService = isHomeService

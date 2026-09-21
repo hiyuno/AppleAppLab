@@ -3,9 +3,20 @@ import SwiftData
 
 /// First tab (iPhone) / first sidebar item (Mac) — DESIGN_LIQUID.md § Home. Answers "¿cómo
 /// estoy hoy?" faster than the full Quincena: today's date, a dynamic motivational message
-/// (`HomeInsightEngine`), and a read-only preview of the current quincena
-/// (`PeriodPreviewCard`) that navigates to the Quincena tab/sidebar-item on tap — and, on
-/// iPhone, on an upward drag past a threshold (plan `glimmering-swinging-bumblebee.md` §5).
+/// (`HomeInsightEngine`), and an embedded preview of the current quincena that navigates to the
+/// Quincena tab/sidebar-item on tap of its drag handle/title — and, on iPhone, on an upward drag
+/// past a threshold (plan `glimmering-swinging-bumblebee.md` §5).
+///
+/// Woz (2026-09-20, `revealProgress` unification): the preview used to be a separate, read-only
+/// `PeriodPreviewCard` view kept in sync with a separately-mounted `PeriodView`
+/// (`staticPeriodLayer`) via a floating title overlay and a pile of frame-tracking machinery
+/// (`sourceRestFrame`/`destRestFrame`, named coordinate spaces, `PeriodViewInternalTitleInsetKey`,
+/// etc.) — all of that is gone. `cardLayer` now mounts exactly ONE real `PeriodView`, driven live
+/// by `dragProgress` via its own `revealProgress` parameter: the compact "quick-balance" summary
+/// and the detailed income/expenses cards are two ends of the SAME view's continuous spectrum,
+/// crossfading and reflowing entirely inside `PeriodView` itself (see that file). `HomeView`'s own
+/// job shrinks to what it always should have been: measuring `availableHeight`/`headerHeight`,
+/// owning the drag gesture, and deciding when to commit/cancel/navigate.
 struct HomeView: View {
     #if os(iOS)
     @Binding var selectedTab: FintrolTab
@@ -15,6 +26,11 @@ struct HomeView: View {
 
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
+    // Settings → Preferencias → "Mostrar próximo mes" — threaded into the embedded `PeriodView`
+    // as `showNextMonth` (see `PeriodView.showNextMonth`/`SummaryPanel.showNextMonth`), same
+    // effect on the preview it always had, now expressed as a param on the single unified view
+    // instead of a param on the old, separate `PeriodPreviewCard`.
+    @AppStorage("fintrol.showNextMonthOnPreviewCard") private var showNextMonthOnPreviewCard = true
     @Query(sort: \RecurringItem.title) private var recurringItems: [RecurringItem]
     @Query(sort: \Subscription.name) private var subscriptions: [Subscription]
     @Query(sort: \Loan.name) private var loans: [Loan]
@@ -30,15 +46,14 @@ struct HomeView: View {
 
     // Same pattern as `LineItemRow`'s swipe gesture — plain `@State`, not `@GestureState`.
     @State private var dragTranslation: CGFloat = 0
-    /// Full container height (header + card/Quincena rect together) — measured on the outer
-    /// container via `GeometryReader`. Only `PeriodPreviewCard` ever moves through this range
-    /// (0 → `-availableHeight`), so it can travel far enough to fully exit above the screen,
-    /// past even the fixed header.
+    /// Full container height (header + embedded Quincena rect together) — measured on the
+    /// outer container via `GeometryReader`. `dragProgress` (and everything derived from it —
+    /// `revealProgress`, `embeddedTopInset`, the corner-radius convergence) is normalized
+    /// against this.
     @State private var availableHeight: CGFloat = 1
-    /// Measured height of the fixed white header (date + message) via `HeaderHeightKey` —
-    /// both the real Quincena (`PeriodView`, static) and `PeriodPreviewCard` (draggable) are
-    /// inset by this amount so they occupy exactly the same rectangle below the header, down
-    /// to the bottom of the screen. The header itself never uses this value on itself.
+    /// Measured height of the fixed white header (date + message) via `HeaderHeightKey`. No
+    /// longer drives `embeddedTopInset` directly (see that property's doc comment) — kept for any
+    /// other Dynamic-Type-aware layout that needs Home's own header height.
     @State private var headerHeight: CGFloat = 0
     /// True for the duration of the post-release settle animation (commit OR cancel) — keeps
     /// `periodPage` mounted through that window so it doesn't pop away mid-slide. Cleared once
@@ -50,8 +65,8 @@ struct HomeView: View {
     /// `dragTranslation` itself is deliberately NOT reset synchronously right after navigating.
     ///
     /// Bug fix 2026-09-18 (user-reported with a 5-frame HUD capture, `since commit` ~239ms): the
-    /// ORIGINAL version of this fix (3-frame QuickTime capture) unmounted `staticPeriodLayer`/
-    /// `cardLayer` the INSTANT `didCommit` flipped true, on the assumption that "`HomeView` itself
+    /// ORIGINAL version of this fix (3-frame QuickTime capture) unmounted `cardLayer` the
+    /// INSTANT `didCommit` flipped true, on the assumption that "`HomeView` itself
     /// is off-screen behind the now-frontmost Quincena tab" by that point — i.e. that setting
     /// `selectedTab`/`selectedSection` and the tab bar's own cut-over to the new tab are
     /// effectively synchronous. They are NOT: a `TabView`/`NavigationSplitView` selection change
@@ -69,8 +84,8 @@ struct HomeView: View {
     /// True whenever `HomeView`'s content is mounted and could conceivably be on screen; flipped
     /// false only in `.onDisappear` — the actual, non-racy signal that the `TabView`/
     /// `NavigationSplitView` has cut over away from `HomeView` and nothing here can be visible any
-    /// more. See `didCommit`'s bug-fix note: unmounting `staticPeriodLayer`/`cardLayer` on
-    /// `didCommit` alone raced the tab switch's own animation; gating on this flag too means the
+    /// more. See `didCommit`'s bug-fix note: unmounting `cardLayer` on `didCommit` alone raced
+    /// the tab switch's own animation; gating on this flag too means the
     /// unmount can only ever happen once `HomeView` is provably off screen, closing that gap
     /// completely instead of narrowing it. Reset back to `true` in `.onAppear`, alongside
     /// `dragTranslation`/`didCommit`, the next time `HomeView` reappears.
@@ -120,7 +135,7 @@ struct HomeView: View {
 
     private var subscriptionSnapshots: [SubscriptionSnapshot] {
         subscriptions.map {
-            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind, isActive: $0.isActive)
+            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind, isActive: $0.isActive, isBiweekly: $0.isBiweekly)
         }
     }
 
@@ -135,12 +150,61 @@ struct HomeView: View {
         return min(max(-dragTranslation / availableHeight, 0), 1)
     }
 
+    /// Chevrons only start sliding in during the FINAL ~30% of the drag (per user request:
+    /// "casi al final de la transition") — `0` for the first 70% of `dragProgress`, then ramps
+    /// linearly from `0` to `1` over the remaining 30%, reaching `1` exactly at full commit.
+    /// Threshold is tunable — flag to the user if they want the reveal to start earlier/later
+    /// once they see it on-device. Derives from `dragProgress` (itself from `dragTranslation`),
+    /// so it animates smoothly along with `dragTranslation`'s own settle animation automatically.
+    /// Deliberately UNTOUCHED by the `revealProgress` unification (2026-09-20, explicit user
+    /// instruction) — `PeriodView.chevronsRevealProgress` still reads this directly.
+    private var chevronsRevealProgress: CGFloat {
+        let start: CGFloat = 0.7
+        guard dragProgress > start else { return 0 }
+        return min((dragProgress - start) / (1 - start), 1)
+    }
+
     /// Reduce Motion: the drag-follow itself is direct manipulation (finger-tracked, not an
     /// automatic transition) so it stays 1:1 regardless — only the post-release SETTLE
     /// animation (commit snapping to the end, or cancel snapping back) collapses to instant
     /// with Reduce Motion on. Same end state either way, per plan §5/§6.
-    private var settleAnimation: Animation? { reduceMotion ? nil : .easeOut(duration: settleAnimationDuration) }
+    ///
+    /// `debugState.easingDisabled` (added 2026-09-19) is a second, debug-only kill switch, toggled
+    /// from `GestureDebugHUD` — flipping it in the HUD short-circuits this to `nil` exactly like
+    /// `reduceMotion` already does, so `commitPush()`/`cancelPush()` snap instantly and the raw,
+    /// un-eased value curves (title lerp, content inset, opacity) can be inspected without any
+    /// curve smoothing. `#if DEBUG`-guarded since `debugState` itself only exists in Debug builds
+    /// (see the `#if DEBUG` around its `@Environment` above) — Release behaves exactly as before,
+    /// gated on `reduceMotion` alone.
+    private var settleAnimation: Animation? {
+        #if DEBUG
+        guard !reduceMotion, !debugState.easingDisabled else { return nil }
+        return .easeOut(duration: effectiveSettleDuration)
+        #else
+        reduceMotion ? nil : .easeOut(duration: effectiveSettleDuration)
+        #endif
+    }
     private let settleAnimationDuration: TimeInterval = 0.2
+
+    /// The settle duration actually used everywhere it matters — both by `settleAnimation`'s
+    /// `withAnimation` transaction AND by the `Task.sleep` calls in `commitPush()`/`cancelPush()`
+    /// that wait out that same animation before flipping `isSettling`/`didCommit`. Added
+    /// 2026-09-19 alongside `HomeDragDebugState.settleSpeedMultiplier` (the HUD's slow-motion
+    /// control): previously `settleAnimationDuration` was a plain constant referenced separately
+    /// by the animation and the sleep, which was safe only because they were always equal. Once
+    /// the HUD can stretch the animation's duration in Debug builds, the sleep MUST stretch by
+    /// the same factor or `isSettling`/`didCommit` flip while the (now much longer) animation is
+    /// still visibly running — reopening exactly the race `isPeriodPageMounted`'s bug-fix notes
+    /// above were written to close. Routing both through this single computed property keeps them
+    /// from ever drifting apart again. `#if DEBUG`-guarded since `debugState` only exists in Debug
+    /// builds; Release always uses the plain constant.
+    private var effectiveSettleDuration: TimeInterval {
+        #if DEBUG
+        settleAnimationDuration * debugState.settleSpeedMultiplier
+        #else
+        settleAnimationDuration
+        #endif
+    }
 
     /// Mount `periodPage` while it's actually needed — while the finger is dragging it into
     /// view, or during the settle animation right after release (commit lands on it, cancel
@@ -157,6 +221,37 @@ struct HomeView: View {
     private var isPeriodPageMounted: Bool {
         (dragTranslation < 0 || isSettling || hasPrewarmedPeriodPage) && (!didCommit || isHomeContentVisible)
     }
+
+    /// Woz (2026-09-20, `revealProgress` unification — replaces `contentTopInset`'s old dual-
+    /// endpoint interpolation, `headerHeight` ↔ `periodInternalTitleInset`, which its own doc
+    /// comment history already flagged as broken under `cardLayer`'s `alignment: .bottom` — see
+    /// git history for the "⚠️ KNOWN RISK" note this closes): the top padding applied to the
+    /// SINGLE embedded `PeriodView` in `cardLayer`. At rest (`dragProgress == 0`) it's large —
+    /// `embeddedRestInset` — pushing the (still mostly-collapsed, `revealProgress ≈ 0`) preview
+    /// down toward the bottom of the screen, leaving Home's own header (date + message) visible
+    /// above it, same as the old hugged `PeriodPreviewCard` used to. It shrinks continuously to
+    /// exactly `0` by full commit (`dragProgress == 1`) — at THAT point this view's own top edge
+    /// exactly matches the real standalone `PeriodView` tab's top edge (no padding, no rounded
+    /// corners, see `cardLayer`'s `clipShape`), which is what keeps the hand-off seamless: the
+    /// same invariant `commitPush()`'s doc comments have always relied on ("by the time `TabView`
+    /// cuts over, both sides already show the identical resting frame"), now expressed as a
+    /// single continuous formula instead of two views kept in sync.
+    ///
+    /// Deviates from the brief's suggestion of a `dragTranslation`-based `.offset()` for this
+    /// layer (kept as a single `.padding(.top:)` interpolation instead, no `.offset()` at all):
+    /// an `.offset()` big enough to slide this view fully off-screen at commit (matching the old
+    /// `cardLayer`'s exit) would make the embedded view invisible right when the user needs to
+    /// see it land — the real hand-off only stays invisible if the outgoing view's RESTING frame
+    /// already matches the destination's frame at that instant, which a padding-only formula
+    /// guarantees and a full off-screen `.offset()` does not.
+    private var embeddedTopInset: CGFloat {
+        embeddedRestInset * (1 - dragProgress)
+    }
+
+    /// Tunable rest-state push-down for `embeddedTopInset` — flag to the user/Steve for retuning
+    /// once seen on-device (same "tunable, verify on-device" spirit as `commitProgressThreshold`/
+    /// `headerToCardSpacing`).
+    private let embeddedRestInset: CGFloat = 320
 
     var body: some View {
         Group {
@@ -216,7 +311,7 @@ struct HomeView: View {
         .onDisappear {
             // The actual, non-racy signal that `HomeView` is off screen — see
             // `isHomeContentVisible`'s doc comment. This is what finally lets
-            // `isPeriodPageMounted` unmount `staticPeriodLayer`/`cardLayer` after a commit,
+            // `isPeriodPageMounted` unmount `cardLayer` after a commit,
             // instead of assuming the tab switch already completed the instant `didCommit` flips.
             isHomeContentVisible = false
             #if DEBUG
@@ -225,31 +320,30 @@ struct HomeView: View {
         }
     }
 
-    // Four stacked layers, NOT one pushed unit (user-confirmed mechanic change): the header
-    // never moves; the real `PeriodView()` occupies the same rectangle the card occupies (below
-    // the header, down to the tab bar) but is jalada desde abajo in sync with the drag — its own
-    // `.offset(y: availableHeight + dragTranslation)` starts fully off-screen below and lands
-    // exactly in place as `cardLayer` finishes exiting above, as if the card were dragging it up
-    // with it; `PeriodPreviewCard` is the only layer with `.offset(y: dragTranslation)`, drawn
-    // topmost, sliding out past the top of the screen. `GeometryReader` measures the TOTAL space
-    // Home gets from the `TabView`/`NavigationStack` above it — that's `availableHeight`, the
-    // full distance both layers travel (card up-and-out, Quincena up-and-in).
+    // ONE mounted layer over Home's fixed header now (user-confirmed mechanic change,
+    // 2026-09-20): `headerLayer` (date + message) never moves; `cardLayer` mounts exactly ONE
+    // `PeriodView`, driven live by `dragProgress` via its own `revealProgress` — see
+    // `PeriodView`'s doc comment. `GeometryReader` measures the TOTAL space Home gets from the
+    // `TabView`/`NavigationStack` above it — that's `availableHeight`, what `dragProgress` is
+    // normalized against.
     private var content: some View {
         GeometryReader { proxy in
             ZStack(alignment: .top) {
                 // DESIGN_LIQUID.md § Home "Fondo del header — excepción blanca": fixed white
-                // surface (no Dark variant on purpose) behind everything else in this ZStack —
-                // header AND the card/Quincena rect below it — so `PeriodPreviewCard`'s rounded
-                // top corners never cut away to reveal the screen's default dark background as
-                // a black sliver. Extends under the top safe area too. Straight rectangle, no
-                // corner rounding here — the 55pt squircle belongs to the card's own top
-                // corners (confirmed with the user: "el roundness va ahí, no donde lo pusiste").
+                // surface (no Dark variant on purpose) covering the FULL height of this `ZStack`
+                // — so `cardLayer`'s rounded top corners never cut away to reveal a mismatched
+                // background right where the card meets the header above it.
                 Color("HomeHeaderBackground")
                     .ignoresSafeArea(edges: .top)
 
                 headerLayer
-                staticPeriodLayer
+                    #if DEBUG
+                    .debugOutline("header", color: .red, enabled: debugState.outlinesEnabled, padding: "h:20 top:0 bottom:\(Int(headerToCardSpacing))")
+                    #endif
                 cardLayer
+                    #if DEBUG
+                    .debugOutline("card", color: .green, enabled: debugState.outlinesEnabled, padding: "top:\(Int(embeddedTopInset))")
+                    #endif
             }
             .onPreferenceChange(HeaderHeightKey.self) { headerHeight = $0 }
             .onAppear {
@@ -267,80 +361,32 @@ struct HomeView: View {
         }
     }
 
-    /// The real Quincena screen (user-confirmed: full `PeriodView()`, not a
-    /// simplified/presentational stand-in) — jalada desde abajo en sincronía 1:1 con el mismo
-    /// `dragTranslation` que saca a `cardLayer` por arriba, como si el card la arrastrara consigo
-    /// (user-confirmed: "vamos subiendo el card de preview y abajo viene jalando a la pantalla de
-    /// quincena" — ya NO está estática esperando a destaparse). Offset = `availableHeight +
-    /// dragTranslation`: en reposo (`dragTranslation == 0`) da `availableHeight`, completamente
-    /// fuera de pantalla por debajo; cuando el card ha salido del todo (`dragTranslation ==
-    /// -availableHeight`) da `0`, exactamente en su lugar — mismo rango, dirección opuesta al
-    /// offset del card.
-    ///
-    /// Hueco negro (bug fix 2026-09-18, user-reported con screenshot): este layer SÍ necesita el
-    /// mismo `.padding(.top, headerHeight)` que `cardLayer` — antes no lo tenía, así que su
-    /// rectángulo medía `availableHeight` completo mientras el de `cardLayer` medía
-    /// `availableHeight - headerHeight` (más corto, por su propio inset). Como ambas capas
-    /// comparten la misma fórmula de offset basada en `availableHeight`/`dragTranslation` pero
-    /// recorrían distancias distintas, el card (más corto) terminaba de salir de pantalla ANTES
-    /// de que esta capa (más larga) hubiera llegado a su posición final — dejando un hueco negro
-    /// vacío entre ambas capas durante el tramo intermedio del drag. Con el mismo padding, ambos
-    /// rectángulos miden exactamente lo mismo y recorren la misma distancia en sincronía.
-    ///
-    /// El padding va ANTES de `.frame`/`.background` (mismo orden que `cardLayer`: padding inset
-    /// del contenido, luego `.frame` expande al tamaño completo, luego `.background` pinta TODO
-    /// ese frame ya expandido — incluida el área del padding). Si el orden fuera
-    /// `.frame`→`.background`→`.padding`, el padding agregaría espacio fuera del área ya pintada
-    /// por `.background`, reintroduciendo la franja transparente/blanca que un fix anterior ya
-    /// resolvió (ver `PROJECT_LEARNINGS.md`) — por eso el orden importa y no es intercambiable.
-    ///
-    /// Z-order (bug fix 2026-09-18, user-reported con screenshot): este layer se dibuja DESPUÉS de
-    /// `headerLayer` en el `ZStack` (ver `content`) — es decir, por delante del Welcome Card, no
-    /// detrás. Antes `headerLayer` estaba entre `staticPeriodLayer` y `cardLayer`, así que durante
-    /// el drag había un instante en que NINGUNA de las dos capas móviles cubría al Welcome Card
-    /// (una ya había salido, la otra no había llegado) y su fondo blanco se asomaba flotando en
-    /// medio de la pantalla. Ahora `headerLayer` está al fondo del `ZStack` (antes de esta capa Y
-    /// de `cardLayer`), así que en cualquier punto del drag, la que sea de las dos capas móviles
-    /// que esté ocupando esa región en ese instante lo tapa por completo. Only
-    /// mounted while `isPeriodPageMounted` — see that property for why. `PeriodView` has no
-    /// `TabView`/tab bar of its own (that lives in `iOSRootView`, outside `HomeView` entirely),
-    /// so placing it in here doesn't duplicate one.
-    @ViewBuilder
-    private var staticPeriodLayer: some View {
-        if isPeriodPageMounted {
-            PeriodView()
-                .padding(.top, headerHeight)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .background(Color("AppBackground"))
-                .ignoresSafeArea(edges: .bottom)
-                .offset(y: availableHeight + dragTranslation)
-        }
-    }
-
     /// Fixed header — date + dynamic message — NEVER offset, not even during the drag. Publishes
-    /// its own rendered height via `HeaderHeightKey` so `staticPeriodLayer`/`cardLayer` below can
-    /// inset by exactly that amount, regardless of Dynamic Type or message length.
+    /// its own rendered height via `HeaderHeightKey` (kept for Dynamic-Type-aware layout
+    /// elsewhere, even though `embeddedTopInset` no longer derives from it — see that property's
+    /// doc comment).
     ///
     /// Bug fix (2026-09-18, user-reported with screenshot): near the end of the drag, this
-    /// layer's dynamic message text rendered as a ghosted/double-exposed overlap with
-    /// `staticPeriodLayer`'s incoming title (e.g. "September 2026") once `cardLayer` had
-    /// scrolled far enough off-screen to reveal what's underneath. Root cause: this layer only
-    /// had `Color.clear` as its own `.background` — it relied entirely on the ZStack's shared
-    /// `Color("HomeHeaderBackground")`, which sits at the very BOTTOM of the ZStack, BELOW
-    /// `staticPeriodLayer`, not between the two. So `headerLayer` had no actual opaque backing
-    /// of its own: everywhere outside the glyphs themselves it was fully transparent, letting
-    /// `staticPeriodLayer` show/blend straight through during the animated `.offset` frames
+    /// layer's dynamic message text used to render as a ghosted/double-exposed overlap with the
+    /// embedded Quincena's incoming title once `cardLayer` had grown far enough to reveal what's
+    /// underneath. Root cause: this layer only had `Color.clear` as its own `.background` — it
+    /// relied entirely on the ZStack's shared `Color("HomeHeaderBackground")`, which sits at the
+    /// very BOTTOM of the ZStack, BELOW `cardLayer`, not between the two. So `headerLayer` had no
+    /// actual opaque backing of its own: everywhere outside the glyphs themselves it was fully
+    /// transparent, letting `cardLayer` show/blend straight through during the animated frames
     /// (same `.compositingGroup()`-before-`.clipShape()` gotcha as `LineItemRow`'s card
     /// background — a transformed sibling layer isn't guaranteed to composite as a clean opaque
     /// stack unless each layer that must fully occlude is flattened with a real opaque
     /// background baked in). Fix: give this layer its own opaque
     /// `Color("HomeHeaderBackground")` fill sized to its own bounds, then flatten with
     /// `.compositingGroup()` so it always paints as one solid, fully-opaque texture over
-    /// whatever `staticPeriodLayer` is doing underneath — the user's ask ("el texto de home se
-    /// queda atrás, porque ahora se enfrenta") is satisfied by making the occlusion real instead
-    /// of relying on z-order alone.
+    /// whatever `cardLayer` is doing underneath — the user's ask ("el texto de home se queda
+    /// atrás, porque ahora se enfrenta") is satisfied by making the occlusion real instead of
+    /// relying on z-order alone.
     private var headerLayer: some View {
         VStack(alignment: .leading, spacing: 32) {
+            settingsButtonRow
+
             dateHeader
 
             messageText
@@ -353,7 +399,7 @@ struct HomeView: View {
                 .foregroundStyle(Color("HomeHeaderTextPrimary"))
         }
         .padding(.horizontal, 20)
-        .padding(.top, 40)
+        .padding(.top, 0)
         // The bottom padding IS the 48pt header→card gap.
         .padding(.bottom, headerToCardSpacing)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -369,67 +415,96 @@ struct HomeView: View {
             }
         )
         // Flattens content + opaque background into a single composited layer so it always
-        // paints as one solid texture over `staticPeriodLayer`, instead of SwiftUI/Core Animation
+        // paints as one solid texture over `cardLayer`, instead of SwiftUI/Core Animation
         // potentially compositing them as separate semi-independent layers mid-animation.
         .compositingGroup()
     }
 
-    /// The only layer with `.offset(y: dragTranslation)` — a literal lid over `staticPeriodLayer`,
-    /// same rectangle, drawn on top. Range is `0` (resting, fully covering the real Quincena) to
-    /// `-availableHeight` (fully off-screen past the top, per the user's confirmed mechanic — not
-    /// just past the header, but the full container height, since the card starts already inset
-    /// by `headerHeight`).
+    /// The single embedded `PeriodView` — replaces the old `PeriodPreviewCard`/`staticPeriodLayer`
+    /// pair entirely (see this file's top doc comment). Driven by TWO live parameters off the
+    /// same `dragProgress`: `revealProgress` (this view's own internal crossfade+reflow — see
+    /// `PeriodView`) and `embeddedTopInset` (this layer's own top padding — see that property's
+    /// doc comment for why it replaces the old two-view offset dance). No `.offset()` at all:
+    /// the padding shrinking to `0` by full commit is what lands this view's top edge exactly
+    /// where the real standalone `PeriodView` tab's top edge sits, which is what keeps the
+    /// hand-off invisible.
+    ///
+    /// Corner radius mirrors that same convergence — `cardCornerRadius` at rest, shrinking to `0`
+    /// by full commit (the standalone destination has no clip at all), so the rounded-top "card"
+    /// look smoothly resolves into the destination's square corners instead of popping.
     @ViewBuilder
     private var cardLayer: some View {
-        if let period {
-            PeriodPreviewCard(
-                coordinate: coordinate,
-                isTodayCoordinate: isTodayCoordinate,
-                income: income(for: period),
-                expense: expense(for: period),
-                sobrante: sobrante(for: period),
-                nextMonth: nextMonth(for: period),
-                onTap: navigateToPeriod
+        if isPeriodPageMounted {
+            PeriodView(
+                revealProgress: dragProgress,
+                onTap: navigateToPeriod,
+                showNextMonth: showNextMonthOnPreviewCard,
+                chevronsRevealProgress: chevronsRevealProgress
             )
-            .compositingGroup()
+            // Woz (2026-09-20, corners-invisible-on-black investigation): `.clipShape` used to sit
+            // AFTER `.padding(.top:)`/`.frame(maxHeight: .infinity)` below — i.e. it clipped the
+            // OUTER frame, whose bounds span the full `GeometryReader` height starting at y=0 (the
+            // very top of `content`'s ZStack, underneath `headerLayer`), not the visible top edge
+            // of this card (which only starts `embeddedTopInset` points lower, where `PeriodView`'s
+            // own opaque background actually begins — everything above that is transparent padding
+            // showing `headerLayer`/`HomeHeaderBackground` through). So the rounded corners WERE
+            // being clipped — just up at y=0, hidden behind/above the header, nowhere near the
+            // black card's actual visible top boundary, which rendered as a perfectly flat,
+            // unclipped straight line no matter the radius (confirmed with pixel sampling: the
+            // black/white transition sat at the exact same row across the full width, with zero
+            // curvature within the radius's pixel range near either edge — a real clip bug, not a
+            // color-contrast one; hardcoding the radius to an obviously-large value couldn't have
+            // surfaced this, since the curve was always off-canvas either way).
+            //
+            // Fix: clip `PeriodView` directly, BEFORE the padding/frame that positions it — clipping
+            // only affects rendering, not layout, so `PeriodView` still receives the exact same size
+            // proposal as before (full available height minus `embeddedTopInset`, from the frame's
+            // maxHeight below), but now the rounded-rect's bounds match PeriodView's own actual
+            // rendered rect, so the curve lands exactly at the visible top edge instead of off-screen.
             .clipShape(
                 UnevenRoundedRectangle(
-                    topLeadingRadius: cardCornerRadius,
+                    topLeadingRadius: cardCornerRadius * (1 - dragProgress),
                     bottomLeadingRadius: 0,
                     bottomTrailingRadius: 0,
-                    topTrailingRadius: cardCornerRadius,
+                    topTrailingRadius: cardCornerRadius * (1 - dragProgress),
                     style: .continuous
                 )
             )
-            .padding(.top, headerHeight)
-            // Full width, full remaining height down to the tab bar — same rectangle as
-            // `staticPeriodLayer`.
+            .padding(.top, embeddedTopInset)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-            // The `NavigationStack`/`TabView` reserves its own bottom safe-area inset for the
-            // floating (Liquid Glass) tab bar, so without this the card's background stopped
-            // short of the physical bottom edge, leaving a plain black strip below it (visible
-            // behind the translucent tab bar). Only `.bottom` is ignored — horizontal edges
-            // already have zero safe-area inset in portrait, and ignoring `.top` would slide the
-            // card under the navigation bar/status bar, which isn't wanted here.
             .ignoresSafeArea(edges: .bottom)
-            .offset(y: dragTranslation)
             #if os(iOS)
-            // `.highPriorityGesture`, not `.gesture` — `PeriodPreviewCard` is a `Button`, whose
-            // own tap gesture otherwise wins the recognition race and the drag never even starts
-            // (confirmed on-device: a plain `.gesture` here silently ate every drag). A short tap
-            // (under `minimumDistance`) still falls through to the button's own action.
-            .highPriorityGesture(dragGesture)
-            #endif
+                // `.highPriorityGesture`, not `.gesture` — without this, `PeriodView`'s own
+                // internal gestures (`ScrollView`'s pan, `LineItemRow`'s swipe actions, every
+                // `Button`) win the recognition race and the drag-to-navigate mechanic never even
+                // starts, same reasoning the old `PeriodPreviewCard` call site already documented.
+                // A short tap (under `minimumDistance`) still falls through to whatever real
+                // control is underneath (line rows, "+", the drag handle/title's own navigation
+                // button — see `PeriodView.handleOrTitleTapped()`).
+                //
+                // ⚠️ KNOWN RISK, flagged per explicit instruction rather than silently shipping a
+                // maybe-broken interaction (verify on-device, §4 of the reveal-unification plan):
+                // now that this view is genuinely interactive (not `PeriodPreviewCard`'s old
+                // non-interactive card), a broad-area `DragGesture(minimumDistance: 16)` with no
+                // axis filter could, in principle, win against `LineItemRow`'s own
+                // leading/trailing swipe gesture for a swipe that happens to travel far enough
+                // before SwiftUI resolves which gesture owns it. Kept exactly as the user
+                // confirmed ("the DRAG gesture, covering the same broad area as before, remains
+                // the primary way to navigate from lower in the card") — needs real on-device
+                // testing with actual line rows visible mid-drag (`revealProgress` above ~0) to
+                // confirm swipe-to-reveal still works cleanly.
+                .highPriorityGesture(dragGesture)
+                #endif
         }
     }
 
     /// Top corners only (bottom stays square — the card runs edge-to-edge to the screen's
-    /// physical bottom). 55pt matches the iPhone 17 Pro's screen curve (confirmed with the
-    /// user).
-    private var cardCornerRadius: CGFloat { 55 }
+    /// physical bottom). Matches the current device's real screen corner curve — see
+    /// `DeviceCornerRadius` — instead of a single hardcoded guess.
+    private var cardCornerRadius: CGFloat { DeviceCornerRadius.current }
 
     /// DESIGN_LIQUID.md § Home "Densidad visual — ajustes puntuales" (revisión 2026-09-18):
-    /// 32pt → 48pt, the gap between the dynamic message and `PeriodPreviewCard`.
+    /// 32pt → 48pt, the gap between the dynamic message and the embedded `PeriodView` card.
     private let headerToCardSpacing: CGFloat = 48
 
     #if os(iOS)
@@ -437,8 +512,8 @@ struct HomeView: View {
         HapticFeedback.lightImpact(reduceMotion: reduceMotion)
     }
 
-    /// Attached only to `PeriodPreviewCard`, not the whole screen — so it never fights the
-    /// `ScrollView`'s own vertical drag outside the card (plan §5/verificación #1).
+    /// Attached only to `cardLayer`, not the whole screen — so it never fights the header's own
+    /// layout (plan §5/verificación #1).
     private var dragGesture: some Gesture {
         DragGesture(minimumDistance: 16)
             .onChanged { value in
@@ -488,7 +563,7 @@ struct HomeView: View {
     /// `0` (full rest: Welcome Card + Preview Card complete), i.e. a visible flash of "everything
     /// jumps back to Home" right before the real Quincena tab cut over on top of it. Fix: leave
     /// `dragTranslation` frozen at `-availableHeight` (the landed, fully-pushed position) and
-    /// instead mark `didCommit = true`, which unmounts `staticPeriodLayer`/`cardLayer` right away
+    /// instead mark `didCommit = true`, which unmounts `cardLayer` right away
     /// (safe — `HomeView` is already off-screen behind the now-frontmost Quincena tab, so nothing
     /// visible changes) without ever touching `dragTranslation` while `HomeView` could still be
     /// on screen. `dragTranslation` itself only gets reset later, invisibly, the next time
@@ -524,7 +599,7 @@ struct HomeView: View {
         debugState.dragTranslation = -availableHeight
         #endif
         Task {
-            try? await Task.sleep(nanoseconds: UInt64(settleAnimationDuration * 1_000_000_000))
+            try? await Task.sleep(nanoseconds: UInt64(effectiveSettleDuration * 1_000_000_000))
             #if DEBUG
             debugState.settleCompletedAt = Date()
             #endif
@@ -562,7 +637,7 @@ struct HomeView: View {
         debugState.dragTranslation = 0
         #endif
         Task {
-            try? await Task.sleep(nanoseconds: UInt64(settleAnimationDuration * 1_000_000_000))
+            try? await Task.sleep(nanoseconds: UInt64(effectiveSettleDuration * 1_000_000_000))
             isSettling = false
             #if DEBUG
             debugState.isSettling = false
@@ -599,35 +674,29 @@ struct HomeView: View {
         insightMessage = HomeInsightEngine.message(for: insightContext)
     }
 
-    private func snapshots(of period: Period) -> [LineSnapshot] { PeriodCoordinator.snapshots(of: period) }
-
-    private func income(for period: Period) -> Decimal {
-        CarryOverEngine.total(for: snapshots(of: period), kind: .income, exchangeRate: effectiveRate)
-    }
-
-    private func expense(for period: Period) -> Decimal {
-        CarryOverEngine.total(for: snapshots(of: period), kind: .expense, exchangeRate: effectiveRate)
-    }
-
-    private func sobrante(for period: Period) -> Decimal {
-        CarryOverEngine.sobrante(for: snapshots(of: period), exchangeRate: effectiveRate)
-    }
-
-    private func nextMonth(for period: Period) -> Decimal {
-        PeriodCoordinator.previewNextMonth(
-            after: period,
-            context: context,
-            recurringItems: recurringSnapshots,
-            subscriptions: subscriptionSnapshots,
-            loans: loanSnapshots,
-            exchangeRate: effectiveRate
-        )
-    }
-
     /// DESIGN_LIQUID.md § Home "Header de fecha" — day-of-week hero (`h1`, leading) + a
     /// trailing two-line secondary date block ("17 de septiembre" / "2026"), `HStack(alignment:
     /// .firstTextBaseline)` so the hero's baseline lines up with the top line of the secondary
     /// block. No accent dot (discarded explicitly — "el naranja nunca decora").
+    /// Coordinator (2026-09-21): Ajustes moved out of the iPhone tab bar into this gear button
+    /// per the user's updated Figma (`00 · Home`) — top-right, above `dateHeader`, its own row so
+    /// it doesn't compete with the weekday hero's baseline alignment. `HomeView` already sits
+    /// inside `iOSRootView`'s per-tab `NavigationStack` (see `destination(for:)`), so a plain
+    /// `NavigationLink` pushes `SettingsView` naturally — no sheet needed.
+    private var settingsButtonRow: some View {
+        HStack {
+            Spacer()
+            NavigationLink {
+                SettingsView()
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.title2)
+                    .foregroundStyle(Color("HomeHeaderTextPrimary"))
+            }
+            .accessibilityLabel("Ajustes")
+        }
+    }
+
     private var dateHeader: some View {
         HStack(alignment: .center) {
             Text(todayWeekdayTitle)
@@ -685,26 +754,17 @@ struct HomeView: View {
 
 // MARK: - HeaderHeightKey
 
-/// Publishes the fixed header's rendered height up to `HomeView`, so the static Quincena layer
-/// and the draggable `PeriodPreviewCard` can both inset by exactly that amount — no magic
-/// constant, tracks Dynamic Type and message length automatically.
+/// Publishes the fixed header's rendered height up to `HomeView` — no magic constant, tracks
+/// Dynamic Type and message length automatically.
 private struct HeaderHeightKey: PreferenceKey {
     static let defaultValue: CGFloat = 0
     // Bug fix 2026-09-18 (regression found while fixing the drag-start jump, see
     // `hasPrewarmedPeriodPage`): was `value = nextValue()` — last sibling to report ALWAYS wins,
     // even a sibling that never touches this key at all and so only ever contributes the
     // untouched `defaultValue` (`0`). `headerLayer` is the only view that actually publishes a
-    // real measurement here; `staticPeriodLayer`/`cardLayer` don't. As long as `staticPeriodLayer`
-    // only mounted well after everything had already settled (the old, gesture-start-only
-    // mount timing), its silent `0` contribution never got a chance to land after `headerLayer`'s
-    // real value. Mounting it EARLIER (right after load, off the drag path) exposed the latent
-    // bug: its first, still-settling layout pass reduces `0` right after `headerLayer`'s real
-    // 278pt-ish value, permanently collapsing `headerHeight` to `0` — the fixed header's real
-    // rectangle stays intact, but `cardLayer`/`staticPeriodLayer`'s own `.padding(.top,
-    // headerHeight)` no longer clears it, so the card renders starting at the very top and
-    // visually buries the date/message header underneath it. `max` makes the reduction resilient
-    // to any sibling — present now or added later — that doesn't genuinely publish this key: once
-    // the real header height has been measured, nothing smaller can ever knock it back down.
+    // real measurement here; `cardLayer` doesn't. `max` makes the reduction resilient to any
+    // sibling — present now or added later — that doesn't genuinely publish this key: once the
+    // real header height has been measured, nothing smaller can ever knock it back down.
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = max(value, nextValue())
     }

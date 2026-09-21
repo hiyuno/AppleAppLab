@@ -97,7 +97,11 @@ struct ServicesView: View {
     }
 }
 
-private struct ServiceEditSheet: View {
+/// Coordinator (2026-09-21): no longer `private` — the unified "Expenses" screen
+/// (`RecurringListView(kind: .expense)`) reuses this sheet directly for its own Services
+/// section instead of only being reachable through `ServicesView` (still the Mac sidebar's own
+/// screen, untouched).
+struct ServiceEditSheet: View {
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Environment(\.dismiss) private var dismiss
@@ -180,6 +184,7 @@ private struct ServiceEditSheet: View {
         // El stepper "Día de pago" se eliminó (feedback del usuario): el día del mes de
         // "Inicio" es la única fuente de verdad para `paymentDay`.
         let derivedPaymentDay = Calendar.current.component(.day, from: startDate)
+        let resolvedItem: Subscription
         if let service {
             service.name = name
             service.price = price
@@ -190,14 +195,16 @@ private struct ServiceEditSheet: View {
             service.civilStartDate = CivilDate(from: startDate, calendar: .current)
             service.civilEndDate = resolvedEndDate.map { CivilDate(from: $0, calendar: .current) }
             service.homeServiceCategory = category
+            resolvedItem = service
         } else {
             let newService = Subscription(name: name, price: price, currency: currency, paymentDay: derivedPaymentDay, startDate: startDate, endDate: resolvedEndDate, homeServiceCategory: category)
             context.insert(newService)
+            resolvedItem = newService
         }
         try? context.save()
-        // Bug fixed (Avie): recompute the combined "Servicios" line across every
-        // already-materialized quincena, then propagate the carry-over chain.
-        PeriodCoordinator.reprojectSubscription(kind: .service, context: context, exchangeRate: rateStore.currentRate ?? 0)
+        // Bug fixed (Avie): recompute this service's own line across every already-materialized
+        // quincena, then propagate the carry-over chain.
+        PeriodCoordinator.reprojectSubscription(item: resolvedItem, context: context, exchangeRate: rateStore.currentRate ?? 0)
         dismiss()
     }
 }

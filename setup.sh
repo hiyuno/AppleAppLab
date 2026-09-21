@@ -46,7 +46,7 @@ else
   echo ""
 fi
 SKILLS_DIR=".claude/skills"
-SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick sam update-team update-feature optimize-app architecture-audit app-store-ready clean-folder-project global-audit global-fix app-web-intake link-todocky)
+SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick sam update-team update-feature update-ui optimize-app architecture-audit app-store-ready clean-folder-project global-audit global-fix app-web-intake link-todocky)
 # app-master no se instala: opera sobre la base global de AppleAppLab (KNOWN_ISSUES.md), no sobre proyectos
 REMOTE_VERSION=$(curl -sf "$RAW/VERSION" | tr -d '[:space:]')
 

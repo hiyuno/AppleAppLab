@@ -26,6 +26,12 @@ public enum LineOrigin: String, Codable, Sendable, CaseIterable {
     /// Payments" row shown in `PeriodView` is presentation-only — it groups lines with this
     /// origin at render time, never a separate `LineItem`/model.
     case creditCard
+    /// "Essentials" (2026-09-21, user's request) — a `Subscription` with `kind == .essential`:
+    /// budgeted everyday spend (food, transportation, clothing, tech, furniture, fun), same
+    /// mechanic as Services/Subscriptions (payment day 1–31, one aggregated line per half) but
+    /// its own origin instead of reusing `.subscription` + `isHomeService`, since that flag is
+    /// only binary and a third kind needs its own tag to disambiguate cleanly.
+    case essential
 }
 
 /// TRD "Credit Cards" (2026-09-17): global preference (applies to every card), read ONLY in
@@ -134,6 +140,9 @@ public enum SubscriptionCategory: String, Codable, Sendable, CaseIterable {
 public enum SubscriptionKind: String, Codable, Sendable, CaseIterable {
     case subscription
     case service
+    /// "Essentials" (2026-09-21, user's request) — everyday budgeted spend (food, gas/
+    /// transportation, clothing, tech, furniture, fun), same mechanic as service/subscription.
+    case essential
 }
 
 /// Category set for home services (Servicios) — distinct from `SubscriptionCategory`,
@@ -157,6 +166,41 @@ public enum HomeServiceCategory: String, Codable, Sendable, CaseIterable {
         case .water: String(localized: "home_service_category_water", defaultValue: "Water")
         case .gas: String(localized: "home_service_category_gas", defaultValue: "Gas")
         case .insurance: String(localized: "home_service_category_insurance", defaultValue: "Insurance")
+        }
+    }
+}
+
+/// Category set for "Essentials" — everyday budgeted spend, distinct from `HomeServiceCategory`
+/// (fixed monthly bills) and `SubscriptionCategory`/`SubscriptionCategoryItem` (entertainment/
+/// tools subscriptions). User's explicit list (2026-09-21): food, gas/transportation, clothing,
+/// tech, furniture, fun (going out, dinners, eating out, clubs, etc.).
+public enum EssentialCategory: String, Codable, Sendable, CaseIterable {
+    case food = "Food"
+    case transportation = "Transportation"
+    case clothing = "Clothing"
+    case tech = "Tech"
+    case furniture = "Furniture"
+    case fun = "Fun"
+
+    public var displayName: String {
+        switch self {
+        case .food: String(localized: "essential_category_food", defaultValue: "Food")
+        case .transportation: String(localized: "essential_category_transportation", defaultValue: "Gas / Transportation")
+        case .clothing: String(localized: "essential_category_clothing", defaultValue: "Clothing")
+        case .tech: String(localized: "essential_category_tech", defaultValue: "Tech")
+        case .furniture: String(localized: "essential_category_furniture", defaultValue: "Furniture")
+        case .fun: String(localized: "essential_category_fun", defaultValue: "Fun")
+        }
+    }
+
+    public var iconName: String {
+        switch self {
+        case .food: "fork.knife"
+        case .transportation: "fuelpump.fill"
+        case .clothing: "tshirt.fill"
+        case .tech: "laptopcomputer"
+        case .furniture: "sofa.fill"
+        case .fun: "party.popper.fill"
         }
     }
 }

@@ -65,7 +65,10 @@ public enum PeriodCoordinator {
             // garbage left behind by a raw `context.delete` (a bypass of `deleteRecurring`/
             // `deleteLoan`, or leftovers from before those existed) without scanning the whole
             // store on every navigation.
+            migrateLegacyCombinedSubscriptionLines(in: existing, context: context, exchangeRate: exchangeRate)
             purgeOrphanLines(in: existing, context: context, exchangeRate: exchangeRate)
+            backfillMissingCarryOverLine(in: existing, context: context, exchangeRate: exchangeRate)
+            reorderAggregateSubscriptionLines(in: existing)
             return existing
         }
 
@@ -83,6 +86,7 @@ public enum PeriodCoordinator {
             // the anchor; clamp to the anchor's own period instead of moving the historical
             // limit backward.
             if let clamped = fetchPeriod(coordinate: anchor, context: context) {
+                migrateLegacyCombinedSubscriptionLines(in: clamped, context: context, exchangeRate: exchangeRate)
                 purgeOrphanLines(in: clamped, context: context, exchangeRate: exchangeRate)
                 return clamped
             }
@@ -109,6 +113,35 @@ public enum PeriodCoordinator {
             )
         }
         return lastPeriod ?? fetchPeriod(coordinate: coordinate, context: context)!
+    }
+
+    /// Coordinator (2026-09-21, user's request — Investments backfill): `materializeIfNeeded`'s
+    /// `FIN-2026-BERTRAND-01` clamp exists to stop ordinary USER NAVIGATION from wandering
+    /// further back than "Historial visible" allows; it was never meant to block an explicit,
+    /// user-confirmed backfill ("¿Ya hiciste las N aportaciones anteriores?" → "Sí"). Materializing
+    /// an Investment's schedule back to its own `startDate` needs to create real periods BEFORE
+    /// whatever the user has already browsed to in Quincena, which `materializeIfNeeded` would
+    /// otherwise silently clamp to the existing anchor (confirmed: it returned the SAME already-
+    /// materialized period for every different past coordinate requested, so only one line ever
+    /// actually got marked paid instead of each period's own). Same create-if-missing behavior,
+    /// no anchor check. Callers materialize past coordinates in ascending (oldest → newest) order
+    /// so each new period's own carry-over lookup finds its already-created predecessor.
+    public static func forceMaterialize(
+        coordinate: PeriodCoordinate,
+        context: ModelContext,
+        recurringItems: [RecurringItemSnapshot],
+        subscriptions: [SubscriptionSnapshot],
+        loans: [LoanSnapshot] = [],
+        exchangeRate: Decimal
+    ) -> Period {
+        if let existing = fetchPeriod(coordinate: coordinate, context: context) {
+            migrateLegacyCombinedSubscriptionLines(in: existing, context: context, exchangeRate: exchangeRate)
+            purgeOrphanLines(in: existing, context: context, exchangeRate: exchangeRate)
+            backfillMissingCarryOverLine(in: existing, context: context, exchangeRate: exchangeRate)
+            reorderAggregateSubscriptionLines(in: existing)
+            return existing
+        }
+        return createPeriod(coordinate, context: context, recurringItems: recurringItems, subscriptions: subscriptions, loans: loans, exchangeRate: exchangeRate)
     }
 
     private static func createPeriod(
@@ -156,16 +189,21 @@ public enum PeriodCoordinator {
             order += 1
         }
 
-        for kind in [SubscriptionKind.subscription, .service] {
-            if let generated = ProjectionEngine.generateSubscriptionLine(for: coordinate, subscriptions: subscriptions, kind: kind, exchangeRate: exchangeRate) {
-                let line = LineItem(
-                    kind: generated.kind, title: generated.title, amount: generated.amount,
-                    currency: generated.currency, sortOrder: order, origin: generated.origin,
-                    isHomeService: generated.isHomeService, period: period
-                )
-                context.insert(line)
-                lines.append(line)
-                order += 1
+        // Coordinator (2026-09-21): one real line per contributing subscription, grouped
+        // Essentials → Subscriptions → Services (the block order `reorderAggregateSubscriptionLines`
+        // also enforces going forward) — not one combined sum per kind.
+        for kind in [SubscriptionKind.essential, .subscription, .service] {
+            for subscription in subscriptions where subscription.kind == kind {
+                if let generated = ProjectionEngine.generatedLine(for: coordinate, subscription: subscription, exchangeRate: exchangeRate) {
+                    let line = LineItem(
+                        kind: generated.kind, title: generated.title, amount: generated.amount,
+                        currency: generated.currency, sortOrder: order, origin: generated.origin,
+                        sourceSubscriptionID: generated.sourceSubscriptionID, isHomeService: generated.isHomeService, period: period
+                    )
+                    context.insert(line)
+                    lines.append(line)
+                    order += 1
+                }
             }
         }
 
@@ -262,6 +300,23 @@ public enum PeriodCoordinator {
             guard let targetPeriod = chainPeriods[coordinate] else { continue }
             if let carryLine = (targetPeriod.lineItems ?? []).first(where: { $0.origin == .carryOver }) {
                 carryLine.amount = newAmount
+            } else {
+                // Bug fix (2026-09-21, user report — real account had no "Latest Month" line
+                // despite a real surplus): `createPeriod` only inserts a carry-over line at THE
+                // MOMENT a period is first materialized, and only if its `previous` period
+                // already existed then. If materialization order ever skips ahead (ex: the
+                // period the user opens first becomes an anchor before its own previous period
+                // is created), that period permanently has no carry-over `LineItem` — this loop
+                // used to silently no-op forever afterward instead of creating one now that the
+                // chain (and a real amount to carry) exists. Mirrors `createPeriod`'s own
+                // carry-line construction; sorted first, same as at normal creation time.
+                let minSortOrder = (targetPeriod.lineItems ?? []).map(\.sortOrder).min() ?? 0
+                let carryLine = LineItem(
+                    kind: .income, title: "Latest Month", amount: newAmount, currency: .usd,
+                    sortOrder: minSortOrder - 1, origin: .carryOver, period: targetPeriod
+                )
+                context.insert(carryLine)
+                targetPeriod.lineItems = (targetPeriod.lineItems ?? []) + [carryLine]
             }
         }
     }
@@ -285,7 +340,7 @@ public enum PeriodCoordinator {
         let carryOverAmount = CarryOverEngine.sobrante(for: snapshots(of: period), exchangeRate: exchangeRate)
         var projected = ProjectionEngine.generateRecurringLines(for: nextCoordinate, recurringItems: recurringItems)
             .map { LineSnapshot(kind: $0.kind, amount: $0.amount, currency: $0.currency, origin: $0.origin) }
-        for kind in [SubscriptionKind.subscription, .service] {
+        for kind in [SubscriptionKind.essential, .subscription, .service] {
             if let generated = ProjectionEngine.generateSubscriptionLine(for: nextCoordinate, subscriptions: subscriptions, kind: kind, exchangeRate: exchangeRate) {
                 projected.append(LineSnapshot(kind: generated.kind, amount: generated.amount, currency: generated.currency, origin: generated.origin))
             }
@@ -358,26 +413,27 @@ public enum PeriodCoordinator {
         }
     }
 
-    /// Same bug, same fix, for the combined "Payments"/"Servicios" line: since that line
-    /// sums *every* `Subscription` of the given `kind` (not one item — there's no
-    /// `sourceRecurringID` to key off), it's identified per period by
-    /// `origin == .subscription && isHomeService == (kind == .service)`. Call after any
-    /// create/edit/delete of a `Subscription` with its `kind`.
-    public static func reprojectSubscription(kind: SubscriptionKind, context: ModelContext, exchangeRate: Decimal) {
-        let allSubscriptions = (try? context.fetch(FetchDescriptor<Subscription>())) ?? []
-        let snapshots = allSubscriptions.filter { $0.kind == kind }.map {
-            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind, isActive: $0.isActive)
-        }
+    /// Coordinator (2026-09-21, user's request — "si elimino/edito 'Food' aquí, solo debe
+    /// afectar esta quincena, la definición se queda"): clone of `reprojectCreditCard`/
+    /// `reprojectLoan` — one real line PER `Subscription`, keyed by `sourceSubscriptionID`,
+    /// not a combined sum. Editing/deactivating that line in one quincena (`isManuallyEdited`/
+    /// `isActive`) never touches another quincena or the `Subscription` itself; a true
+    /// permanent removal still goes through `deleteSubscription`. Supersedes the old
+    /// kind-wide "one combined line" reproject.
+    public static func reprojectSubscription(item: Subscription, context: ModelContext, exchangeRate: Decimal) {
+        let snapshot = SubscriptionSnapshot(
+            id: item.id, name: item.name, price: item.price, currency: item.currency, paymentDay: item.paymentDay,
+            startDate: item.civilStartDate, endDate: item.civilEndDate, kind: item.kind, isActive: item.isActive, isBiweekly: item.isBiweekly
+        )
         let allPeriods = ((try? context.fetch(FetchDescriptor<Period>())) ?? []).sorted { $0.coordinate < $1.coordinate }
         guard !allPeriods.isEmpty else { return }
 
-        let wantsHomeService = kind == .service
         var earliestTouched: Period?
 
         for period in allPeriods {
-            dedupeLines(in: period, context: context, matching: { $0.origin == .subscription && $0.isHomeService == wantsHomeService })
-            let existingLine = (period.lineItems ?? []).first { $0.origin == .subscription && $0.isHomeService == wantsHomeService }
-            let generated = ProjectionEngine.generateSubscriptionLine(for: period.coordinate, subscriptions: snapshots, kind: kind, exchangeRate: exchangeRate)
+            dedupeLines(in: period, context: context, matching: { $0.sourceSubscriptionID == item.id })
+            let existingLine = (period.lineItems ?? []).first { $0.sourceSubscriptionID == item.id }
+            let generated = ProjectionEngine.generatedLine(for: period.coordinate, subscription: snapshot, exchangeRate: exchangeRate)
 
             if let existingLine {
                 guard !existingLine.isManuallyEdited else { continue }
@@ -394,18 +450,36 @@ public enum PeriodCoordinator {
                 let nextOrder = ((period.lineItems ?? []).map(\.sortOrder).max() ?? -1) + 1
                 let newLine = LineItem(
                     kind: generated.kind, title: generated.title, amount: generated.amount, currency: generated.currency,
-                    sortOrder: nextOrder, origin: generated.origin, isHomeService: generated.isHomeService, period: period
+                    sortOrder: nextOrder, origin: generated.origin, sourceSubscriptionID: generated.sourceSubscriptionID,
+                    isHomeService: generated.isHomeService, period: period
                 )
                 context.insert(newLine)
                 period.lineItems?.append(newLine)
                 if earliestTouched == nil { earliestTouched = period }
             }
+
+            // Coordinator (2026-09-21, user's request): Essentials, Subscriptions, Services, in
+            // that relative order — runs for EVERY period on every reproject (not just the ones
+            // this call touched), so it also self-heals periods materialized before this
+            // ordering existed, without needing a data migration.
+            reorderAggregateSubscriptionLines(in: period)
         }
 
         try? context.save()
         if let earliestTouched {
             recomputeForward(after: earliestTouched, context: context, exchangeRate: exchangeRate)
             try? context.save()
+        }
+    }
+
+    /// Bulk convenience over `reprojectSubscription(item:)` — every `Subscription` of `kind`,
+    /// one at a time. Existing call sites (edit sheets pass a single item now, but a couple of
+    /// bulk paths — JSON import, `deleteSubscription`'s sibling cleanup — still think in terms
+    /// of "this kind changed").
+    public static func reprojectSubscription(kind: SubscriptionKind, context: ModelContext, exchangeRate: Decimal) {
+        let items = ((try? context.fetch(FetchDescriptor<Subscription>())) ?? []).filter { $0.kind == kind }
+        for item in items {
+            reprojectSubscription(item: item, context: context, exchangeRate: exchangeRate)
         }
     }
 
@@ -470,6 +544,10 @@ public enum PeriodCoordinator {
                 switch item.kind {
                 case .subscription: match.category = item.subscriptionCategory
                 case .service: match.homeServiceCategory = item.homeServiceCategory
+                // JSON import (Ajustes → "Importar suscripciones y servicios…") only ever
+                // parses `.subscription`/`.service` kinds — `SubscriptionImportService.parse`
+                // has no `.essential` case in its schema, so this is structurally unreachable.
+                case .essential: break
                 }
                 updated += 1
             } else {
@@ -486,6 +564,14 @@ public enum PeriodCoordinator {
                         name: item.name, price: item.amount, currency: item.currency, paymentDay: item.payDay,
                         startDate: item.startDate.date(calendar: .current), endDate: item.endDate?.date(calendar: .current),
                         card: item.paymentMethod, kind: .subscription, category: item.subscriptionCategory, isActive: item.isActive
+                    )
+                // Same as above — `.essential` never actually comes out of
+                // `SubscriptionImportService.parse`, this only satisfies exhaustiveness.
+                case .essential:
+                    created = Subscription(
+                        name: item.name, price: item.amount, currency: item.currency, paymentDay: item.payDay,
+                        startDate: item.startDate.date(calendar: .current), endDate: item.endDate?.date(calendar: .current),
+                        essentialCategory: .food, isActive: item.isActive
                     )
                 }
                 // `paymentMethod` (JSON) <-> `card` (model) applies to both kinds — the service
@@ -671,16 +757,17 @@ public enum PeriodCoordinator {
         purgeLines(context: context, exchangeRate: exchangeRate) { $0.sourceCreditCardID == id }
     }
 
-    /// `Subscription` has no per-item generated line — every subscription of a `kind` feeds
-    /// one combined "Payments"/"Servicios" line — so deleting one doesn't orphan a line the
-    /// way Recurring/Loan do. Re-running `reprojectSubscription(kind:)` after the delete
-    /// recomputes that combined line (or removes it entirely) from whichever subscriptions of
-    /// that kind remain.
+    /// Same fix, for `Subscription` (2026-09-21, per-item refactor: now has real generated
+    /// lines to orphan, exactly like Recurring/Loan/CreditCard). This is the PERMANENT delete
+    /// — removes the recurring definition itself forever, everywhere. For "remove this one
+    /// quincena only, keep the definition", deactivate that quincena's line instead
+    /// (`LineItemRow`'s swipe/contextMenu "Desactivar") — manual-edit-wins still applies here
+    /// too, so a hand-edited line survives this delete until the user removes it themselves.
     public static func deleteSubscription(_ item: Subscription, context: ModelContext, exchangeRate: Decimal) {
-        let kind = item.kind
+        let id = item.id
         context.delete(item)
         try? context.save()
-        reprojectSubscription(kind: kind, context: context, exchangeRate: exchangeRate)
+        purgeLines(context: context, exchangeRate: exchangeRate) { $0.sourceSubscriptionID == id }
     }
 
     /// Deletes every `LineItem`, across every materialized `Period`, that matches `matching`
@@ -737,11 +824,15 @@ public enum PeriodCoordinator {
         // path; this whole-store sweep is the belt-and-suspenders catch-all for anything that
         // bypassed it).
         let existingCreditCardIDs = Set(((try? context.fetch(FetchDescriptor<CreditCard>())) ?? []).map(\.id))
+        // Coordinator (2026-09-21, per-item refactor): same belt-and-suspenders catch-all,
+        // extended now that `Subscription` has real per-period lines to orphan too.
+        let existingSubscriptionIDs = Set(((try? context.fetch(FetchDescriptor<Subscription>())) ?? []).map(\.id))
 
         let orphans = (period.lineItems ?? []).filter { line in
             if let sourceID = line.sourceRecurringID { return !existingRecurringIDs.contains(sourceID) }
             if let loanID = line.sourceLoanID { return !existingLoanIDs.contains(loanID) }
             if let cardID = line.sourceCreditCardID { return !existingCreditCardIDs.contains(cardID) }
+            if let subscriptionID = line.sourceSubscriptionID { return !existingSubscriptionIDs.contains(subscriptionID) }
             return false
         }
         guard !orphans.isEmpty else { return }
@@ -753,6 +844,84 @@ public enum PeriodCoordinator {
         try? context.save()
         recomputeForward(after: period, context: context, exchangeRate: exchangeRate)
         try? context.save()
+    }
+
+    /// Self-heal (2026-09-21, per-item refactor — user's request that editing/deleting "Food"
+    /// only ever affects one quincena): periods materialized BEFORE this refactor still carry
+    /// the old "one combined line per kind" `LineItem`s, which have no `sourceSubscriptionID`
+    /// (every line created going forward always sets one) — that's how a legacy line is
+    /// recognized here. Purges them unconditionally, `isManuallyEdited` included: same
+    /// reasoning as `purgeOrphanLines`'s own doc comment — a manual edit made against a concept
+    /// that no longer exists (one line standing in for many subscriptions) can never be
+    /// reconciled into the new per-item model, so keeping it around only leaves a permanent,
+    /// double-counted duplicate once the real per-item lines regenerate. Runs before
+    /// `purgeOrphanLines` in `materializeIfNeeded` — every time a `Period` is opened, no
+    /// one-time migration script needed.
+    private static func migrateLegacyCombinedSubscriptionLines(in period: Period, context: ModelContext, exchangeRate: Decimal) {
+        let legacyLines = (period.lineItems ?? []).filter {
+            ($0.origin == .essential || $0.origin == .subscription) && $0.sourceSubscriptionID == nil
+        }
+        guard !legacyLines.isEmpty else { return }
+
+        for line in legacyLines {
+            period.lineItems?.removeAll { $0.id == line.id }
+            context.delete(line)
+        }
+        try? context.save()
+
+        reprojectSubscription(kind: .essential, context: context, exchangeRate: exchangeRate)
+        reprojectSubscription(kind: .subscription, context: context, exchangeRate: exchangeRate)
+        reprojectSubscription(kind: .service, context: context, exchangeRate: exchangeRate)
+    }
+
+    /// Bug fix (2026-09-21, user report — real account had no "Latest Month" line despite a
+    /// real surplus the period before): `createPeriod` only inserts a carry-over `LineItem` at
+    /// the moment `period` is first materialized, and only if its `previous` period already
+    /// existed in the store then. If a period ever got created before its own previous period
+    /// did (e.g. the user's first-ever open landed on it as the anchor), it permanently has no
+    /// carry-over line, and `recomputeForward`'s per-edit walk could only UPDATE an existing
+    /// line, never create the missing one — so it stayed broken forever, silently. Same cheap
+    /// per-`Period` hook as `purgeOrphanLines(in:context:exchangeRate:)` above (every time a
+    /// `Period` is opened), so a real amount backfills the next time the user visits it, no
+    /// edit required.
+    private static func backfillMissingCarryOverLine(in period: Period, context: ModelContext, exchangeRate: Decimal) {
+        guard (period.lineItems ?? []).first(where: { $0.origin == .carryOver }) == nil else { return }
+        guard let previous = fetchPeriod(coordinate: period.coordinate.previous, context: context) else { return }
+
+        let sobrante = CarryOverEngine.sobrante(for: snapshots(of: previous), exchangeRate: exchangeRate)
+        let minSortOrder = (period.lineItems ?? []).map(\.sortOrder).min() ?? 0
+        let carryLine = LineItem(
+            kind: .income, title: "Latest Month", amount: sobrante, currency: .usd,
+            sortOrder: minSortOrder - 1, origin: .carryOver, period: period
+        )
+        context.insert(carryLine)
+        period.lineItems = (period.lineItems ?? []) + [carryLine]
+        try? context.save()
+        recomputeForward(after: period, context: context, exchangeRate: exchangeRate)
+        try? context.save()
+    }
+
+    /// Bug fix (2026-09-21, user's request): expense lines must group Essentials, then
+    /// Subscriptions ("Payments"), then Services ("Servicios"), in that block order — whatever
+    /// order they happened to be created/reprojected in. Coordinator (2026-09-21, per-item
+    /// refactor): each group can now hold SEVERAL lines (one per `Subscription`, not one
+    /// combined line) — sorts each group by its own existing `sortOrder` first so items keep
+    /// their relative order within the group, then renumbers the three groups back-to-back
+    /// starting at their current combined minimum. Cheap enough to run on every
+    /// `materializeIfNeeded`/`reprojectSubscription` pass — self-heals every period
+    /// automatically instead of needing a one-time migration.
+    private static func reorderAggregateSubscriptionLines(in period: Period) {
+        let lines = (period.lineItems ?? []).sorted { $0.sortOrder < $1.sortOrder }
+        let essentials = lines.filter { $0.origin == .essential }
+        let subscriptions = lines.filter { $0.origin == .subscription && !$0.isHomeService }
+        let services = lines.filter { $0.origin == .subscription && $0.isHomeService }
+        let ordered = essentials + subscriptions + services
+        guard ordered.count > 1 else { return }
+
+        let baseOrder = ordered.map(\.sortOrder).min() ?? 0
+        for (offset, line) in ordered.enumerated() {
+            line.sortOrder = baseOrder + offset
+        }
     }
 
     // MARK: - Overview (in-memory projection, never persists)
@@ -797,7 +966,7 @@ public enum PeriodCoordinator {
         while cursor <= coordinate {
             var lines = ProjectionEngine.generateRecurringLines(for: cursor, recurringItems: recurringItems)
                 .map { LineSnapshot(kind: $0.kind, amount: $0.amount, currency: $0.currency, origin: $0.origin) }
-            for kind in [SubscriptionKind.subscription, .service] {
+            for kind in [SubscriptionKind.essential, .subscription, .service] {
                 if let generated = ProjectionEngine.generateSubscriptionLine(for: cursor, subscriptions: subscriptions, kind: kind, exchangeRate: exchangeRate) {
                     lines.append(LineSnapshot(kind: generated.kind, amount: generated.amount, currency: generated.currency, origin: generated.origin))
                 }

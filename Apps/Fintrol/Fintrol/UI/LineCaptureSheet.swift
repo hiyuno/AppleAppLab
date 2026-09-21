@@ -80,6 +80,7 @@ struct LineCaptureSheet: View {
         case .investment: return "Generado por: inversión"
         case .carryOver: return "Generado por: quincena anterior"
         case .creditCard: return "Generado por: tarjeta de crédito"
+        case .essential: return "Generado por: essential"
         }
     }
 

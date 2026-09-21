@@ -6,6 +6,67 @@ struct PeriodView: View {
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
 
+    /// Woz (2026-09-20, `revealProgress` unification — replaces the old `PeriodPreviewCard` +
+    /// `HomeView.staticPeriodLayer` two-view architecture entirely): `1` by default (fully
+    /// revealed — the normal standalone `PeriodView()` call site in `RootView.swift` is
+    /// completely unaffected). `HomeView` drives this LIVE with `dragProgress` (0...1) during
+    /// the Home→Quincena drag — NOT a separate morph/tracking mechanism, just a continuous
+    /// parameter this view reacts to directly, the same way the rest of the drag reads
+    /// `dragTranslation` 1:1. Controls the crossfade+reflow between the compact "quick-balance"
+    /// summary (INCOME/EXPENSES side-by-side boxes, visible at low `revealProgress`, see
+    /// `quickBalanceLayer`) and the detailed income/expenses cards (individual line items,
+    /// visible at high `revealProgress`, see `detailedCardsLayer`) — confirmed against the
+    /// user's Figma file (node `57:80` "Content" inside "01 · Quincena", node `8:2`): a
+    /// `quick-balance` child sits `hidden="true"` at the exact same origin as the detailed
+    /// `income card`/`expenses card` siblings that follow it, i.e. the design file itself
+    /// already models this as "swap one representation for another, let the rest of the layout
+    /// close the gap."
+    var revealProgress: CGFloat = 1
+
+    /// Woz (2026-09-20): replaces `PeriodPreviewCard.onTap`. `nil` by default (the normal
+    /// standalone `PeriodView()` call site — tapping the title/handle opens `JumpSheet`, same
+    /// as always). `HomeView` passes its own `navigateToPeriod` here when embedding this view —
+    /// see `handleOrTitleTapped()` for how the two behaviors are selected, and this file's top
+    /// doc comment for why only the drag handle + title region (not the whole screen) triggers
+    /// it now that the embedded view is genuinely interactive.
+    var onTap: (() -> Void)?
+
+    /// True RGB interpolation between `PeriodSectionCardBackground` (#161617, `revealProgress ==
+    /// 0`) and `AppBackground` (#000000, `revealProgress == 1`) — see the `.background(...)`
+    /// call site's doc comment for why this replaced a naive stacked-opacity crossfade (produced
+    /// a visible gray wash instead of a clean solid color). Both endpoints are dark neutral grays
+    /// this close together, so a flat per-channel lerp reads as a clean fade with no visible hue
+    /// shift.
+    private var embeddedBackgroundColor: Color {
+        let t = Double(min(max(revealProgress, 0), 1))
+        let component = Double(0x16) / 255.0 * (1 - t)
+        let blueComponent = Double(0x17) / 255.0 * (1 - t)
+        return Color(red: component, green: component, blue: blueComponent)
+    }
+
+    /// Settings → Preferencias → "Mostrar próximo mes". `true` by default (the normal standalone
+    /// `PeriodView()` call site always shows `NextMonthCard`, unaffected). `HomeView` threads its
+    /// own `@AppStorage` read through here when embedding this view — see
+    /// `SummaryPanel.showNextMonth`'s doc comment.
+    var showNextMonth: Bool = true
+
+    /// Drives the previous/next period chevron buttons' slide-in reveal — `1` by default (fully
+    /// in place, no offset) so the normal `PeriodView()` call site in `RootView.swift` is
+    /// unaffected. `HomeView` sets this to a value that ramps from `0` to `1` only in the FINAL
+    /// portion of the Home→Quincena drag (see `HomeView.chevronsRevealProgress`), so the chevrons
+    /// slide in from off-screen only as the transition is nearly complete, instead of sitting
+    /// static for the whole drag. Deliberately UNTOUCHED by the `revealProgress` unification
+    /// (2026-09-20, explicit user instruction) — left exactly as it was.
+    var chevronsRevealProgress: CGFloat = 1
+
+    /// Natural (unconstrained) height of `quickBalanceBlock`, measured via
+    /// `QuickBalanceHeightKey` — see `quickBalanceLayer` for how this drives the collapse-to-zero
+    /// animation as `revealProgress` rises.
+    @State private var quickBalanceNaturalHeight: CGFloat = 0
+    /// Natural (unconstrained) height of `detailedCardsLayer`'s content (`blocks`), measured via
+    /// `DetailedCardsHeightKey` — mirror of `quickBalanceNaturalHeight`, see `detailedCardsLayer`.
+    @State private var detailedCardsNaturalHeight: CGFloat = 0
+
     @Query(sort: \RecurringItem.title) private var recurringItems: [RecurringItem]
     @Query(sort: \Subscription.name) private var subscriptions: [Subscription]
     @Query(sort: \Loan.name) private var loans: [Loan]
@@ -26,6 +87,9 @@ struct PeriodView: View {
     @State private var showJumpSheet = false
     @State private var isPresentingCreditCardSheet = false
     @State private var isPresentingInvestmentSheet = false
+    @State private var isPresentingEssentialsSheet = false
+    @State private var isPresentingPaymentsSheet = false
+    @State private var isPresentingServiciosSheet = false
     @State private var isLoading = true
 
     // HIG_REVIEW #5 (Larry): the leading/trailing swipe gestures on a line have no visual
@@ -44,6 +108,17 @@ struct PeriodView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     private var isLargeAccessibilitySize: Bool { dynamicTypeSize >= .accessibility1 }
+
+    // Debug-only: reads the SAME `HomeDragDebugState` instance `HomeView`/`RootView`'s
+    // `GestureDebugHUD` already share (defined in `RootView.swift`, injected app-wide via
+    // `.environment` from `RootView` — visible here with no import since it's the same module),
+    // so `PeriodView` can draw its own `.debugOutline(...)` layers when "outlines: ON" is
+    // toggled from the HUD, whether this instance is mounted standalone (tab/sidebar root) or
+    // embedded inside `HomeView.cardLayer` during the drag transition. See
+    // `HomeDragDebugState.outlinesEnabled`'s doc comment.
+    #if DEBUG
+    @Environment(HomeDragDebugState.self) private var debugState
+    #endif
 
     private var todayCoordinate: PeriodCoordinate { PeriodDateEngine.coordinate(containing: CivilDate.today()) }
     private var isTodayCoordinate: Bool { coordinate == todayCoordinate }
@@ -64,7 +139,7 @@ struct PeriodView: View {
 
     private var subscriptionSnapshots: [SubscriptionSnapshot] {
         subscriptions.map {
-            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind, isActive: $0.isActive)
+            SubscriptionSnapshot(id: $0.id, name: $0.name, price: $0.price, currency: $0.currency, paymentDay: $0.paymentDay, startDate: $0.civilStartDate, endDate: $0.civilEndDate, kind: $0.kind, isActive: $0.isActive, isBiweekly: $0.isBiweekly)
         }
     }
 
@@ -87,9 +162,45 @@ struct PeriodView: View {
         // frame (`isLoading = true`'s default), so there is never a gap where this screen
         // renders with SwiftUI's default white background. Fixes the white-flash "reload
         // glitch" reported when a Home→Quincena drag commits: `selectedTab = .period` mounts a
-        // brand-new `PeriodView()` instance in `iOSRootView` (distinct from the drag's
-        // `staticPeriodLayer`), which starts `isLoading = true` again and, without this, showed
-        // `loadingSkeleton` with no background of its own for that one frame.
+        // brand-new `PeriodView()` instance in `iOSRootView` (distinct from the drag's own
+        // embedded instance inside `HomeView.cardLayer`), which starts `isLoading = true` again
+        // and, without this, showed `loadingSkeleton` with no background of its own for that one
+        // frame.
+        //
+        // Woz (2026-09-20, corner-radius-invisible-on-black fix): was a flat `Color("AppBackground")`
+        // fill — correct for the standalone tab (real nav-bar/system chrome around it provides
+        // contrast) but WRONG when embedded in `HomeView.cardLayer`: that ZStack's base layer is
+        // ALSO plain `AppBackground` (pure black) painted directly behind the embedded card with
+        // nothing in between, so the clipped `UnevenRoundedRectangle` corners (see
+        // `HomeView.cardLayer`) were genuinely there and genuinely clipped — just invisible, zero
+        // contrast between "inside the clip" and "outside the clip". Same class of bug already
+        // fixed once on the old, now-deleted `PeriodPreviewCard` (`PeriodSectionCardBackground`,
+        // #161617, specifically to stand out against the plain black behind it) — lost when that
+        // view got folded into this one and reverted to plain `AppBackground`.
+        //
+        // Fix interpolates the ACTUAL RGB channels between the two colors, driven by
+        // `revealProgress`, instead of stacking two independently-translucent `Color.opacity(...)`
+        // fills — that first attempt (2026-09-20) looked washed-out/gray on-device: overlaying two
+        // partially-transparent flat fills doesn't blend to the same result as a true color lerp,
+        // it visibly greys out everything underneath (a user-reported screenshot showed exactly
+        // this — a persistent gray wash over the whole card, not a clean solid background).
+        // `embeddedBackgroundColor` below produces ONE fully-opaque interpolated color instead, so
+        // there's no stacked-translucency artifact. Reuses the SAME progress signal
+        // `HomeView.cardLayer` already threads in as `revealProgress: dragProgress` — no extra
+        // plumbing needed: standalone (`onTap == nil`) always has `revealProgress == 1` (its
+        // default), so it's 100% `AppBackground`, unchanged from before. Embedded, it starts at
+        // `revealProgress == 0` (100% `PeriodSectionCardBackground`, contrast against the black
+        // behind it) and interpolates to 100% `AppBackground` by `revealProgress == 1` (full
+        // commit), exactly matching the destination standalone tab at the hand-off instant — same
+        // convergence-to-zero-difference invariant `cardCornerRadius`/`embeddedTopInset` rely on.
+        // User correction (2026-09-20): the interpolated `embeddedBackgroundColor` used to sit
+        // HERE, at the whole view's root — covering the scrollable content area too, which read
+        // as an unwanted gray patch behind INCOME/EXPENSES (a user screenshot flagged exactly
+        // this). The rounded-corner contrast problem only ever concerns the very TOP edge, where
+        // `stickyHeader` sits against the white header above — so the interpolated color moved
+        // THERE (see `stickyHeader`'s own `.background`), and this root fill goes back to a flat
+        // `AppBackground`, matching `HomeView.content`'s own base layer exactly — no visible seam,
+        // no extra background box, transparent-reading scroll content exactly as intended.
         .background(Color("AppBackground").ignoresSafeArea())
         .navigationTitle("")
         #if os(iOS)
@@ -155,6 +266,39 @@ struct PeriodView: View {
                 onTogglePaid: { togglePaid($0) }
             )
         }
+        .sheet(isPresented: $isPresentingEssentialsSheet) {
+            SubscriptionBreakdownSheet(
+                title: String(localized: "period_essentials_row_title", defaultValue: "Essentials"),
+                lines: (period?.lineItems ?? []).filter { $0.origin == .essential }.sorted { $0.sortOrder < $1.sortOrder },
+                exchangeRate: effectiveRate,
+                onStartEditing: { captureTarget = CaptureTarget(line: $0, kind: .expense) },
+                onQuickCommit: { commitQuickEdit() },
+                onToggleActive: { toggleActive($0) },
+                onTogglePaid: { togglePaid($0) }
+            )
+        }
+        .sheet(isPresented: $isPresentingPaymentsSheet) {
+            SubscriptionBreakdownSheet(
+                title: String(localized: "period_payments_row_title", defaultValue: "Payments"),
+                lines: (period?.lineItems ?? []).filter { $0.origin == .subscription && !$0.isHomeService }.sorted { $0.sortOrder < $1.sortOrder },
+                exchangeRate: effectiveRate,
+                onStartEditing: { captureTarget = CaptureTarget(line: $0, kind: .expense) },
+                onQuickCommit: { commitQuickEdit() },
+                onToggleActive: { toggleActive($0) },
+                onTogglePaid: { togglePaid($0) }
+            )
+        }
+        .sheet(isPresented: $isPresentingServiciosSheet) {
+            SubscriptionBreakdownSheet(
+                title: String(localized: "period_servicios_row_title", defaultValue: "Servicios"),
+                lines: (period?.lineItems ?? []).filter { $0.origin == .subscription && $0.isHomeService }.sorted { $0.sortOrder < $1.sortOrder },
+                exchangeRate: effectiveRate,
+                onStartEditing: { captureTarget = CaptureTarget(line: $0, kind: .expense) },
+                onQuickCommit: { commitQuickEdit() },
+                onToggleActive: { toggleActive($0) },
+                onTogglePaid: { togglePaid($0) }
+            )
+        }
     }
 
     // MARK: - Content
@@ -164,16 +308,30 @@ struct PeriodView: View {
             VStack(spacing: 24) {
                 if isLargeAccessibilitySize {
                     VStack(spacing: 24) {
-                        blocks
-                        SobranteBadge(sobrante: sobrante)
-                        summaryPanel
+                        periodContentBlocks
+                        // Coordinator (2026-09-21, /update-ui): Sobrante→Next Month is its own
+                        // tighter 8pt gap in Figma (`balance` frame: SOBRANTE height 81, Resumen
+                        // starts at y=89 → 8pt), not the outer 24pt block spacing.
+                        VStack(spacing: 8) {
+                            SobranteBadge(sobrante: sobrante)
+                                #if DEBUG
+                                .debugOutline("sobrante", color: .pink, enabled: debugState.outlinesEnabled)
+                                #endif
+                            summaryPanel
+                                #if DEBUG
+                                .debugOutline("summaryPanel", color: .mint, enabled: debugState.outlinesEnabled)
+                                #endif
+                        }
                     }
                 } else {
                     #if os(macOS)
                     HStack(alignment: .top, spacing: 20) {
                         VStack(spacing: 24) {
-                            blocks
+                            periodContentBlocks
                             SobranteBadge(sobrante: sobrante)
+                                #if DEBUG
+                                .debugOutline("sobrante", color: .pink, enabled: debugState.outlinesEnabled)
+                                #endif
                         }
                         .accessibilityElement(children: .contain)
                         .accessibilityLabel(String(localized: "period_two_column_income_a11y", defaultValue: "Income and expenses column"))
@@ -182,13 +340,28 @@ struct PeriodView: View {
                             .frame(width: 280)
                             .accessibilityElement(children: .contain)
                             .accessibilityLabel(String(localized: "period_two_column_summary_a11y", defaultValue: "Summary column"))
+                            #if DEBUG
+                            .debugOutline("summaryPanel", color: .mint, enabled: debugState.outlinesEnabled)
+                            #endif
                     }
                     .accessibilityElement(children: .contain)
                     .accessibilityLabel(String(localized: "period_two_column_layout_a11y", defaultValue: "Two-column layout"))
                     #else
-                    blocks
-                    SobranteBadge(sobrante: sobrante)
-                    summaryPanel
+                    periodContentBlocks
+                    // Coordinator (2026-09-21, /update-ui): Sobrante→Next Month is its own
+                    // tighter 8pt gap in Figma (`balance` frame: SOBRANTE height 81, Resumen
+                    // starts at y=89 → 8pt), not the outer 24pt block spacing — applies to both
+                    // the embedded Home preview and the standalone Quincena tab, same view.
+                    VStack(spacing: 8) {
+                        SobranteBadge(sobrante: sobrante)
+                            #if DEBUG
+                            .debugOutline("sobrante", color: .pink, enabled: debugState.outlinesEnabled)
+                            #endif
+                        summaryPanel
+                            #if DEBUG
+                            .debugOutline("summaryPanel", color: .mint, enabled: debugState.outlinesEnabled)
+                            #endif
+                    }
                     #endif
                 }
             }
@@ -203,6 +376,9 @@ struct PeriodView: View {
             // last-card-to-TOTAL). Bottom keeps its original 16pt — only the top gap changed.
             .padding(.top, 12)
             .padding(.bottom, 16)
+            #if DEBUG
+            .debugOutline("content", color: .indigo, enabled: debugState.outlinesEnabled, padding: "h:10 top:12 bottom:16")
+            #endif
         }
         // Coordinator (2026-09-17): the Quincena header (title/chevrons/range pill) is now
         // fixed above the scroll content instead of scrolling away with it — `.safeAreaInset`
@@ -212,7 +388,144 @@ struct PeriodView: View {
         // that arithmetic redone by hand any time the header's height changes).
         .safeAreaInset(edge: .top, spacing: 0) {
             stickyHeader
+                #if DEBUG
+                .debugOutline("stickyHeader", color: .orange, enabled: debugState.outlinesEnabled, padding: "h:10 top:4 bottom:8")
+                #endif
         }
+        // `ScrollView` paints its own system content background (a system material, close to
+        // but NOT exactly any of our own colors) OVER whatever sits behind it unless told
+        // otherwise — confirmed by direct experiment (2026-09-20): swapping this view's own
+        // root `.background(...)` all the way to `Color.blue` had ZERO visible effect on the
+        // area behind this `ScrollView`'s content, while the same swap DID affect areas
+        // outside it (nothing to compare there, but the total absence of blue anywhere in the
+        // scroll region was the tell). `.scrollContentBackground(.hidden)` turns that system
+        // fill off so our own explicit backgrounds (root `AppBackground`, `stickyHeader`'s
+        // `embeddedBackgroundColor`, each card's own fill) are what's actually visible,
+        // instead of the system material showing through every gap between them.
+        .scrollContentBackground(.hidden)
+        // Woz (2026-09-20, `revealProgress` unification): measures `quickBalanceBlock`'s and
+        // `detailedCardsLayer`'s own NATURAL (unconstrained) heights — same `GeometryReader` +
+        // `PreferenceKey` technique `HomeView.HeaderHeightKey` already uses — so
+        // `quickBalanceLayer`/`detailedCardsLayer` can collapse/grow between `0` and that real
+        // measured height as `revealProgress` changes, instead of a guessed constant.
+        .onPreferenceChange(QuickBalanceHeightKey.self) { quickBalanceNaturalHeight = $0 }
+        .onPreferenceChange(DetailedCardsHeightKey.self) { detailedCardsNaturalHeight = $0 }
+    }
+
+    /// Groups `quickBalanceLayer` and `detailedCardsLayer` with NO spacing between them — per
+    /// the user's Figma file, both occupy the exact same origin (the compact quick-balance sits
+    /// `hidden="true"` at the same position the detailed income/expenses cards start at), and
+    /// since they're driven by complementary `(1 - revealProgress)`/`revealProgress` heights off
+    /// the SAME parameter, only one of the two ever has non-zero height at the extremes — an
+    /// outer `spacing` here would just reintroduce a gap between them during the crossfade.
+    private var periodContentBlocks: some View {
+        VStack(spacing: 0) {
+            quickBalanceLayer
+                #if DEBUG
+                .debugOutline("quickBalance", color: .purple, enabled: debugState.outlinesEnabled)
+                #endif
+            detailedCardsLayer
+        }
+    }
+
+    /// Compact INCOME/EXPENSES summary — visible (full height, full opacity) at
+    /// `revealProgress == 0`, collapses to zero height AND zero opacity by `revealProgress == 1`
+    /// so it's completely out of the layout once fully revealed (matches the Figma file's own
+    /// `hidden="true"` modeling of this element — see `revealProgress`'s doc comment). Measured
+    /// via `.background(GeometryReader ...)` placed BEFORE `.frame(height:)` in the modifier
+    /// chain — the background reports `quickBalanceBlock`'s own natural size (an `HStack` of
+    /// fixed-size `Text`/card elements that doesn't compress under a smaller proposed height),
+    /// independent of the `.frame(height:)` constraint applied afterward, which is what lets this
+    /// converge to the same natural height on every layout pass regardless of `revealProgress`.
+    /// Guards on `quickBalanceNaturalHeight > 0` (not yet measured) so the very first render
+    /// doesn't flash collapsed before the first measurement lands.
+    private var quickBalanceLayer: some View {
+        quickBalanceBlock
+            .background(
+                GeometryReader { geo in
+                    Color.clear.preference(key: QuickBalanceHeightKey.self, value: geo.size.height)
+                }
+            )
+            .frame(height: quickBalanceNaturalHeight > 0 ? quickBalanceNaturalHeight * (1 - revealProgress) : nil, alignment: .top)
+            .clipped()
+            .opacity(1 - revealProgress)
+            .allowsHitTesting(revealProgress < 1)
+    }
+
+    /// The detailed INCOME/EXPENSES cards (`blocks` — individual line items, "+" buttons, swipe
+    /// actions, all genuinely interactive, user's explicit decision) — mirror image of
+    /// `quickBalanceLayer`: zero height/opacity at `revealProgress == 0`, grows to `blocks`' own
+    /// natural full height/opacity by `revealProgress == 1` (the normal standalone `PeriodView()`
+    /// appearance, completely unaffected since `revealProgress` defaults to `1` there). Same
+    /// measurement technique as `quickBalanceLayer` — see that doc comment.
+    ///
+    /// `.allowsHitTesting(revealProgress > 0)`: below a certain `revealProgress` this is
+    /// zero-height and `.clipped()`, so nothing here is actually paintable — this just makes
+    /// that explicit rather than relying on zero-size alone to keep it out of hit-testing.
+    private var detailedCardsLayer: some View {
+        blocks
+            .background(
+                GeometryReader { geo in
+                    Color.clear.preference(key: DetailedCardsHeightKey.self, value: geo.size.height)
+                }
+            )
+            .frame(height: detailedCardsNaturalHeight > 0 ? detailedCardsNaturalHeight * revealProgress : nil, alignment: .top)
+            .clipped()
+            .opacity(revealProgress)
+            .allowsHitTesting(revealProgress > 0)
+    }
+
+    /// Figma mockup (2026-09-18): INCOME/EXPENSES are two side-by-side "boxes" — label above,
+    /// amount inside a nested card below. Relocated verbatim from the now-deleted
+    /// `PeriodPreviewCard.totalsBlock`/`totalColumn` (2026-09-20, `revealProgress` unification) —
+    /// same `.ultraThinMaterial.opacity(0.5)` nested-card fill used by `LoanDetailView`/
+    /// `InvestmentsView` for their internal stat cards.
+    private var quickBalanceBlock: some View {
+        HStack(spacing: 16) {
+            quickBalanceColumn(title: String(localized: "period_income_header", defaultValue: "INCOME"), amount: income)
+            quickBalanceColumn(title: String(localized: "period_expenses_header", defaultValue: "EXPENSES"), amount: expense)
+        }
+    }
+
+    private func quickBalanceColumn(title: String, amount: Decimal) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                // Coordinator (2026-09-21, /update-ui): Figma's "title" node is 14px Bold with
+                // 0.6px tracking, not `.caption` (12px) — and it's centered within the column's
+                // full width (a wrapper with `justify-center`), not left-aligned.
+                .font(.system(size: 14, weight: .bold))
+                .tracking(0.6)
+                // Coordinator (2026-09-21, tokens update): system `.secondary` → the Figma
+                // token's `Text/Secondary` (#A8A8A8, solid) — same pass across every dark-mode
+                // caption on this screen.
+                .foregroundStyle(Color("TextSecondary"))
+                .frame(maxWidth: .infinity, alignment: .center)
+            Text(amount.currencyString())
+                // Coordinator (2026-09-21, /update-ui): Figma's amount is Regular weight, not
+                // Semibold.
+                .font(.system(size: 17, weight: .regular))
+                .monospacedDigit()
+                .foregroundStyle(.primary)
+                // Coordinator (2026-09-21): centered, not leading — Figma's row is symmetric
+                // (29.25pt on both sides of the amount within the 140.5pt row).
+                .frame(maxWidth: .infinity, alignment: .center)
+                .padding(16)
+                .background(
+                    // Coordinator (2026-09-21, /update-ui): 20pt, not 16 — matches Figma's
+                    // `rounded-[20px]` on this box (the app's own "internos" token is 12pt and
+                    // "cards" is 20pt; Figma puts this specific box on the card radius, not the
+                    // internal-element one).
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        // Solid #2a2a2a per Figma (was `.ultraThinMaterial.opacity(0.5)`,
+                        // inherited from `PeriodPreviewCard.totalColumn` — that material read
+                        // fine on the old card's own contrasting background, but blurs/lightens
+                        // whatever's behind it, which reads as an unwanted gray wash now that
+                        // this box sits directly on Home's black background (user-reported
+                        // screenshot, 2026-09-20).
+                        .fill(Color(red: 0x2a / 255.0, green: 0x2a / 255.0, blue: 0x2a / 255.0))
+                )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// `header` + an opaque background so it fully occludes content scrolling underneath.
@@ -235,12 +548,23 @@ struct PeriodView: View {
     /// fixed frame; it cannot extend past the header's own bounds into the `ScrollView` because
     /// there's no separate `.overlay`/offset placing it outside that frame this time.
     private var stickyHeader: some View {
-        header
+        VStack(spacing: 16) {
+            dragHandle
+                #if DEBUG
+                .debugOutline("dragHandle", color: .blue.opacity(0.6), enabled: debugState.outlinesEnabled)
+                #endif
+            header
+        }
             // Coordinator (2026-09-17): matches `content`'s 10pt horizontal margin.
             .padding(.horizontal, 10)
             .padding(.top, 4)
             .padding(.bottom, 8)
             .background(alignment: .bottom) {
+                // User correction (2026-09-20): explicitly prefers flat black here over the
+                // `embeddedBackgroundColor` contrast fix — the tradeoff (the top corners' clip
+                // against `HomeView`'s black background is technically still there, just visually
+                // blends in and isn't distinguishable at a glance) is accepted. Reverted to a flat
+                // `AppBackground` fill, same as the rest of the card.
                 ZStack(alignment: .bottom) {
                     Color("AppBackground")
                     LinearGradient(
@@ -253,6 +577,40 @@ struct PeriodView: View {
             }
     }
 
+    /// Woz (2026-09-20, `revealProgress` unification): relocated verbatim from the now-deleted
+    /// `PeriodPreviewCard.dragHandle` — figma mockup 100×4pt capsule, `#252525`, centered. Common
+    /// to both states now (always present at its natural layout position, per `revealProgress`'s
+    /// doc comment), not just the old preview-only card. Tappable, same action as the title (see
+    /// `handleOrTitleTapped()`) — part of the "non-interactive top region" that navigates to the
+    /// real Quincena tab when embedded (user's explicit decision, §4 of the reveal-unification
+    /// plan: the whole card is no longer one big `Button` now that its lower content is genuinely
+    /// interactive, so only this handle + the title below it still act as a single tap target).
+    private var dragHandle: some View {
+        Button(action: handleOrTitleTapped) {
+            Capsule()
+                .fill(Color(red: 0x25 / 255.0, green: 0x25 / 255.0, blue: 0x25 / 255.0)) // #252525
+                .frame(width: 100, height: 4)
+                .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+        .accessibilityHidden(true)
+    }
+
+    /// Shared action for `dragHandle` and the title button inside `header` — the "non-interactive
+    /// top region" (drag handle + title/header block, everything in `header` EXCEPT the
+    /// chevrons, which keep their own previous/next-period actions untouched). When `onTap` is
+    /// set (this instance is embedded inside `HomeView`), tapping either one navigates to the
+    /// real Quincena tab/section, exactly like the whole old `PeriodPreviewCard` used to on any
+    /// tap. When `onTap` is `nil` (the normal standalone `PeriodView()` call site), tapping opens
+    /// `JumpSheet` — the screen's own original behavior, completely unaffected.
+    private func handleOrTitleTapped() {
+        if let onTap {
+            onTap()
+        } else {
+            showJumpSheet = true
+        }
+    }
+
     private var blocks: some View {
         VStack(spacing: 24) {
             if !hasSeenSwipeHint {
@@ -261,6 +619,9 @@ struct PeriodView: View {
             lineBlock(title: String(localized: "period_income_header", defaultValue: "INCOME"), kind: .income)
             lineBlock(title: String(localized: "period_expenses_header", defaultValue: "EXPENSES"), kind: .expense)
         }
+        #if DEBUG
+        .debugOutline("blocks", color: .teal, enabled: debugState.outlinesEnabled)
+        #endif
     }
 
     private var swipeDiscoverabilityHint: some View {
@@ -269,13 +630,13 @@ struct PeriodView: View {
                 .foregroundStyle(Color.accentColor)
             Text(String(localized: "period_swipe_hint_message", defaultValue: "Swipe a line: right to activate or deactivate, left to mark it as paid (swipe again to delete or edit)."))
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color("TextSecondary"))
             Spacer(minLength: 0)
             Button {
                 hasSeenSwipeHint = true
             } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color("TextSecondary"))
             }
             .buttonStyle(.plain)
             .accessibilityLabel(String(localized: "period_swipe_hint_dismiss_a11y", defaultValue: "Dismiss hint"))
@@ -285,6 +646,20 @@ struct PeriodView: View {
         // its own right — the 12pt internal-element token, not the 20pt card radius.
         .background(RoundedRectangle(cornerRadius: 12, style: .continuous).fill(Color.accentColor.opacity(0.1)))
         .accessibilityElement(children: .combine)
+        #if DEBUG
+        .debugOutline("swipeHint", color: .brown, enabled: debugState.outlinesEnabled, padding: "12")
+        #endif
+    }
+
+    /// Year + month + range pill — extracted out of `header` so the chevrons on either side stay
+    /// out of it. Uses the shared `PeriodTitleBlock` content, common to both revealed states now
+    /// (see `revealProgress`'s doc comment) — no longer paired with a separately-tracked floating
+    /// copy; this IS the only copy, always.
+    private var titleBlock: some View {
+        PeriodTitleBlock(coordinate: coordinate, isTodayCoordinate: isTodayCoordinate)
+            #if DEBUG
+            .debugOutline("titleBlock", color: .purple, enabled: debugState.outlinesEnabled)
+            #endif
     }
 
     private var header: some View {
@@ -308,41 +683,16 @@ struct PeriodView: View {
             .buttonStyle(.glass)
             .accessibilityLabel(String(localized: "period_previous_a11y", defaultValue: "Previous period"))
             .disabled(coordinate <= earliestCoordinate)
+            // Slides in from off-screen left, only in the final portion of the Home→Quincena
+            // drag — see `chevronsRevealProgress` doc comment.
+            .offset(x: (chevronsRevealProgress - 1) * 80)
+            .opacity(chevronsRevealProgress)
 
             Spacer()
 
             VStack(spacing: 4) {
-                Button {
-                    showJumpSheet = true
-                } label: {
-                    VStack(spacing: 6) {
-                        // Figma header redesign (2026-09-18, node 128:66): the year sits above
-                        // the month row as plain text, no longer appended to the month text.
-                        // Coordinator (2026-09-18): pill container removed per user request —
-                        // same size/weight/color as before, just no background/Capsule.
-                        Text(coordinate.yearTitle)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.white)
-
-                        Text(coordinate.monthTitle)
-                            .font(.title2.weight(.semibold))
-                            .foregroundStyle(.primary)
-                        // Coordinator (2026-09-16, DESIGN_LIQUID.md, Jonny): the separate
-                        // "Current"/"Proyección" badge is gone — this day-range pill is now
-                        // the ONLY indicator. Today's period → bold green text, no fill.
-                        // Anything else (past OR future, no distinction) → `.secondary` text,
-                        // no extra label.
-                        // Coordinator (2026-09-18, user request): removed the solid green
-                        // `.fill` — the pill shape stays (padding + `Capsule` stroke), but it's
-                        // transparent now; the green moved from the background to the text.
-                        Text(coordinate.dayRangeTitle)
-                            .font(.subheadline.weight(isTodayCoordinate ? .bold : .regular))
-                            .foregroundStyle(isTodayCoordinate ? Color.green : .secondary)
-                            .padding(.horizontal, 10).padding(.vertical, 3)
-                            .overlay(
-                                Capsule().strokeBorder(isTodayCoordinate ? Color.green.opacity(0.5) : Color.secondary.opacity(0.3))
-                            )
-                    }
+                Button(action: handleOrTitleTapped) {
+                    titleBlock
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Fecha: \(coordinate.accessibleTitle)\(isTodayCoordinate ? String(localized: "period_date_a11y_current_suffix", defaultValue: ", current period") : "")")
@@ -364,6 +714,10 @@ struct PeriodView: View {
             }
             .buttonStyle(.glass)
             .accessibilityLabel(String(localized: "period_next_a11y", defaultValue: "Next period"))
+            // Slides in from off-screen right, only in the final portion of the Home→Quincena
+            // drag — see `chevronsRevealProgress` doc comment.
+            .offset(x: (1 - chevronsRevealProgress) * 80)
+            .opacity(chevronsRevealProgress)
         }
         .padding(.horizontal, 4)
     }
@@ -401,9 +755,25 @@ struct PeriodView: View {
         // Webull/etc. (`origin == .investment`) collapse into a single "Investments" navigation
         // row (EXPENSES only). `regularLines` now excludes BOTH aggregated origins.
         let investmentLines = kind == .expense ? lines.filter { $0.origin == .investment } : []
-        let regularLines = kind == .expense ? lines.filter { $0.origin != .creditCard && $0.origin != .investment } : lines
-        let creditCardTotal = creditCardLines.reduce(Decimal(0)) { $0 + $1.amount }
-        let investmentTotal = investmentLines.reduce(Decimal(0)) { $0 + $1.amount }
+        // "Cuando le de clic ahi, quiero que salga una ventana con todo el desglose" (2026-09-21):
+        // same aggregation pattern as Credit Cards/Investments — Essentials (`origin ==
+        // .essential`) and the combined Payments/Servicios line (`origin == .subscription`,
+        // disambiguated by `isHomeService`) each collapse into their own navigation row instead
+        // of rendering as a single editable `LineItemRow`.
+        let essentialLines = kind == .expense ? lines.filter { $0.origin == .essential } : []
+        let paymentsLines = kind == .expense ? lines.filter { $0.origin == .subscription && !$0.isHomeService } : []
+        let serviciosLines = kind == .expense ? lines.filter { $0.origin == .subscription && $0.isHomeService } : []
+        let regularLines = kind == .expense ? lines.filter { $0.origin != .creditCard && $0.origin != .investment && $0.origin != .essential && $0.origin != .subscription } : lines
+        // Bug fix (2026-09-21, user report — deactivating "Tech"/"Fun" correctly dropped the
+        // breakdown sheet's own Total to $400, but this row kept showing $500): unlike
+        // `CarryOverEngine.total`/`CreditCardPaymentsSheet`/`SubscriptionBreakdownSheet`, these
+        // five totals summed EVERY line regardless of `isActive` — the one aggregate total in
+        // the app that didn't exclude deactivated lines from its sum.
+        let creditCardTotal = creditCardLines.filter(\.isActive).reduce(Decimal(0)) { $0 + $1.amount }
+        let investmentTotal = investmentLines.filter(\.isActive).reduce(Decimal(0)) { $0 + $1.amount }
+        let essentialTotal = essentialLines.filter(\.isActive).reduce(Decimal(0)) { $0 + $1.amount }
+        let paymentsTotal = paymentsLines.filter(\.isActive).reduce(Decimal(0)) { $0 + $1.amount }
+        let serviciosTotal = serviciosLines.filter(\.isActive).reduce(Decimal(0)) { $0 + $1.amount }
 
         return VStack(alignment: .leading, spacing: 24) {
             // Coordinator (2026-09-16, user's Figma review): "+" reverts to the section
@@ -416,13 +786,13 @@ struct PeriodView: View {
             // old loose-title-to-inner-text one).
             HStack {
                 Text(title)
-                    // Coordinator (2026-09-17): no longer distinct from "TOTAL INCOME"/"TOTAL
-                    // EXPENSES" — both are now `p small` (`.caption` Bold, 12pt), the same
-                    // token.
-                    .font(.caption.weight(.bold))
-                    .tracking(0.5)
+                    // Coordinator (2026-09-21, user's explicit request): bumped from 14px to
+                    // 18px — supersedes the earlier /update-ui pass on node 12:7 (that one
+                    // matched Figma exactly at 14px; the user asked for it larger regardless).
+                    .font(.system(size: 18, weight: .bold))
+                    .tracking(0.6)
                     .textCase(.uppercase)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color("TextSecondary"))
                     .accessibilityHidden(true)
 
                 Spacer()
@@ -430,15 +800,21 @@ struct PeriodView: View {
                 Button {
                     captureTarget = CaptureTarget(line: nil, kind: kind)
                 } label: {
-                    // Coordinator (2026-09-16): exact Figma layer name — plain `plus`, no
-                    // capsule/circle, ~20pt (Figma: 19.8×19.82pt).
+                    // Coordinator (2026-09-21, user's Figma review): the "+" now matches
+                    // `header`'s chevron buttons exactly — Figma represents both as a static
+                    // `plus.circle.fill`/`chevron.*.circle.fill` proxy since it can't render
+                    // live Liquid Glass, but the real button is plain `plus` sized to a 29×29
+                    // frame with `.buttonStyle(.glass)` painting the circle, same as the
+                    // chevrons — no manual circle/tint here either.
                     Image(systemName: "plus")
-                        .font(.system(size: 20))
-                        .foregroundStyle(.secondary)
+                        .frame(width: 29, height: 29)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.glass)
                 .accessibilityLabel(kind == .income ? String(localized: "period_add_income_a11y", defaultValue: "Add income") : String(localized: "period_add_expense_a11y", defaultValue: "Add expense"))
             }
+            #if DEBUG
+            .debugOutline("card:titleRow", color: .gray, enabled: debugState.outlinesEnabled)
+            #endif
 
             // DESIGN_LIQUID.md § "Bloques INCOME/EXPENSES" (Figma, updated 2026-09-15 —
             // supersedes the single-card-with-dividers layout): each line is still its own
@@ -459,6 +835,41 @@ struct PeriodView: View {
                     )
                 }
 
+                // "Essencial, Suscriptions, Services. en ese orden" (2026-09-21) — same relative
+                // order as `PeriodCoordinator.reorderAggregateSubscriptionLines`. Coordinator
+                // (2026-09-21, per-item refactor — user's request that editing/deleting "Food"
+                // only ever touches this one quincena): each `Subscription` now generates its
+                // OWN real `LineItem`, so a group can hold several lines with independently
+                // different `isPaid` states — back to the same collapsed-navigation-row pattern
+                // as Credit Cards/Investments (no single `isPaid` to show on the row itself; that
+                // state lives per-item inside the breakdown sheet).
+                if !essentialLines.isEmpty {
+                    aggregateRow(
+                        title: String(localized: "period_essentials_row_title", defaultValue: "Essentials"),
+                        total: essentialTotal,
+                        a11yHint: String(localized: "period_essentials_row_a11y_hint", defaultValue: "Double-tap to see the breakdown"),
+                        action: { isPresentingEssentialsSheet = true }
+                    )
+                }
+
+                if !paymentsLines.isEmpty {
+                    aggregateRow(
+                        title: String(localized: "period_payments_row_title", defaultValue: "Payments"),
+                        total: paymentsTotal,
+                        a11yHint: String(localized: "period_payments_row_a11y_hint", defaultValue: "Double-tap to see the breakdown"),
+                        action: { isPresentingPaymentsSheet = true }
+                    )
+                }
+
+                if !serviciosLines.isEmpty {
+                    aggregateRow(
+                        title: String(localized: "period_servicios_row_title", defaultValue: "Servicios"),
+                        total: serviciosTotal,
+                        a11yHint: String(localized: "period_servicios_row_a11y_hint", defaultValue: "Double-tap to see the breakdown"),
+                        action: { isPresentingServiciosSheet = true }
+                    )
+                }
+
                 if !creditCardLines.isEmpty {
                     Button {
                         isPresentingCreditCardSheet = true
@@ -469,12 +880,17 @@ struct PeriodView: View {
                                 .foregroundStyle(.primary)
                             Spacer()
                             Text(creditCardTotal.currencyString())
-                                .font(.body.weight(.semibold))
-                                .monospacedDigit()
+                                // Coordinator (2026-09-21, /update-ui): matches the regular
+                                // `LineItemRow` text weight — Figma's row text is Regular, not
+                                // Semibold.
+                                .font(.body)
                                 .foregroundStyle(.primary)
                         }
                         .padding(16)
-                        .background(Color("AppBackgroundSecondary"))
+                        // Coordinator (2026-09-21, /update-ui): same fix as `LineItemRow` — was
+                        // `AppBackgroundSecondary` (#000000, indistinguishable from the card
+                        // behind it), Figma's row background is `AppBackgroundTertiary` (#3C3C3C).
+                        .background(Color("AppBackgroundTertiary"))
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     }
                     .buttonStyle(.plain)
@@ -494,12 +910,11 @@ struct PeriodView: View {
                                 .foregroundStyle(.primary)
                             Spacer()
                             Text(investmentTotal.currencyString())
-                                .font(.body.weight(.semibold))
-                                .monospacedDigit()
+                                .font(.body)
                                 .foregroundStyle(.primary)
                         }
                         .padding(16)
-                        .background(Color("AppBackgroundSecondary"))
+                        .background(Color("AppBackgroundTertiary"))
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     }
                     .buttonStyle(.plain)
@@ -510,16 +925,23 @@ struct PeriodView: View {
                     .accessibilityHint(String(localized: "period_investments_row_a11y_hint", defaultValue: "Double-tap to see the breakdown by account"))
                 }
             }
+            #if DEBUG
+            .debugOutline("card:rows", color: .red.opacity(0.5), enabled: debugState.outlinesEnabled, padding: "spacing:8")
+            #endif
 
             HStack {
-                // `p small` (`.caption` Bold, 12pt) — same token as the header above.
+                // Coordinator (2026-09-21, /update-ui): 14px Bold per Figma's "total" node, not
+                // `.caption` (12pt).
                 Text(kind == .income ? String(localized: "period_total_income", defaultValue: "TOTAL INCOME") : String(localized: "period_total_expenses", defaultValue: "TOTAL EXPENSES"))
-                    .font(.caption.weight(.bold))
+                    .font(.system(size: 14, weight: .bold))
                 Spacer()
                 Text(total(for: kind).currencyString())
-                    .font(.caption.weight(.bold))
+                    .font(.system(size: 14, weight: .bold))
                     .monospacedDigit()
             }
+            #if DEBUG
+            .debugOutline("card:total", color: .blue.opacity(0.5), enabled: debugState.outlinesEnabled)
+            #endif
         }
         // Coordinator (2026-09-18): the container's own padding — 16pt is the standard card
         // padding already used everywhere else in the app (`LoanDetailView`,
@@ -534,6 +956,32 @@ struct PeriodView: View {
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .accessibilityElement(children: .contain)
         .accessibilityLabel(kind == .income ? String(localized: "period_income_a11y", defaultValue: "Income") : String(localized: "period_expenses_a11y", defaultValue: "Expenses"))
+        #if DEBUG
+        .debugOutline("card:\(title)", color: .cyan, enabled: debugState.outlinesEnabled, padding: "16")
+        #endif
+    }
+
+    /// Shared style for a collapsed aggregate row (Essentials/Payments/Servicios) — same visual
+    /// pattern as the Credit Cards Payments/Investments rows above.
+    @ViewBuilder
+    private func aggregateRow(title: String, total: Decimal, a11yHint: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Text(title)
+                    .font(.body)
+                    .foregroundStyle(.primary)
+                Spacer()
+                Text(total.currencyString())
+                    .font(.body)
+                    .foregroundStyle(.primary)
+            }
+            .padding(16)
+            .background(Color("AppBackgroundTertiary"))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title), \(total.currencyString())")
+        .accessibilityHint(a11yHint)
     }
 
     // Coordinator (2026-09-15, Figma tSUzh4zfCpDPYT5A88otst node 8:2): the "Tipo de cambio"
@@ -543,7 +991,10 @@ struct PeriodView: View {
     // sheet used to write (`period.manualExchangeRateOverride`) has no UI trigger left as a
     // result — accepted by the coordinator's instruction, not an oversight.
     private var summaryPanel: some View {
-        SummaryPanel(mandar: mandar, nextMonth: nextMonth)
+        // `mandarOpacity: revealProgress` (2026-09-20): "Mandar" doesn't appear at all in the
+        // compact preview state — user's explicit decision, see `SummaryPanel.mandarOpacity`'s
+        // doc comment. `NextMonthCard` inside `SummaryPanel` is unaffected.
+        SummaryPanel(mandar: mandar, nextMonth: nextMonth, mandarOpacity: revealProgress, showNextMonth: showNextMonth)
     }
 
     private var loadingSkeleton: some View {
@@ -658,6 +1109,12 @@ struct PeriodView: View {
         period.map(PeriodCoordinator.snapshots(of:)) ?? []
     }
 
+    /// Feeds `quickBalanceBlock` — same `total(for:)` the detailed cards' own "TOTAL
+    /// INCOME"/"TOTAL EXPENSES" rows already use, so the compact and detailed representations
+    /// never disagree.
+    private var income: Decimal { total(for: .income) }
+    private var expense: Decimal { total(for: .expense) }
+
     private var sobrante: Decimal {
         CarryOverEngine.sobrante(for: currentSnapshots, exchangeRate: effectiveRate)
     }
@@ -676,5 +1133,25 @@ struct PeriodView: View {
             loans: loanSnapshots,
             exchangeRate: effectiveRate
         )
+    }
+}
+
+// MARK: - Height PreferenceKeys
+
+/// Publishes `quickBalanceBlock`'s own natural (unconstrained) height — see `quickBalanceLayer`'s
+/// doc comment for how this drives its collapse-to-zero animation as `revealProgress` rises. Same
+/// `max`-reducing pattern as `HomeView.HeaderHeightKey`.
+private struct QuickBalanceHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
+/// Same as `QuickBalanceHeightKey`, for `detailedCardsLayer`'s content (`blocks`).
+private struct DetailedCardsHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
     }
 }

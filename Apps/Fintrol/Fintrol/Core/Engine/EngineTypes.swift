@@ -53,8 +53,10 @@ public struct SubscriptionSnapshot: Sendable, Hashable {
     public let endDate: CivilDate?
     public let kind: SubscriptionKind
     public let isActive: Bool
+    /// Mirrors `Subscription.isBiweekly` — "cada mes" vs "cada quincena" (2026-09-21).
+    public let isBiweekly: Bool
 
-    public init(id: UUID, name: String, price: Decimal, currency: Currency, paymentDay: Int, startDate: CivilDate, endDate: CivilDate?, kind: SubscriptionKind = .subscription, isActive: Bool = true) {
+    public init(id: UUID, name: String, price: Decimal, currency: Currency, paymentDay: Int, startDate: CivilDate, endDate: CivilDate?, kind: SubscriptionKind = .subscription, isActive: Bool = true, isBiweekly: Bool = false) {
         self.id = id
         self.name = name
         self.price = price
@@ -64,6 +66,7 @@ public struct SubscriptionSnapshot: Sendable, Hashable {
         self.endDate = endDate
         self.kind = kind
         self.isActive = isActive
+        self.isBiweekly = isBiweekly
     }
 }
 
@@ -139,8 +142,14 @@ public struct GeneratedLine: Sendable, Hashable {
     public let sourceLoanID: UUID?
     /// See `LineItem.sourceCreditCardID` — only meaningful when `origin == .creditCard`.
     public let sourceCreditCardID: UUID?
+    /// See `LineItem.sourceSubscriptionID` — only meaningful when `origin == .essential` or
+    /// `.subscription`. Coordinator (2026-09-21, user's request): each `Subscription` now
+    /// generates its OWN line per period (like `CreditCard`/`Loan`) instead of folding into one
+    /// combined sum — editing/deactivating one in a single quincena no longer touches every
+    /// other quincena or the recurring definition itself.
+    public let sourceSubscriptionID: UUID?
 
-    public init(kind: LineKind, title: String, amount: Decimal, currency: Currency, origin: LineOrigin, sourceRecurringID: UUID?, isHomeService: Bool = false, sourceLoanID: UUID? = nil, sourceCreditCardID: UUID? = nil) {
+    public init(kind: LineKind, title: String, amount: Decimal, currency: Currency, origin: LineOrigin, sourceRecurringID: UUID?, isHomeService: Bool = false, sourceLoanID: UUID? = nil, sourceCreditCardID: UUID? = nil, sourceSubscriptionID: UUID? = nil) {
         self.kind = kind
         self.title = title
         self.amount = amount
@@ -150,6 +159,7 @@ public struct GeneratedLine: Sendable, Hashable {
         self.isHomeService = isHomeService
         self.sourceLoanID = sourceLoanID
         self.sourceCreditCardID = sourceCreditCardID
+        self.sourceSubscriptionID = sourceSubscriptionID
     }
 }
 

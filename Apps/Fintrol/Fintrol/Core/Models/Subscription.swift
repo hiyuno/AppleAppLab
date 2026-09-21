@@ -27,6 +27,11 @@ public final class Subscription {
     /// subscription/service the user still wants on record but no longer projected), and
     /// there was no field to honor that without this.
     public var isActive: Bool = true
+    /// "Cada mes" (default) vs "cada quincena" — user's request (2026-09-21), so far only
+    /// surfaced in `EssentialEditSheet`. `false` for every existing/imported row (added
+    /// post-v1, pre-release — no migration needed). When `true`, `ProjectionEngine` includes
+    /// this subscription in BOTH halves of the month instead of gating on `paymentDay`'s half.
+    public var isBiweekly: Bool = false
 
     public init(
         id: UUID = UUID(),
@@ -73,6 +78,29 @@ public final class Subscription {
         self.categoryRaw = homeServiceCategory.rawValue
     }
 
+    /// Coordinator (2026-09-21): "Essentials" — mirrors the `homeServiceCategory:` convenience
+    /// init above exactly, just `kind: .essential` and `EssentialCategory` instead.
+    public convenience init(
+        id: UUID = UUID(),
+        name: String,
+        price: Decimal,
+        currency: Currency,
+        paymentDay: Int,
+        startDate: Date,
+        endDate: Date? = nil,
+        essentialCategory: EssentialCategory,
+        isActive: Bool = true,
+        isBiweekly: Bool = false
+    ) {
+        self.init(
+            id: id, name: name, price: price, currency: currency, paymentDay: paymentDay,
+            startDate: startDate, endDate: endDate, card: "", kind: .essential, category: .tools,
+            isActive: isActive
+        )
+        self.categoryRaw = essentialCategory.rawValue
+        self.isBiweekly = isBiweekly
+    }
+
     public var currency: Currency {
         get { Currency(rawValue: currencyRaw) ?? .usd }
         set { currencyRaw = newValue.rawValue }
@@ -90,6 +118,11 @@ public final class Subscription {
 
     public var homeServiceCategory: HomeServiceCategory {
         get { HomeServiceCategory(rawValue: categoryRaw) ?? .rent }
+        set { categoryRaw = newValue.rawValue }
+    }
+
+    public var essentialCategory: EssentialCategory {
+        get { EssentialCategory(rawValue: categoryRaw) ?? .food }
         set { categoryRaw = newValue.rawValue }
     }
 

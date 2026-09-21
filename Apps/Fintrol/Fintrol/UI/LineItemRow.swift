@@ -56,6 +56,7 @@ struct LineItemRow: View {
         case .investment: return String(localized: "line_origin_investment", defaultValue: "investment")
         case .carryOver: return String(localized: "line_origin_carry_over", defaultValue: "carried over from last period")
         case .creditCard: return String(localized: "line_origin_credit_card", defaultValue: "credit card")
+        case .essential: return String(localized: "line_origin_essential", defaultValue: "essential")
         }
     }
 
@@ -73,6 +74,22 @@ struct LineItemRow: View {
     /// tint — same source hex as the paid-card tint (`#006338`, dark green), not system blue
     /// or the default `.green`.
     private static let paidHintColor = Color(red: 0x00 / 255.0, green: 0x63 / 255.0, blue: 0x38 / 255.0)
+
+    /// Coordinator (2026-09-21, /update-ui on node 12:7 "income card"): a fresh Figma pull shows
+    /// paid rows are a SOLID `Semantic/Success Green` fill (#006338), not a translucent/dark-tint
+    /// overlay — superseding the previous pass's `#14332B` tint (that was this token's "-Dark"
+    /// step, meant for the row's TEXT color instead, see `paidRowTextColor` below).
+    private static let paidRowBackground = Color(red: 0x00 / 255.0, green: 0x63 / 255.0, blue: 0x38 / 255.0)
+
+    /// Coordinator (2026-09-21, /update-ui): paid rows use `Semantic/Success Green-Dark`
+    /// (#14332B) for their text (title + amount), giving a subtle dark-on-green contrast instead
+    /// of plain white — confirmed on both the resting and swiped-open paid row states in Figma.
+    private static let paidRowTextColor = Color(red: 0x14 / 255.0, green: 0x33 / 255.0, blue: 0x2B / 255.0)
+
+    /// Coordinator (2026-09-21, tokens update): danger red moved from system `.red` (#FF3B30) to
+    /// the Figma token's `Semantic/Danger Red` (#DB281E) — darker/more muted, matching the same
+    /// pass that already updated `paidHintColor`'s green.
+    private static let dangerColor = Color(red: 0xDB / 255.0, green: 0x28 / 255.0, blue: 0x1E / 255.0)
 
     private var convertedCaption: String? {
         guard line.currency == .mxn, let exchangeRate, exchangeRate > 0 else { return nil }
@@ -97,38 +114,20 @@ struct LineItemRow: View {
     @State private var dragTranslation: CGFloat = 0
     @GestureState private var isDragging = false
     private let swipeCommitThreshold: CGFloat = 88
-    /// HIG #5 (Larry): swipe-trailing's semantics stay exactly as the user decided — first
-    /// action is "Marcar pagado" — but Eliminar/Editar (DESIGN_LIQUID.md's original second
-    /// trailing action) needed a visible, discoverable path beyond only `.contextMenu`.
-    /// Dragging trailing past this second, further threshold reveals it as a genuine second
-    /// stage of the same gesture (red for Eliminar, per Larry) instead of changing what the
-    /// first threshold already means.
-    private let swipeSecondActionThreshold: CGFloat = 176
 
-    private var isPastSecondTrailingThreshold: Bool { !line.isPaid && dragTranslation <= -swipeSecondActionThreshold }
-
-    /// Coordinator (2026-09-17, root-cause fix): which trailing action would fire, frozen the
-    /// instant `onEnded` decides to commit one — set right before the closing `settle`
-    /// animation starts, cleared at the top of every new live drag. Without this, the reveal's
-    /// color/icon were recomputed every frame straight from the live `dragTranslation` even
-    /// DURING the settle animation — so releasing past the second threshold (red "Eliminar")
-    /// would visibly flash back to green "Marcar pagado" as the offset animated back through
-    /// the first threshold on its way to 0.
+    /// Coordinator (2026-09-21, user's explicit request): swipe-trailing is now single-stage —
+    /// only "Marcar/Desmarcar pagado", full stop. The old second-stage deep-swipe (Eliminar for
+    /// manual lines, Editar for generated ones) is gone; editing is press-and-hold →
+    /// `.contextMenu` → "Editar" only, never a swipe gesture, so there's exactly one way in.
     private enum TrailingStage: Equatable {
         case paidToggle
-        case delete
-        case edit
     }
     @State private var committedTrailingStage: TrailingStage?
 
     private var currentTrailingStage: TrailingStage? {
         if let committedTrailingStage { return committedTrailingStage }
         guard dragTranslation < 0 else { return nil }
-        if isPastSecondTrailingThreshold {
-            return line.origin == .manual ? .delete : .edit
-        } else {
-            return .paidToggle
-        }
+        return .paidToggle
     }
 
     private var settleAnimation: Animation? { reduceMotion ? nil : .easeOut(duration: 0.2) }
@@ -184,21 +183,6 @@ struct LineItemRow: View {
                     }
                 } else if translation >= swipeCommitThreshold {
                     commitAndSettle(onToggleActive)
-                } else if translation <= -swipeSecondActionThreshold {
-                    // Fix 3: freeze which action (Eliminar/Editar) is committing BEFORE the
-                    // close animation starts — `swipeRevealLayer` reads this instead of the
-                    // live offset while settling, so the strip can't drift back through the
-                    // first threshold's green mid-close and flash the wrong action.
-                    committedTrailingStage = line.origin == .manual ? .delete : .edit
-                    withAnimation(settleAnimation) { dragTranslation = 0 }
-                    if line.origin == .manual, let onDelete {
-                        onDelete()
-                    } else {
-                        onStartEditing()
-                    }
-                    #if os(iOS)
-                    hapticImpact()
-                    #endif
                 } else if translation <= -swipeCommitThreshold {
                     committedTrailingStage = .paidToggle
                     commitAndSettle(onTogglePaid)
@@ -286,12 +270,14 @@ struct LineItemRow: View {
     /// so it sizes to the card's real bounds (post-padding), not the unpadded content.
     private var cardBackground: some View {
         ZStack {
-            Color("AppBackgroundSecondary")
-            // "Bloqueo de líneas pagadas" (2026-09-16): tercera excepción documentada al verde
-            // (junto a SOBRANTE y la píldora "Hoy") — un tinte verde translúcido sobre el Frost
-            // de la card, no un reemplazo.
+            // Coordinator (2026-09-21, /update-ui): was `Color("AppBackgroundSecondary")`
+            // (#000000 in dark mode — pixel-sampled indistinguishable from the #161617 card
+            // behind it). Figma's row background is `Background/AppBackground Tertiary`
+            // (#3C3C3C), a real, visible step up from the card.
             if line.isPaid {
-                Color.green.opacity(0.16)
+                Self.paidRowBackground
+            } else {
+                Color("AppBackgroundTertiary")
             }
             swipeRevealLayer
         }
@@ -348,25 +334,21 @@ struct LineItemRow: View {
                 Spacer(minLength: 0)
             } else if dragTranslation < 0 {
                 Spacer(minLength: 0)
-                // Fix 3 (coordinator, 2026-09-17): reads the FROZEN `currentTrailingStage`,
-                // not a live re-derivation from `dragTranslation` — while settling after a
-                // committed delete/edit, the live offset drifts back through the first
-                // threshold on its way to 0, which would otherwise flip this straight back to
-                // the green "Marcar pagado" branch mid-close (a wrong-action flash).
-                if currentTrailingStage == .delete || currentTrailingStage == .edit {
-                    // Second stage of the same trailing gesture, per Larry's ruling: Eliminar
-                    // (manual lines) or Editar (generated lines) — visible + red, never only
-                    // reachable via contextMenu.
-                    (currentTrailingStage == .delete ? Color.red : Color.blue)
+                // Single-stage trailing swipe now (2026-09-21) — only ever "Marcar"/"Desmarcar
+                // pagado", however far the user drags. Editing is press-and-hold →
+                // `.contextMenu` only, never a swipe outcome.
+                if line.isPaid {
+                    // Coordinator (2026-09-21, user's explicit request): once a line is already
+                    // paid, this first-stage swipe action is "Desmarcar pagado", not "Marcar
+                    // pagado" — red + X, matching the same visual language as the delete stage,
+                    // not the green checkmark used to mark something paid in the first place.
+                    Self.dangerColor
                         .frame(width: -dragTranslation)
                         .overlay(alignment: .trailing) {
-                            Label(
-                                currentTrailingStage == .delete ? deleteLabel : editLabel,
-                                systemImage: currentTrailingStage == .delete ? "trash.fill" : "pencil"
-                            )
-                            .labelStyle(.iconOnly)
-                            .foregroundStyle(.white)
-                            .padding(.trailing, 24)
+                            Label(markUnpaidLabel, systemImage: "xmark")
+                                .labelStyle(.iconOnly)
+                                .foregroundStyle(.white)
+                                .padding(.trailing, 24)
                         }
                         .clipShape(Self.trailingRevealShape)
                 } else {
@@ -375,13 +357,10 @@ struct LineItemRow: View {
                     Self.paidHintColor
                         .frame(width: -dragTranslation)
                         .overlay(alignment: .trailing) {
-                            Label(
-                                line.isPaid ? markUnpaidLabel : markPaidLabel,
-                                systemImage: "checkmark"
-                            )
-                            .labelStyle(.iconOnly)
-                            .foregroundStyle(.white)
-                            .padding(.trailing, 24)
+                            Label(markPaidLabel, systemImage: "checkmark")
+                                .labelStyle(.iconOnly)
+                                .foregroundStyle(.white)
+                                .padding(.trailing, 24)
                         }
                         .clipShape(Self.trailingRevealShape)
                 }
@@ -398,10 +377,14 @@ struct LineItemRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(line.title)
                     .font(.body)
+                    // Coordinator (2026-09-21, /update-ui): paid rows' title text is
+                    // `Semantic/Success Green-Dark` (#14332B) against the paid green background,
+                    // not the default white/primary.
+                    .foregroundStyle(line.isPaid ? Self.paidRowTextColor : .primary)
                 if let convertedCaption {
                     Text(convertedCaption)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color("TextSecondary"))
                         .monospacedDigit()
                 }
             }
@@ -409,9 +392,15 @@ struct LineItemRow: View {
             Spacer()
 
             Text(line.amount.currencyString(currency: line.currency))
-                .font(.body.weight(.semibold))
+                // Coordinator (2026-09-21, /update-ui): Figma's amount is Regular weight, not
+                // Semibold.
+                .font(.body)
+                .foregroundStyle(line.isPaid ? Self.paidRowTextColor : .primary)
                 .monospacedDigit()
-                .strikethrough(!line.isActive)
+                // Coordinator (2026-09-21, user's explicit request): paid rows now also strike
+                // through, not just inactive ones — the green paid tint alone wasn't enough of a
+                // "this is done" signal.
+                .strikethrough(!line.isActive || line.isPaid)
         }
         // Coordinator (2026-09-16): removed the permanent "palomita discreta" badge — the
         // card's green tint (`cardBackground`, `isPaid`) is now the sole "pagado" indicator at
