@@ -560,21 +560,97 @@ struct PeriodView: View {
             .padding(.top, 4)
             .padding(.bottom, 8)
             .background(alignment: .bottom) {
-                // User correction (2026-09-20): explicitly prefers flat black here over the
-                // `embeddedBackgroundColor` contrast fix — the tradeoff (the top corners' clip
-                // against `HomeView`'s black background is technically still there, just visually
-                // blends in and isn't distinguishable at a glance) is accepted. Reverted to a flat
-                // `AppBackground` fill, same as the rest of the card.
-                ZStack(alignment: .bottom) {
-                    Color("AppBackground")
-                    LinearGradient(
-                        colors: [Color("AppBackground"), Color("AppBackground").opacity(0)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                    .frame(height: 14)
+                // User request (2026-09-22): liquid-glass sticky header — scrolled content
+                // should show through, blurred, instead of the flat `AppBackground` fill this
+                // used before. `.ultraThinMaterial` gives the frost/blur; a thin `AppBackground`
+                // tint on top keeps the date/title legible against whatever scrolls underneath
+                // without going back to fully opaque. Only for the real, standalone Quincena
+                // screen (`onTap == nil`) — the follow-up user correction (2026-09-22) explicitly
+                // scoped this OUT of the embedded `HomeView` preview card, which keeps its
+                // original flat fill via `embeddedBackgroundColor` below.
+                Group {
+                    if onTap == nil {
+                        // Bug fix (2026-09-22, user report — screenshot showed a visible seam,
+                        // "como si hubiera dos layers"): the material's own frame has a hard
+                        // rectangular edge, and unblurred list content sits directly below it, so
+                        // a flat-opacity fade over a fixed 14pt strip still cut off abruptly.
+                        // Masking the WHOLE fill (material + tint) with a gradient — not just a
+                        // layer stacked on top of it — fades the blur itself out over a taller
+                        // stretch, so the glass dissolves into the scrolled content instead of
+                        // ending in a visible edge.
+                        ZStack(alignment: .bottom) {
+                            Rectangle().fill(.ultraThinMaterial)
+                            Color("AppBackground").opacity(0.35)
+                        }
+                        .mask(
+                            LinearGradient(
+                                stops: [
+                                    .init(color: .black, location: 0),
+                                    .init(color: .black, location: 0.82),
+                                    .init(color: .black.opacity(0), location: 1)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    } else {
+                        ZStack(alignment: .bottom) {
+                            Color("AppBackground")
+                            LinearGradient(
+                                colors: [Color("AppBackground"), Color("AppBackground").opacity(0)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                            .frame(height: 14)
+                        }
+                    }
                 }
+                // Bug fix (2026-09-21, user report): `.safeAreaInset` places this view's own
+                // frame right at the safe area boundary, not behind the status bar/Dynamic
+                // Island above it — so THIS fill (everything else in `stickyHeader` stays put)
+                // never covered that strip, and scrolled content became visible poking through
+                // it. Extending only the background (not the content, which must stay inset
+                // below the status bar) up into the top safe area closes that gap.
+                .ignoresSafeArea(edges: .top)
             }
+            // User request (2026-09-22): horizontal swipe as a second way to change period,
+            // originally scoped to just `header` (the date/chevrons row) — user follow-up
+            // ("extiendelo a que sea a cualquier parte de la parte de arriba") widened it to the
+            // WHOLE sticky header (drag handle capsule included), matching the red-boxed area in
+            // their screenshot. `.contentShape(Rectangle())` first: an `HStack`/`VStack` with
+            // `Spacer()`s is only hit-testable where its children actually draw pixels by
+            // default, so without this, a touch starting in a `Spacer()` gap wouldn't reach the
+            // gesture at all — likely why the swipe felt inconsistent by direction/position
+            // before this widened it to the full frame. Explicit mapping from the user, not the
+            // usual "swipe left reveals what's next" paging convention: left-to-right (positive
+            // translation) → next period, right-to-left (negative translation) → previous.
+            // `minimumDistance: 24` keeps this from fighting the title's own tap-to-jump.
+            // Mirrors the chevrons exactly — same `coordinate.next`/`.previous`, same
+            // `loadPeriod()`, same haptic, same historical-limit guard as the disabled
+            // `chevron.backward`.
+            //
+            // Bug fix (2026-09-22, verified in simulator): plain `.gesture` lost the arena to
+            // the title's own `Button` every time — SwiftUI prefers a descendant's gesture, so
+            // even a real swipe across the title got read as a tap and opened `JumpSheet`
+            // instead. `.highPriorityGesture` claims the touch stream first, but only once the
+            // drag actually clears `minimumDistance` — a true tap-with-no-movement still never
+            // "starts", so it falls through to the title's `onTapGesture` exactly as before.
+            .contentShape(Rectangle())
+            .highPriorityGesture(
+                DragGesture(minimumDistance: 24)
+                    .onEnded { value in
+                        guard abs(value.translation.width) > abs(value.translation.height) else { return }
+                        if value.translation.width > 0 {
+                            coordinate = coordinate.next
+                            loadPeriod()
+                            HapticFeedback.lightImpact(reduceMotion: reduceMotion)
+                        } else if coordinate > earliestCoordinate {
+                            coordinate = coordinate.previous
+                            loadPeriod()
+                            HapticFeedback.lightImpact(reduceMotion: reduceMotion)
+                        }
+                    }
+            )
     }
 
     /// Woz (2026-09-20, `revealProgress` unification): relocated verbatim from the now-deleted
@@ -662,62 +738,83 @@ struct PeriodView: View {
             #endif
     }
 
+    // User request (2026-09-22): hide the chevron buttons "por el momento" now that the header
+    // swipe does the same next/previous navigation — kept as a single flag (not deleted) so
+    // it's a one-line revert if they come back. The buttons themselves, `earliestCoordinate`
+    // disabling, and their accessibility labels are all left intact below, just not shown.
+    private var showsChevronButtons: Bool { false }
+
     private var header: some View {
         HStack {
-            Button {
-                coordinate = coordinate.previous
-                loadPeriod()
-                // Coordinator (2026-09-17): light haptic on a real period change — this
-                // action only runs when the button isn't `.disabled`, so the historical-limit
-                // case (no-op tap) never fires it.
-                HapticFeedback.lightImpact(reduceMotion: reduceMotion)
-            } label: {
-                // Coordinator (2026-09-16): system Liquid Glass paints the button now — plain
-                // `chevron.backward` (no `.circle.fill`), no manual tint. `.glass` (not
-                // `.glassProminent`): this side has no "active" accent state, and the
-                // historical-limit disabled look comes from native `.disabled(true)`, not a
-                // hand-picked gray.
-                Image(systemName: "chevron.backward")
-                    .frame(width: 29, height: 29)
+            if showsChevronButtons {
+                Button {
+                    coordinate = coordinate.previous
+                    loadPeriod()
+                    // Coordinator (2026-09-17): light haptic on a real period change — this
+                    // action only runs when the button isn't `.disabled`, so the historical-limit
+                    // case (no-op tap) never fires it.
+                    HapticFeedback.lightImpact(reduceMotion: reduceMotion)
+                } label: {
+                    // Coordinator (2026-09-16): system Liquid Glass paints the button now — plain
+                    // `chevron.backward` (no `.circle.fill`), no manual tint. `.glass` (not
+                    // `.glassProminent`): this side has no "active" accent state, and the
+                    // historical-limit disabled look comes from native `.disabled(true)`, not a
+                    // hand-picked gray.
+                    Image(systemName: "chevron.backward")
+                        .frame(width: 29, height: 29)
+                }
+                .buttonStyle(.glass)
+                .accessibilityLabel(String(localized: "period_previous_a11y", defaultValue: "Previous period"))
+                .disabled(coordinate <= earliestCoordinate)
+                // Slides in from off-screen left, only in the final portion of the Home→Quincena
+                // drag — see `chevronsRevealProgress` doc comment.
+                .offset(x: (chevronsRevealProgress - 1) * 80)
+                .opacity(chevronsRevealProgress)
             }
-            .buttonStyle(.glass)
-            .accessibilityLabel(String(localized: "period_previous_a11y", defaultValue: "Previous period"))
-            .disabled(coordinate <= earliestCoordinate)
-            // Slides in from off-screen left, only in the final portion of the Home→Quincena
-            // drag — see `chevronsRevealProgress` doc comment.
-            .offset(x: (chevronsRevealProgress - 1) * 80)
-            .opacity(chevronsRevealProgress)
 
             Spacer()
 
             VStack(spacing: 4) {
-                Button(action: handleOrTitleTapped) {
-                    titleBlock
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Fecha: \(coordinate.accessibleTitle)\(isTodayCoordinate ? String(localized: "period_date_a11y_current_suffix", defaultValue: ", current period") : "")")
-                .accessibilityHint(String(localized: "period_date_a11y_hint", defaultValue: "Tap to jump to another period"))
+                // Bug fix (2026-09-22, user report — swipe "a veces funciono y a veces no" on
+                // real device, right-to-left "no funciona nada"): this used to be a `Button`,
+                // which on real hardware races unpredictably against the header's own
+                // `.highPriorityGesture` swipe below — Button's UIKit-bridged press recognizer
+                // can win the arena even when a real drag is in progress, far more often than in
+                // the simulator's cleaner synthetic touches. Plain `.onTapGesture` composes
+                // deterministically with an ancestor's `.highPriorityGesture(DragGesture(...))`:
+                // once the touch clears `minimumDistance`, the drag claims the stream and the tap
+                // never fires; below that, the drag never "starts" and the tap fires normally.
+                // `.accessibilityAddTraits(.isButton)` replaces the trait `Button` used to give
+                // for free — VoiceOver still announces this as tappable.
+                titleBlock
+                    .contentShape(Rectangle())
+                    .onTapGesture(perform: handleOrTitleTapped)
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityLabel("Fecha: \(coordinate.accessibleTitle)\(isTodayCoordinate ? String(localized: "period_date_a11y_current_suffix", defaultValue: ", current period") : "")")
+                    .accessibilityHint(String(localized: "period_date_a11y_hint", defaultValue: "Tap to jump to another period"))
             }
 
             Spacer()
 
-            Button {
-                coordinate = coordinate.next
-                loadPeriod()
-                HapticFeedback.lightImpact(reduceMotion: reduceMotion)
-            } label: {
-                // Plain `chevron.forward` — system Liquid Glass paints the button.
-                // Coordinator (2026-09-16): neutral `.glass` like "atrás" and "+" — the user
-                // wants no solid accent fill here, `.glassProminent` was reverted.
-                Image(systemName: "chevron.forward")
-                    .frame(width: 29, height: 29)
+            if showsChevronButtons {
+                Button {
+                    coordinate = coordinate.next
+                    loadPeriod()
+                    HapticFeedback.lightImpact(reduceMotion: reduceMotion)
+                } label: {
+                    // Plain `chevron.forward` — system Liquid Glass paints the button.
+                    // Coordinator (2026-09-16): neutral `.glass` like "atrás" and "+" — the user
+                    // wants no solid accent fill here, `.glassProminent` was reverted.
+                    Image(systemName: "chevron.forward")
+                        .frame(width: 29, height: 29)
+                }
+                .buttonStyle(.glass)
+                .accessibilityLabel(String(localized: "period_next_a11y", defaultValue: "Next period"))
+                // Slides in from off-screen right, only in the final portion of the Home→Quincena
+                // drag — see `chevronsRevealProgress` doc comment.
+                .offset(x: (1 - chevronsRevealProgress) * 80)
+                .opacity(chevronsRevealProgress)
             }
-            .buttonStyle(.glass)
-            .accessibilityLabel(String(localized: "period_next_a11y", defaultValue: "Next period"))
-            // Slides in from off-screen right, only in the final portion of the Home→Quincena
-            // drag — see `chevronsRevealProgress` doc comment.
-            .offset(x: (1 - chevronsRevealProgress) * 80)
-            .opacity(chevronsRevealProgress)
         }
         .padding(.horizontal, 4)
     }
@@ -769,11 +866,21 @@ struct PeriodView: View {
         // `CarryOverEngine.total`/`CreditCardPaymentsSheet`/`SubscriptionBreakdownSheet`, these
         // five totals summed EVERY line regardless of `isActive` — the one aggregate total in
         // the app that didn't exclude deactivated lines from its sum.
-        let creditCardTotal = creditCardLines.filter(\.isActive).reduce(Decimal(0)) { $0 + $1.amount }
-        let investmentTotal = investmentLines.filter(\.isActive).reduce(Decimal(0)) { $0 + $1.amount }
-        let essentialTotal = essentialLines.filter(\.isActive).reduce(Decimal(0)) { $0 + $1.amount }
-        let paymentsTotal = paymentsLines.filter(\.isActive).reduce(Decimal(0)) { $0 + $1.amount }
-        let serviciosTotal = serviciosLines.filter(\.isActive).reduce(Decimal(0)) { $0 + $1.amount }
+        //
+        // Bug fix (2026-09-21, user report — "Alpaca" $100 USD + "Novotech" MX$7,950 summed to
+        // $8,050 instead of ~$565.67): a line can be in MXN (its own currency, shown as-is on
+        // its own row) — these totals are presented in plain USD, so each line must convert
+        // through `CurrencyConversion.toUSD` first instead of raw-summing `.amount`.
+        func usdTotal(_ lines: [LineItem]) -> Decimal {
+            lines.filter(\.isActive).reduce(Decimal(0)) { partial, line in
+                partial + CurrencyConversion.toUSD(amount: line.amount, currency: line.currency, rate: effectiveRate)
+            }
+        }
+        let creditCardTotal = usdTotal(creditCardLines)
+        let investmentTotal = usdTotal(investmentLines)
+        let essentialTotal = usdTotal(essentialLines)
+        let paymentsTotal = usdTotal(paymentsLines)
+        let serviciosTotal = usdTotal(serviciosLines)
 
         return VStack(alignment: .leading, spacing: 24) {
             // Coordinator (2026-09-16, user's Figma review): "+" reverts to the section

@@ -91,10 +91,27 @@ struct LineItemRow: View {
     /// pass that already updated `paidHintColor`'s green.
     private static let dangerColor = Color(red: 0xDB / 255.0, green: 0x28 / 255.0, blue: 0x1E / 255.0)
 
-    private var convertedCaption: String? {
+    /// Coordinator (2026-09-21, user's request): the permanent "≈ $X USD · Rate Y" caption is
+    /// gone — replaced by a tap-to-toggle on the amount itself (below). The conversion is still
+    /// computed exactly the same way ("por detrás sigue haciendo la conversión"); only where it
+    /// shows changed. `nil` for a USD line — nothing to convert, nothing to toggle.
+    private var convertedUSDAmount: Decimal? {
         guard line.currency == .mxn, let exchangeRate, exchangeRate > 0 else { return nil }
-        let usd = CurrencyConversion.toUSD(amount: line.amount, currency: .mxn, rate: exchangeRate)
-        return String(localized: "line_converted_caption", defaultValue: "≈ \(usd.currencyString()) USD · Rate \(exchangeRate.twoDecimalString)")
+        return CurrencyConversion.toUSD(amount: line.amount, currency: .mxn, rate: exchangeRate)
+    }
+
+    /// Local display-only toggle (2026-09-21, user's request) — flips the amount between its
+    /// real MXN value and the USD equivalent on tap, never touching `line.currency`/`line.amount`
+    /// themselves. Deliberately separate from the contextMenu's "Cambiar a MXN/USD" (that one
+    /// genuinely mutates the stored line and every total downstream); this is purely a glance
+    /// toggle, per-row, reset whenever the row leaves screen and comes back.
+    @State private var isShowingUSDEquivalent = false
+
+    private var displayAmountText: String {
+        if isShowingUSDEquivalent, let convertedUSDAmount {
+            return convertedUSDAmount.currencyString(currency: .usd)
+        }
+        return line.amount.currencyString(currency: line.currency)
     }
 
     var body: some View {
@@ -381,26 +398,28 @@ struct LineItemRow: View {
                     // `Semantic/Success Green-Dark` (#14332B) against the paid green background,
                     // not the default white/primary.
                     .foregroundStyle(line.isPaid ? Self.paidRowTextColor : .primary)
-                if let convertedCaption {
-                    Text(convertedCaption)
-                        .font(.caption)
-                        .foregroundStyle(Color("TextSecondary"))
-                        .monospacedDigit()
-                }
             }
 
             Spacer()
 
-            Text(line.amount.currencyString(currency: line.currency))
-                // Coordinator (2026-09-21, /update-ui): Figma's amount is Regular weight, not
-                // Semibold.
-                .font(.body)
-                .foregroundStyle(line.isPaid ? Self.paidRowTextColor : .primary)
-                .monospacedDigit()
-                // Coordinator (2026-09-21, user's explicit request): paid rows now also strike
-                // through, not just inactive ones — the green paid tint alone wasn't enough of a
-                // "this is done" signal.
-                .strikethrough(!line.isActive || line.isPaid)
+            // Coordinator (2026-09-21, user's request — "esto solo va a aplicar para cuando el
+            // gasto sea en pesos"): tappable only when there's a USD equivalent to toggle to
+            // (`convertedUSDAmount != nil`, i.e. an MXN line with a usable rate) — a USD line's
+            // amount is inert, same as before.
+            Group {
+                if convertedUSDAmount != nil {
+                    Button {
+                        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) {
+                            isShowingUSDEquivalent.toggle()
+                        }
+                    } label: {
+                        amountText
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    amountText
+                }
+            }
         }
         // Coordinator (2026-09-16): removed the permanent "palomita discreta" badge — the
         // card's green tint (`cardBackground`, `isPaid`) is now the sole "pagado" indicator at
@@ -411,6 +430,19 @@ struct LineItemRow: View {
         // only way in is long-press → `.contextMenu` → "Editar" (still wired to
         // `onStartEditing()` there). Swipes (activar/desactivar, pagado, Eliminar) are
         // untouched — this was the row's own tap gesture only.
+    }
+
+    private var amountText: some View {
+        Text(displayAmountText)
+            // Coordinator (2026-09-21, /update-ui): Figma's amount is Regular weight, not
+            // Semibold.
+            .font(.body)
+            .foregroundStyle(line.isPaid ? Self.paidRowTextColor : .primary)
+            .monospacedDigit()
+            // Coordinator (2026-09-21, user's explicit request): paid rows now also strike
+            // through, not just inactive ones — the green paid tint alone wasn't enough of a
+            // "this is done" signal.
+            .strikethrough(!line.isActive || line.isPaid)
     }
 
     /// DESIGN_LIQUID.md: "inactiva" / "pagada" / "inactiva, pagada" / nothing — always in this

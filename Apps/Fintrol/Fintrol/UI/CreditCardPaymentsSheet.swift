@@ -17,8 +17,14 @@ struct CreditCardPaymentsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.modelContext) private var context
 
+    // Bug fix (2026-09-21, user report on the sibling Investments sheet — same mixed-currency
+    // sum bug applies here too): a card's line can be in MXN (manually switched via
+    // contextMenu) — the Total is presented in plain USD, so each line must convert through
+    // `CurrencyConversion.toUSD` first, same as `CarryOverEngine.total` does everywhere else.
     private var total: Decimal {
-        lines.filter(\.isActive).reduce(Decimal(0)) { $0 + $1.amount }
+        lines.filter(\.isActive).reduce(Decimal(0)) { partial, line in
+            partial + CurrencyConversion.toUSD(amount: line.amount, currency: line.currency, rate: exchangeRate ?? 0)
+        }
     }
 
     private func suggestedText(for line: LineItem) -> String? {
