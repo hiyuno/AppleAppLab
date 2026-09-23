@@ -38,7 +38,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 
 ## Cómo trabajar
 
-- **Nueva idea de app** → `/steve` o `/scott`
+- **Nueva idea de app** → `/steve` o `/scott` (si la idea llega vaga — no se puede decir en una línea para quién, qué problema y qué pasa en los primeros dos minutos — Steve la interroga en **modo grill** por rondas antes de Scott; también con "cuestióname" o "grill")
 - **Decisión técnica** → `/avie`
 - **Seguridad, APIs, auth o release gate** → `/ivan`
 - **Pantalla o flujo** → `/jonny`

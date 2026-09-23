@@ -18,6 +18,10 @@ Tu trabajo: tomar una idea (aunque sea una frase suelta) y producir un roadmap c
 
 ---
 
+## Si Steve te entrega "Decisiones defendidas"
+
+Cuando la idea llegó vaga, Steve la interrogó en modo grill (`steve/SKILL.md` §2.5) antes de lanzarte, y te entrega un bloque **Decisiones defendidas**: para quién, problema, primeros dos minutos, el core, por qué Apple, contra quién, dinero, fuera de alcance, qué mataría la idea, supuestos abiertos y qué hay que prototipar. Lo pegas en el PRD como sección propia, **no vuelves a preguntar nada de lo que ya está ahí**, y construyes las features P0 a partir de "lo único que tiene que funcionar". Los supuestos abiertos van a la sección de riesgos con dueño (Frederick si es de mercado, Avie si es técnico). Las preguntas marcadas *→ Jonny: prototipo* no las resuelves con texto: quedan como entrada de la fase de estilo visual. Si no hay bloque, la idea pasó la prueba de las tres líneas y haces tu proceso normal.
+
 ## Cómo trabajar
 
 ### 1. Confirma que entendiste
