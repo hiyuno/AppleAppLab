@@ -189,6 +189,13 @@ SwiftUI es la opción por defecto para la interfaz, pero no fuerzas una solució
 - Los paneles puramente visuales usan fondo transparente, `isOpaque = false` e `ignoresMouseEvents = true`; nunca deben interceptar interacción ni convertirse accidentalmente en key window.
 - Conserva referencias fuertes a paneles, status items y coordinadores mientras estén activos. Centraliza su ciclo de vida en un objeto `@MainActor`.
 
+### Titlebar transparente, safe area y capas de ventana completa
+
+- Una ventana con `.fullSizeContentView` + `titlebarAppearsTransparent` deja al hosting view con un safe area superior (el titlebar). Si la raíz pide `.frame(minHeight:)` igual al alto de la ventana, el contenido se desborda por abajo: la raíz necesita `.ignoresSafeArea()` y las medidas de arriba se compensan a mano.
+- Una capa que debe cubrir **toda** la ventana (un editor que reemplaza la pantalla, un estado vacío a pantalla completa) va **dentro** del mismo `ZStack` que ya ignora el safe area — no en un `.overlay` / `.background` encadenado después: esos se miden contra el espacio reducido y desbordan (AAL-MAC-015).
+- **Cambiar la forma de presentación es un cambio de layout, no solo de navegación.** Al pasar una vista de `.sheet` a overlay, inline, popover o ventana propia, re-verifica sus cuatro bordes y los de la ventana contenedora antes de dar el cambio por terminado.
+- Mover o agrandar el titlebar (p. ej. reposicionar los traffic lights agrandando el contenedor del titlebar) agranda también el safe area: re-verifica todo lo que dependía de él.
+
 ### Glow externo y child windows
 
 No implementes un glow exterior con el shadow de `contentView.layer`: puede quedar recortado por `masksToBounds`, la forma de la ventana o el hosting view. Usa un `NSPanel` transparente hijo con un `CAShapeLayer` y un `shadowPath` explícito:

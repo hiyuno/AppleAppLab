@@ -157,6 +157,25 @@ final class OnboardingUITests: XCTestCase {
 }
 ```
 
+### Márgenes de ventana — un test barato que atrapa cortes de layout
+
+Cuando una pantalla tiene márgenes definidos en el diseño (pie con botones, título), un UI test comprueba que el elemento más externo queda **dentro** de la ventana con su margen. Atrapa overlays/sheets/safe areas que empujan contenido fuera del borde — errores que un screenshot recortado no muestra.
+
+```swift
+func testTemplateEditorFooterKeepsBottomMargin() {
+    let app = XCUIApplication()
+    app.launch()
+    // … navegar hasta la pantalla
+    let window = app.windows.firstMatch
+    let done = window.buttons["Done"]
+    XCTAssertTrue(done.waitForExistence(timeout: 2))
+    let bottomMargin = window.frame.maxY - done.frame.maxY
+    XCTAssertGreaterThanOrEqual(bottomMargin, 15, "Done must sit ≥16pt inside the window's bottom edge (design)")
+}
+```
+
+Uno por pantalla con márgenes críticos; el valor esperado sale del diseño (Pen `ctx.bounds` / Figma `get_metadata`), no se inventa.
+
 ---
 
 ## Mocks y fixtures

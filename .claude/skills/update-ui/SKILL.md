@@ -108,9 +108,15 @@ Corrige cada diferencia real. Si un fix es puramente de estilo (color, padding, 
 ## Fase 6 — Verificar (Steve)
 
 1. Build.
-2. Correr en el simulador fijo del proyecto (o el que esté configurado en la memoria de la sesión).
-3. Screenshot de la pantalla/fragmento y comparación visual contra el screenshot del diseño (Figma `get_screenshot`; Pen `TakeScreenshot([frameId])`).
-4. Si el usuario está probando en dispositivo real durante la sesión, instalar ahí también una vez confirmado en el simulador.
+2. Correr en el simulador fijo del proyecto (o el que esté configurado en la memoria de la sesión). En macOS, la app en la ventana real.
+3. **Chequeo de los cuatro bordes — con números, no a ojo.** Para el elemento más externo de cada lado (título arriba, botones del pie abajo, primer campo a la izquierda, último control a la derecha), mide su frame real (resumen de accesibilidad del screenshot de la app, o un `debugOutline`) y compara su distancia al borde de la pantalla/ventana contra los `bounds` del diseño (Pen `ctx.bounds`; Figma `get_metadata`). Tolerancia: 1 pt. Si algo toca el borde o lo pasa, la verificación **falla**, aunque "se vea bien".
+4. **Capturas con margen.** Todo screenshot/zoom de verificación incluye ~20 pt **fuera** de la ventana o pantalla. Un recorte que termina exactamente en el borde oculta un corte: el botón cortado parece un botón normal.
+5. Screenshot de la pantalla/fragmento y comparación visual contra el screenshot del diseño (Figma `get_screenshot`; Pen `TakeScreenshot([frameId])`).
+6. Si el usuario está probando en dispositivo real durante la sesión, instalar ahí también una vez confirmado en el simulador.
+
+**Si algo sale mal: medir antes de corregir.** No se aplica un fix de layout sin haber medido el frame real y confirmado la causa (qué contenedor propone qué tamaño). Un fix por suposición que no arregla nada cuesta una vuelta completa de build + verificación. Si el primer fix falla, pasa a `/global-fix` en vez de encadenar suposiciones.
+
+**Si el fix cambió cómo se presenta una vista** (sheet ↔ overlay ↔ inline ↔ popover ↔ ventana propia), el chequeo de los cuatro bordes se repite para esa vista **y** para la vista/ventana que la contiene: cambiar el contenedor cambia la propuesta de tamaño y el safe area (ver `KNOWN_ISSUES.md` AAL-MAC-015).
 
 ---
 

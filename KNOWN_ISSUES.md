@@ -22,6 +22,7 @@ Base curada de problemas reutilizables en apps Apple. No sustituye la documentac
 | AAL-MAC-012 | conditional | Swift concurrency | `assumeIsolated` solo con garantía documentada de ejecución en main |
 | AAL-MAC-013 | deprecated | Observation | Mito: `@Bindable var model = model` copia una instancia observable |
 | AAL-MAC-014 | verified | SwiftUI/macOS | `editMode` no está disponible en macOS |
+| AAL-MAC-015 | verified | SwiftUI/AppKit layout | Capa de ventana completa como `.overlay` desborda por el safe area del titlebar |
 | AAL-TEST-001 | verified | Testing/codecs | Fixtures válidos y `#require` evitan traps del host de pruebas |
 
 ## Entradas verificadas
@@ -110,6 +111,23 @@ Base curada de problemas reutilizables en apps Apple. No sustituye la documentac
 - **Verificación:** test focalizado, suite macOS completa, build iOS Simulator y ausencia de nuevos `.ips` tras la corrección.
 - **Prevención:** cada cambio estricto de codec actualiza en la misma entrega el corpus válido, los casos inválidos explícitos y sus expectativas; no usar `!` sobre resultados de parseo, validación o fetch.
 - **Relacionadas:** —
+
+### AAL-MAC-015 — Capas de ventana completa dentro del contenedor que ignora el safe area
+
+- **Fingerprint:** `swiftui/fullsizecontentview/overlay-after-ignoresSafeArea-overflow`
+- **Categoría:** SwiftUI / AppKit / layout de ventana
+- **Plataformas:** macOS; observado en macOS 15; Xcode 26, Swift 6
+- **Proyecto fuente / fechas:** New PROject (`APP-NPR-005`); first seen 2026-09-27; last verified 2026-09-27
+- **Owner / status:** Woz + Steve / `verified`
+- **Síntoma:** en una ventana con titlebar transparente, una vista que reemplaza toda la pantalla (un editor mostrado encima de Settings) queda con su pie pegado o cortado contra el borde inferior, mientras las demás pantallas de la misma ventana se ven bien.
+- **Reproducción/evidencia:** ventana `.fullSizeContentView` + `titlebarAppearsTransparent`; raíz SwiftUI con `.frame(minHeight: alto de ventana).ignoresSafeArea()`; la vista de pantalla completa agregada como `.overlay { … }` después. Medido: el pie sobresale ~13–16 pt (≈ la altura del titlebar a repartir).
+- **Hipótesis/causa raíz:** confirmada — el `.overlay` recibe la propuesta de tamaño del view al que se encadena, calculada contra el safe area reducido por el titlebar; su contenido pide el alto completo y se desborda. El `ZStack` de la raíz sí ignora el safe area, por eso sus hijos se ven bien.
+- **Garantía de plataforma/fuente:** comportamiento de layout de SwiftUI con safe areas; no es un bug del sistema.
+- **Workaround:** ninguno fiable; quitar el `minHeight` de la vista superpuesta **no** lo corrige.
+- **Solución durable:** poner la capa de pantalla completa como un hijo más del mismo `ZStack` que ya ignora el safe area (`if let request { EditorView(…) }`), sin tamaño mínimo propio. Recibe el mismo frame borde a borde que el resto.
+- **Verificación:** chequeo de los cuatro bordes con frames reales (accesibilidad) contra el diseño; captura con margen fuera de la ventana; UI test de margen inferior (ver `/bertrand`).
+- **Prevención:** cambiar la forma de presentación (sheet ↔ overlay ↔ inline) es un cambio de layout: re-verificar bordes de la vista y de su ventana (`/woz`, `/update-ui` Fase 6). Agrandar el titlebar (p. ej. reposicionar traffic lights) agranda el safe area y hace el problema más visible.
+- **Relacionadas:** AAL-MAC-007 (cada `NSHostingView` es un árbol separado), AAL-MAC-010.
 
 ## Entradas condicionales
 
