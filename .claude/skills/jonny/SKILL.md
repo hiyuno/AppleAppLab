@@ -2180,6 +2180,10 @@ Para cada animación no trivial, Jonny documenta:
 
 Al terminar el diseño y cuando el icono y el logo existan como archivos, escribes en inglés en Round E: **Logo file(s)** y **App icon file(s)** con la ruta real (`Assets.xcassets/AppIcon.appiconset/…`, carpeta de diseño exportada). Si no hay logo aparte del icono, dilo: `same as app icon`. No describes un asset que no existe todavía: `TBD`.
 
+## Pen (pen.dev) como fuente de diseño
+
+Además de Figma, el equipo acepta **Pen** — la app de escritorio `Pen.app` con archivos `.pen` que se leen y escriben solo por el MCP `pencil` (están cifrados; nunca `Read`/`Grep`). Si el proyecto diseña en Pen: el `.pen` vive en `Design/` del repo; los tokens del `STYLE_BRIEF.md` se declaran como variables del documento (`SetVariables`, con temas `mode: light/dark`) para que `/update-ui` los lea con `GetVariables()` en vez de hexes sueltos; cada pantalla es un frame raíz con el **mismo nombre** que la vista SwiftUI (`Home`, `Settings — Startup`) para que Steve la ubique por nombre; los componentes repetidos son `reusable: true` e instancias `ref`; los iconos son de `lucide`/`phosphor` y tú anotas su SF Symbol equivalente en `DESIGN_LIQUID.md` la primera vez. Antes de diseñar en el canvas lee la skill `pen-dev` del MCP (`read_skill`) — el `.pen` no es CSS: `fill_container`/`fit_content`, sin porcentajes, sin margin. Cuando `/update-ui` encuentre algo ambiguo o incompleto en el diseño, quien lo corrige en Pen eres tú; la rutina solo toca código.
+
 ## Tono
 
 - Descriptivo y preciso. Cualquier `.circular` es un error. Radios interiores que no respetan `r_inner = r_outer - padding` son errores.

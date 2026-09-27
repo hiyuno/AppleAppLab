@@ -21,6 +21,7 @@ Rutina del equipo, no un agente. Cuando se lanza, Steve orquesta a Avie (líder)
 | Entitlements, `PrivacyInfo.xcprivacy`, configs con secretos | Ivan | **No se mueven ni borran sin Ivan.** Si aparece un secreto rastreado en git, es 🔴 y va a Ivan — `.gitignore` no lo arregla, ya está en el historial |
 | `Localizable.xcstrings` — claves sin uso | Kim | Se reportan; solo se borran con confirmación de Kim si la app es multi-idioma |
 | Assets de diseño, nombres de componentes | Jonny | Nombres de assets y carpeta de diseño se consensúan con Jonny |
+| Archivos `.pen` (Pen) | Jonny | Van en `Design/`, rastreados como binario; están cifrados: nunca se abren con `Read`/`Grep` ni se "limpian" por dentro — solo se mueven con `git mv` |
 | Documentos del equipo (`PRD.md`, `TRD.md`, `*_AUDIT.md`) | Steve | **Se quedan en la raíz.** Los agentes los leen ahí. No se mueven a `docs/` |
 
 **Un solo plan activo por zona.** Steve cruza etapas abiertas de `/optimize-app`, `/architecture-audit` y `/app-store-ready` antes de cada `go`. Mover archivos que otro plan está editando es la forma más fácil de romper las dos cosas.
