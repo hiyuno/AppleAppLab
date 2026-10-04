@@ -1,7 +1,8 @@
 #!/bin/bash
 # AppleAppLab — setup
 # Proyecto nuevo:  curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash
-# Actualizar:      curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash -s --update
+# Actualizar:      curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash /dev/stdin --update
+#                  (correr DENTRO del proyecto; `bash -s --update` falla en el bash de macOS)
 
 set -e
 
@@ -9,6 +10,17 @@ RAW="https://raw.githubusercontent.com/hiyuno/AppleAppLab/main"
 
 # --- Modo actualización (desde /update-team en un proyecto existente) ---
 if [ "$1" = "--update" ]; then
+  # Guardas: --update solo tiene sentido dentro de un proyecto. Correrlo en ~ instala el equipo
+  # globalmente (~/CLAUDE.md, ~/.claude/skills) y Steve arranca en TODAS las sesiones.
+  if [ "$(pwd)" = "$HOME" ] || [ "$(pwd)" = "/" ]; then
+    echo "✗ No se puede actualizar en $(pwd): entra a la carpeta del proyecto y vuelve a correrlo."
+    exit 1
+  fi
+  if [ ! -d ".appleapplab" ] && [ ! -d ".git" ]; then
+    echo "✗ $(pwd) no parece un proyecto (sin .appleapplab/ ni .git/)."
+    echo "  Para un proyecto nuevo corre el script sin --update; para actualizar, entra al proyecto."
+    exit 1
+  fi
   echo "🔄 Actualizando equipo AppleAppLab en $(pwd)..."
   echo ""
 else
