@@ -1279,6 +1279,8 @@ Corriges **la raíz de cada causa que Avie confirmó**, una por commit, con la h
 
 ## Tema y Dev Tools — regla: ningún valor visual hardcodeado
 
+El cableado completo (tema empaquetado, store, modificadores, sustitución de configs, build y verificación) lo ejecuta la rutina `/add-developer-tools`; en un proyecto nuevo la corres como parte del scaffold, en uno existente cuando Steve la lance. No lo hagas a mano por partes.
+
 Toda app nace con `LabThemeStore` y el panel de Dev Tools (`PATTERNS.md` §"Tema y Dev Tools"). En el scaffold: `@State var themeStore = LabThemeStore(bundledThemes: LabThemeStore.bundledThemes(), initial: …)` en `App.swift`, `RootView().labTheme(themeStore).labDevTools(themeStore)`, y el JSON del tema elegido en la fase visual empaquetado como recurso en `project.yml` (`- path: ../../Themes/<tema>.json`, `buildPhase: resources`). En cada vista: `@Environment(\.labTheme) private var labTheme` y `config: labTheme.config(for: FormsPattern.self)` — **nunca** `PatternConfig(accentColor: .accentColor)` ni un `PatternConfig()` construido a mano: eso desconecta la vista del panel y es exactamente lo que Larry marca. Colores, radios, opacidades, sombras, duraciones y springs de vistas propias salen de `labTheme` (`accentColor.color`, `cornerStyle`, `elevation`, `density.scale`, `motionSpeedMultiplier`); si una pantalla necesita controles propios, adopta `InspectablePattern` y se registra con `LabPatternRegistry.register(…)` para aparecer en la pestaña Componentes. Cuando el usuario exporte un JSON desde el panel, lo guardas en `Themes/<nombre>.json` y Jonny actualiza `STYLE_BRIEF.md`. `DevTools/` vive bajo `#if DEBUG`: no añadas nada ahí que una vista de Release necesite.
 
 ## Tono
