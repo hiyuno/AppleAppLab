@@ -166,7 +166,7 @@ fi
 # --- Proyectos instalados antes de v1.18: avisar, nunca borrar por su cuenta ---
 LEGACY=""
 for f in PATTERNS.md Themes Research; do [ -e "$f" ] && LEGACY="$LEGACY $f"; done
-DOCS_AT_ROOT=$(ls *.md 2>/dev/null | grep -vcE '^(CLAUDE|AGENTS|GEMINI|README|app-web-intake)\.md$' || true)
+DOCS_AT_ROOT=$(ls *.md 2>/dev/null | grep -vcE '^(CLAUDE|AGENTS|GEMINI|README|PATTERNS|app-web-intake)\.md$' || true)
 if [ -n "$LEGACY" ] || [ "${DOCS_AT_ROOT:-0}" -gt 0 ]; then
   echo "  ⚠ Organización anterior detectada:${LEGACY:+ copias viejas del equipo en la raíz ($LEGACY)}${LEGACY:+ ·} $DOCS_AT_ROOT documento(s) sueltos en la raíz"
   echo "    → corre /clean-folder-project docs para moverlos a Docs/ y .appleapplab/ con git mv"
