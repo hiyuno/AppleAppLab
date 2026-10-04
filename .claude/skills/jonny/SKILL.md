@@ -2184,6 +2184,10 @@ Al terminar el diseño y cuando el icono y el logo existan como archivos, escrib
 
 Además de Figma, el equipo acepta **Pen** — la app de escritorio `Pen.app` con archivos `.pen` que se leen y escriben solo por el MCP `pencil` (están cifrados; nunca `Read`/`Grep`). Si el proyecto diseña en Pen: el `.pen` vive en `Design/` del repo; los tokens del `STYLE_BRIEF.md` se declaran como variables del documento (`SetVariables`, con temas `mode: light/dark`) para que `/update-ui` los lea con `GetVariables()` en vez de hexes sueltos; cada pantalla es un frame raíz con el **mismo nombre** que la vista SwiftUI (`Home`, `Settings — Startup`) para que Steve la ubique por nombre; los componentes repetidos son `reusable: true` e instancias `ref`; los iconos son de `lucide`/`phosphor` y tú anotas su SF Symbol equivalente en `DESIGN_LIQUID.md` la primera vez. Antes de diseñar en el canvas lee la skill `pen-dev` del MCP (`read_skill`) — el `.pen` no es CSS: `fill_container`/`fit_content`, sin porcentajes, sin margin. Cuando `/update-ui` encuentre algo ambiguo o incompleto en el diseño, quien lo corrige en Pen eres tú; la rutina solo toca código.
 
+## El tema es un JSON, y vuelve del panel
+
+El resultado de la fase visual no es solo `STYLE_BRIEF.md`: es un `Themes/<nombre>.json` (`LabTheme`) que la app empaqueta y carga como default. Si el usuario eligió un tema predefinido, es ese archivo; si pediste algo nuevo, lo creas desde PatternLibrary (Guardar tema → el JSON queda en `UserDefaults`; Exportar) o desde el panel de Dev Tools de cualquier app. Cuando Woz o el usuario te traigan un JSON exportado desde el panel ("así lo dejé afinado"), lo adoptas: va a `Themes/`, actualizas `STYLE_BRIEF.md` con los tokens que cambiaron y `THEMES.md` si es un tema nuevo del equipo. Los `patternOverrides` por componente son parte del tema: no los descartes al normalizar.
+
 ## Tono
 
 - Descriptivo y preciso. Cualquier `.circular` es un error. Radios interiores que no respetan `r_inner = r_outer - padding` son errores.

@@ -292,6 +292,10 @@ Al terminar `TRD.md`, escribes en inglés en Round C: **Does the app already hav
 
 Diagnosticas tú, no Woz: quien escribió el código es quien más fácil se cree su propia explicación. Sigues `.claude/skills/global-fix/SKILL.md`: con la reproducción y el test rojo de Bertrand, escribes primero **cómo debería funcionar la función** de entrada a salida — qué entra, qué estado lee y quién más lo escribe, qué frontera cruza (`async`, actor, `@MainActor`, `Task`, red, `ModelContext`, `onChange`, `onAppear`), qué invariante debe cumplirse en cada tramo. Después enumeras **todas** las causas plausibles sin filtrar, con el catálogo de familias (estado, concurrencia, datos, ciclo de vida, fronteras externas, entorno, el fix anterior) e incluyendo la posibilidad de dos causas a la vez; las rankeas por probabilidad × facilidad de comprobar, y las **falsas una por una con evidencia** — log, breakpoint, test aislado, `git bisect` — nunca por intuición. No pasas a fix con un "probablemente". Tras la verificación de Bertrand, re-lees el flujo arreglado y decides qué se quita: lo que existía para tapar el bug, lo muerto, los caminos duplicados; Woz lo ejecuta en commit aparte. Si el fix real exige cambiar estructura de toda la app, lo marcas `🏗` y va a `/architecture-audit`; el bug se mitiga mínimamente mientras tanto, dicho de frente.
 
+## Tema y Dev Tools en el TRD
+
+Toda app del equipo lleva en el TRD, como dependencia estándar junto a `AppleAppLabUI`: un `LabThemeStore` como **única fuente de verdad visual** inyectado con `.labTheme()` en la raíz, el tema de la fase visual empaquetado desde `Themes/*.json`, y el panel `.labDevTools()` solo en Debug. Es una decisión de arquitectura, no de estilo: un dato visual con dos fuentes (el tema y un hex suelto en una vista) es la misma falta que dos fuentes de verdad de datos, y `/architecture-audit` C1 lo trata igual. Si el proyecto no es SwiftUI puro o tiene restricciones (widgets no pueden importar el paquete — ver Eve), lo anotas y defines cómo llegan los tokens ahí.
+
 ## Tono
 
 - Preciso. Sin ambigüedad.

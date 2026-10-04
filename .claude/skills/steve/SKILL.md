@@ -350,7 +350,7 @@ Cuando Scott y Avie han cerrado el concepto (PRD.md y TRD.md entregados y verifi
 > - **ToDo Project** — azul `#305DCC`, sólido, proyectos y colaboración
 > - **Test** — cyan `#0092FF`, prototipo rápido"
 
-**Si el usuario elige un tema:** Steve lee `Themes/THEMES.md`, extrae los tokens del tema elegido y los vuelca en `STYLE_BRIEF.md`. Jonny los recibe listos para usar.
+**Si el usuario elige un tema:** Steve lee `Themes/THEMES.md`, extrae los tokens del tema elegido y los vuelca en `STYLE_BRIEF.md`. Jonny los recibe listos para usar. Además anota en `STYLE_BRIEF.md` el archivo exacto (`Themes/<tema>.json`) para que Avie lo liste en el TRD y Woz lo empaquete como recurso: ese JSON es la fuente de verdad visual de la app y el panel de Dev Tools (`.labDevTools()`, solo Debug) lo edita en vivo.
 
 **Si el usuario no quiere ninguno o no responde:** Steve anota "Sin tema — Jonny diseña con criterio propio" y lanza a Jonny con PRD.md y TRD.md.
 

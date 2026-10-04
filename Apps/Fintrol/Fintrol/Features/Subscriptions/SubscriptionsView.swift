@@ -3,6 +3,7 @@ import SwiftData
 import AppleAppLabUI
 
 struct SubscriptionsView: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Query(sort: \Subscription.name) private var allSubscriptions: [Subscription]
@@ -20,7 +21,7 @@ struct SubscriptionsView: View {
                     icon: "repeat",
                     title: "Sin suscripciones todavía",
                     message: "Agrega tu primera suscripción para que se calcule sola en cada quincena",
-                    config: PatternConfig(accentColor: .accentColor)
+                    config: labTheme.config(for: EmptyStatesPattern.self)
                 )
             } else {
                 List {

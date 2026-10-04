@@ -10,6 +10,7 @@ import UIKit
 /// precargado con los valores existentes cuando edita. El mismo componente sirve para crear
 /// y para editar.
 struct LineCaptureSheet: View {
+    @Environment(\.labTheme) private var labTheme
     /// `nil` → creando una línea nueva de `kind`. No-nil → editando esa línea existente.
     let editingLine: LineItem?
     let kind: LineKind
@@ -95,7 +96,7 @@ struct LineCaptureSheet: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if isTitleEditable {
-                    LabTextField(placeholder: "Descripción", text: $title, config: PatternConfig(accentColor: .accentColor))
+                    LabTextField(placeholder: "Descripción", text: $title, config: labTheme.config(for: FormsPattern.self))
                         #if os(iOS)
                         .textInputAutocapitalization(.sentences)
                         #endif

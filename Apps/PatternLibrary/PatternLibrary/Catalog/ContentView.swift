@@ -1,4 +1,5 @@
 import SwiftUI
+import AppleAppLabUI
 
 struct ContentView: View {
     @State private var catalog = CatalogViewModel()
@@ -26,7 +27,7 @@ struct ContentView: View {
                 }
             }
             Section("Patterns") {
-                ForEach(PatternCatalog.all) { entry in
+                ForEach(LabPatternRegistry.all) { entry in
                     Label(entry.name, systemImage: entry.symbolName)
                         .tag(SidebarSelection.pattern(entry.id))
                 }
@@ -40,7 +41,7 @@ struct ContentView: View {
         case .settings(let category):
             SettingsView(category: category)
         case .pattern(let id):
-            if let entry = PatternCatalog.all.first(where: { $0.id == id }) {
+            if let entry = LabPatternRegistry.all.first(where: { $0.id == id }) {
                 PatternDetailView(entry: entry)
                     .id(entry.id)
             } else {
@@ -55,5 +56,5 @@ struct ContentView: View {
 #Preview {
     ContentView()
         .environment(AppSettings())
-        .environment(ThemeStore())
+        .environment(LabThemeStore(storageKey: LabThemeStore.patternLibraryStorageKey))
 }

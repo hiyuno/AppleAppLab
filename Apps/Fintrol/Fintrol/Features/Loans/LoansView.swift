@@ -6,6 +6,7 @@ import AppleAppLabUI
 /// not credit cards (Fase 2 del PRD): a loan has a fixed term and deterministic amortization,
 /// a credit card has a revolving balance — different model, different screen.
 struct LoansView: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Query(sort: \Loan.name) private var allLoans: [Loan]
@@ -42,7 +43,7 @@ struct LoansView: View {
                     icon: "banknote",
                     title: "Sin préstamos todavía",
                     message: "Registra un préstamo para ver su saldo y calendario de pagos automáticamente",
-                    config: PatternConfig(accentColor: .accentColor)
+                    config: labTheme.config(for: EmptyStatesPattern.self)
                 )
             } else {
                 // Coordinator (2026-09-16): `List` kept ONLY for its native `.swipeActions`/
@@ -372,6 +373,7 @@ private enum LoanFrequencyOption: String, CaseIterable, Identifiable {
 // Coordinator (2026-09-16): widened from `private` to internal so `LoanDetailView`'s new
 // "Editar" toolbar button can reuse this exact form/validation instead of duplicating it.
 struct LoanEditSheet: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Environment(\.dismiss) private var dismiss
@@ -499,7 +501,7 @@ struct LoanEditSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    LabTextField(placeholder: "Nombre", text: $name, config: PatternConfig(accentColor: .accentColor))
+                    LabTextField(placeholder: "Nombre", text: $name, config: labTheme.config(for: FormsPattern.self))
 
                     Picker("Dirección", selection: $direction) {
                         Text("Me lo prestaron").tag(LoanDirection.borrowed)
@@ -537,7 +539,7 @@ struct LoanEditSheet: View {
                     LabToggleRow(title: "Hasta liquidar (revolving)", isOn: Binding(
                         get: { mode == .revolving },
                         set: { mode = $0 ? .revolving : .fixedTerm }
-                    ), config: PatternConfig(accentColor: .accentColor))
+                    ), config: labTheme.config(for: TogglesPattern.self))
 
                     if mode == .fixedTerm {
                         Stepper("Plazo (meses): \(termMonths)", value: $termMonths, in: 1...600)
@@ -601,7 +603,7 @@ struct LoanEditSheet: View {
                 }
 
                 Section {
-                    LabToggleRow(title: "Activo", isOn: $isActive, config: PatternConfig(accentColor: .accentColor))
+                    LabToggleRow(title: "Activo", isOn: $isActive, config: labTheme.config(for: TogglesPattern.self))
                 }
             }
             .navigationTitle(loan == nil ? "Nuevo préstamo" : "Editar préstamo")

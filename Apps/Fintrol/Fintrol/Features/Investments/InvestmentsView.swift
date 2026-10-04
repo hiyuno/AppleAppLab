@@ -7,6 +7,7 @@ import AppleAppLabUI
 /// fecha" summing every `isActive` materialized `LineItem` it has generated so far (excludes
 /// deactivated lines — same rule as every other total in the app, `CarryOverEngine`).
 struct InvestmentsView: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Query(sort: \RecurringItem.title) private var allItems: [RecurringItem]
@@ -37,7 +38,7 @@ struct InvestmentsView: View {
                     icon: "chart.line.uptrend.xyaxis",
                     title: "Sin inversiones todavía",
                     message: "Registra una cuenta para llevar tus aportaciones recurrentes",
-                    config: PatternConfig(accentColor: .accentColor)
+                    config: labTheme.config(for: EmptyStatesPattern.self)
                 )
             } else {
                 List {
@@ -376,6 +377,7 @@ private enum InvestmentFrequencyKind: String, CaseIterable, Identifiable {
 }
 
 private struct InvestmentEditSheet: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Environment(\.dismiss) private var dismiss
@@ -425,7 +427,7 @@ private struct InvestmentEditSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    LabTextField(placeholder: "Cuenta (GBM, Cetesdirecto…)", text: $accountName, config: PatternConfig(accentColor: .accentColor))
+                    LabTextField(placeholder: "Cuenta (GBM, Cetesdirecto…)", text: $accountName, config: labTheme.config(for: FormsPattern.self))
                     HStack {
                         // Coordinator (2026-09-17): `LabDecimalField` — centralized fix for
                         // "0.00 isn't a placeholder, has to be deleted by hand".

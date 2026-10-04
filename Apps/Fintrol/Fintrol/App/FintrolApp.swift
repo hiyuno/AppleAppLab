@@ -1,5 +1,6 @@
 import SwiftUI
 import SwiftData
+import AppleAppLabUI
 
 /// FIN-2026 (Avie): the previous version of this init caught ANY container-creation failure
 /// — including a merely corrupt/incompatible on-disk store — and fell back to an in-memory
@@ -26,6 +27,12 @@ struct FintrolApp: App {
     private let storeLoadError: StoreLoadError?
     @State private var exchangeRateStore = ExchangeRateStore()
     @State private var lockStore = BiometricLockStore()
+    // Visual source of truth: Themes/fintrol.json ships in the bundle and is the
+    // default; in Debug the dev tools (shake / ⌥⌘D / floating button) edit it live.
+    @State private var themeStore: LabThemeStore = {
+        let bundled = LabThemeStore.bundledThemes()
+        return LabThemeStore(bundledThemes: bundled, initial: bundled.first { $0.name == "Fintrol" } ?? .default)
+    }()
     @State private var isShowingStoreLoadError = false
 
     init() {
@@ -106,6 +113,8 @@ struct FintrolApp: App {
             RootView()
                 .environment(exchangeRateStore)
                 .environment(lockStore)
+                .labTheme(themeStore)
+                .labDevTools(themeStore)
                 .preferredColorScheme((AppAppearance(rawValue: appearanceRaw) ?? .system).colorScheme)
                 .onAppear {
                     if lockStore.isLockEnabled { lockStore.resetForColdStart() }
@@ -135,6 +144,7 @@ struct FintrolApp: App {
             }
             .environment(exchangeRateStore)
             .environment(lockStore)
+            .labTheme(themeStore)
             .modelContainer(modelContainer)
             .preferredColorScheme((AppAppearance(rawValue: appearanceRaw) ?? .system).colorScheme)
             .frame(width: 420)

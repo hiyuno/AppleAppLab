@@ -2,14 +2,14 @@ import SwiftUI
 import AppleAppLabUI
 
 struct PatternDetailView: View {
-    let entry: PatternEntry
-    @State private var inspector: InspectorViewModel
+    let entry: LabPatternEntry
+    @State private var config: PatternConfig
     @Environment(AppSettings.self) private var appSettings
-    @Environment(ThemeStore.self) private var themeStore
+    @Environment(LabThemeStore.self) private var themeStore
 
-    init(entry: PatternEntry) {
+    init(entry: LabPatternEntry) {
         self.entry = entry
-        _inspector = State(initialValue: InspectorViewModel(config: entry.defaultConfig))
+        _config = State(initialValue: entry.defaultConfig)
     }
 
     var body: some View {
@@ -19,9 +19,14 @@ struct PatternDetailView: View {
 
             if !entry.inspectableProperties.isEmpty {
                 Divider()
-                InspectorView(properties: entry.inspectableProperties, viewModel: inspector)
-                    .frame(minWidth: 260, idealWidth: 280, maxWidth: 280)
-                    .fixedSize(horizontal: false, vertical: false)
+                ScrollView {
+                    LabPatternInspector(properties: entry.inspectableProperties, config: $config) {
+                        themeStore.editingPatternConfig = config
+                    }
+                    .padding(16)
+                }
+                .background(.regularMaterial)
+                .frame(minWidth: 260, idealWidth: 280, maxWidth: 280)
             }
         }
         // Guarantees the detail column of NavigationSplitView never shrinks below what
@@ -30,26 +35,18 @@ struct PatternDetailView: View {
         .frame(minWidth: entry.inspectableProperties.isEmpty ? 240 : 520)
         .navigationTitle(entry.name)
         .onAppear { applyThemeToInspector() }
-        .onChange(of: themeStore.activeThemeID) { applyThemeToInspector() }
+        .onChange(of: themeStore.activeSavedID) { applyThemeToInspector() }
     }
 
+    /// Pattern defaults + the global settings + any override saved for this
+    /// pattern under the active theme — the same resolution `LabTheme.config(for:)`
+    /// does inside an app, driven here by the live `AppSettings`.
     private func applyThemeToInspector() {
-        let base = entry.defaultConfig
-        inspector.config.accentColor = appSettings.accentColor
-        inspector.config.cornerStyle = appSettings.cornerStyle
-        inspector.config.elevation = appSettings.elevation
-        inspector.config.spacing = base.spacing * appSettings.density.scale
-        inspector.config.duration = base.duration / appSettings.motionSpeedMultiplier
-
-        // Layer any settings saved for this specific pattern under the active
-        // theme on top of the global ones above.
-        if let activeTheme = themeStore.themes.first(where: { $0.id == themeStore.activeThemeID }),
-           let override = activeTheme.patternOverrides[entry.name] {
-            override.apply(to: &inspector.config)
-        }
-
-        themeStore.activePatternName = entry.name
-        themeStore.activePatternConfig = inspector.config
+        var theme = appSettings.theme(named: themeStore.active.name)
+        theme.patternOverrides = themeStore.active.patternOverrides
+        config = theme.config(for: entry.name, base: entry.defaultConfig)
+        themeStore.editingPatternName = entry.name
+        themeStore.editingPatternConfig = config
     }
 
     private var previewArea: some View {
@@ -65,7 +62,7 @@ struct PatternDetailView: View {
                 blurIntensity: appSettings.blurIntensity,
                 transparency: appSettings.transparency
             ) {
-                entry.makePreview(inspector.config)
+                entry.makePreview(config)
                     .fontDesign(appSettings.fontDesign.design)
                     .fontWeight(appSettings.fontWeight.weight)
                     .symbolRenderingMode(appSettings.iconRenderingMode.mode)

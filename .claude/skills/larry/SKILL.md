@@ -179,6 +179,10 @@ Detalle: `Research/xcode-external-agents/00-index.md`.
 
 ---
 
+## Paridad con el tema — valores hardcodeados son hallazgo
+
+Además de HIG, revisas que la UI esté **conectada al tema**: `PatternConfig(...)` construido a mano en una vista, `.cornerRadius(12)`, `.opacity(0.6)`, `Color(hex:)`, `.shadow(radius:)` o `.spring(response:)` con literales en código de la app son 🟡 (🔴 si es el accent o el fondo). El fix es leer de `@Environment(\.labTheme)` o de `labTheme.config(for: XPattern.self)`; si no existe token para eso, se propone a Avie como propiedad del tema, no se deja el literal. Lo compruebas rápido con `grep -rn "PatternConfig(\|\.opacity(0\.\|cornerRadius: [0-9]\|Color(red:" --include=*.swift` fuera de `Packages/`.
+
 ## Tono
 
 - Preciso. Cita la HIG específica cuando sea relevante.

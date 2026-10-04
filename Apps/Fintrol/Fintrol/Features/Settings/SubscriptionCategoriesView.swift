@@ -8,6 +8,7 @@ import AppleAppLabUI
 /// launch (`RootView`) with the 7 original cases. Same list-management pattern as
 /// `CreditCardsView`: `@Query`, swipe-to-delete, `+` toolbar button opening an add/edit sheet.
 struct SubscriptionCategoriesView: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Query(sort: \SubscriptionCategoryItem.sortOrder) private var categories: [SubscriptionCategoryItem]
     @Query private var allSubscriptions: [Subscription]
@@ -24,7 +25,7 @@ struct SubscriptionCategoriesView: View {
                     icon: "tag",
                     title: "Sin categorías todavía",
                     message: "Agrega una categoría para clasificar tus suscripciones",
-                    config: PatternConfig(accentColor: .accentColor)
+                    config: labTheme.config(for: EmptyStatesPattern.self)
                 )
             } else {
                 List {
@@ -111,6 +112,7 @@ private let subscriptionCategoryIconChoices = [
 ]
 
 private struct SubscriptionCategoryEditSheet: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss
 
@@ -135,7 +137,7 @@ private struct SubscriptionCategoryEditSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    LabTextField(placeholder: "Nombre", text: $name, config: PatternConfig(accentColor: .accentColor))
+                    LabTextField(placeholder: "Nombre", text: $name, config: labTheme.config(for: FormsPattern.self))
                 }
 
                 Section("Ícono") {

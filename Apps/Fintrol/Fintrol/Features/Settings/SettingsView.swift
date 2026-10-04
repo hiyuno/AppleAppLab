@@ -7,6 +7,7 @@ import AppleAppLabUI
 /// "Ajustes generales" — Form nativo con dos Section (DESIGN_LIQUID.md). En iOS es un tab;
 /// en macOS vive en la `Settings` scene nativa (⌘,), ver `FintrolApp.swift`.
 struct SettingsView: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Environment(BiometricLockStore.self) private var lockStore
@@ -184,7 +185,7 @@ struct SettingsView: View {
                             lockErrorMessage = nil
                         }
                     }
-                ), config: PatternConfig(accentColor: .accentColor))
+                ), config: labTheme.config(for: TogglesPattern.self))
                 if let lockErrorMessage {
                     Text(lockErrorMessage)
                         .font(.caption)
@@ -436,6 +437,7 @@ enum AppAppearance: String, CaseIterable, Identifiable {
 }
 
 private struct ExchangeRateSettingsView: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
 
@@ -513,7 +515,7 @@ private struct ExchangeRateSettingsView: View {
             Section {
                 Toggle("Automático", isOn: $isAutomatic)
                 if !isAutomatic {
-                    LabTextField(placeholder: "Tipo de cambio (1–100)", text: $manualRateText, config: PatternConfig(accentColor: .accentColor))
+                    LabTextField(placeholder: "Tipo de cambio (1–100)", text: $manualRateText, config: labTheme.config(for: FormsPattern.self))
                         #if os(iOS)
                         .keyboardType(.decimalPad)
                         #endif

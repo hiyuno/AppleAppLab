@@ -5,10 +5,10 @@ struct SettingsView: View {
     let category: SettingsCategory
 
     @Environment(AppSettings.self) private var appSettings
-    @Environment(ThemeStore.self) private var themeStore
+    @Environment(LabThemeStore.self) private var themeStore
 
     @State private var newThemeName = ""
-    @State private var themeToRename: Theme?
+    @State private var themeToRename: LabTheme?
     @State private var renameText = ""
 
     private static let suggestedAccents: [(name: String, color: Color)] = [
@@ -45,19 +45,19 @@ struct SettingsView: View {
         @Bindable var appSettings = appSettings
 
         Section("Temas") {
-            if themeStore.themes.isEmpty {
+            if themeStore.saved.isEmpty {
                 Text("No hay temas guardados todavía.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(themeStore.themes) { theme in
+                ForEach(themeStore.saved) { theme in
                     HStack(spacing: 12) {
                         Button {
                             themeStore.apply(theme, to: appSettings)
                         } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: themeStore.activeThemeID == theme.id ? "checkmark.circle.fill" : "circle")
-                                    .foregroundStyle(themeStore.activeThemeID == theme.id ? appSettings.accentColor : .secondary)
+                                Image(systemName: themeStore.activeSavedID == theme.id ? "checkmark.circle.fill" : "circle")
+                                    .foregroundStyle(themeStore.activeSavedID == theme.id ? appSettings.accentColor : .secondary)
                                 Text(theme.name)
                                 Spacer()
                             }
@@ -701,5 +701,5 @@ private struct MotionSpeedExample: View {
 #Preview {
     SettingsView(category: .color)
         .environment(AppSettings())
-        .environment(ThemeStore())
+        .environment(LabThemeStore(storageKey: LabThemeStore.patternLibraryStorageKey))
 }

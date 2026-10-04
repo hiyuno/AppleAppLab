@@ -1,10 +1,11 @@
 import SwiftUI
+import AppleAppLabUI
 import AppKit
 
 @main
 struct PatternLibraryApp: App {
     @State private var appSettings = AppSettings()
-    @State private var themeStore = ThemeStore()
+    @State private var themeStore = LabThemeStore(storageKey: LabThemeStore.patternLibraryStorageKey)
 
     private static let minWindowWidth: CGFloat = 900
     private static let minWindowHeight: CGFloat = 600

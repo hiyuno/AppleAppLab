@@ -4,7 +4,7 @@ Componentes ya construidos y refinados en `Packages/AppleAppLabUI/`.
 
 **Regla del equipo:** antes de diseñar o codificar cualquier elemento de UI, revisar este catálogo. Si el componente existe, se usa — no se recrea.
 
-Todos los componentes reciben un `PatternConfig` que contiene los tokens del tema activo (accent, cornerRadius, spacing, elevation, etc.). El tema se aplica una vez a nivel de app y fluye automáticamente a cada componente.
+Todos los componentes reciben un `PatternConfig` que contiene los tokens del tema activo (accent, cornerRadius, spacing, elevation, etc.). El tema se aplica una vez a nivel de app (`.labTheme(store)`) y cada vista lo resuelve por componente con `labTheme.config(for: XPattern.self)` — ver "Tema y Dev Tools" más abajo. Nunca se construye un `PatternConfig` a mano en la app.
 
 ---
 
@@ -167,6 +167,88 @@ LabBadge(text: "Nuevo", config: config)
 ```
 
 ---
+
+## Tema y Dev Tools — `LabTheme` · `LabThemeStore` · `.labDevTools()`
+
+La regla del equipo: **ningún valor visual hardcodeado en la app**. Colores, radios, opacidades, sombras, duraciones y springs salen del tema activo, y cada componente recibe su `PatternConfig` resuelto desde ahí. Eso es lo que hace que el panel de Dev Tools pueda mover toda la interfaz en vivo y que lo afinado se exporte al repo en vez de perderse.
+
+### Cableado en la app (una vez, en `App.swift`)
+
+```swift
+import AppleAppLabUI
+
+@main
+struct MiApp: App {
+    @State private var themeStore: LabThemeStore = {
+        let bundled = LabThemeStore.bundledThemes()          // lee Themes/*.json del bundle
+        return LabThemeStore(bundledThemes: bundled,
+                             initial: bundled.first { $0.name == "Fintrol" } ?? .default)
+    }()
+
+    var body: some Scene {
+        WindowGroup {
+            RootView()
+                .labTheme(themeStore)      // inyecta \.labTheme + tint, fuente, símbolos, apariencia
+                .labDevTools(themeStore)   // solo #if DEBUG; en Release es no-op
+        }
+    }
+}
+```
+
+En `project.yml`, el JSON del tema se empaqueta como recurso:
+
+```yaml
+sources:
+  - path: MiApp
+  - path: ../../Themes/fintrol.json
+    buildPhase: resources
+```
+
+### En cada vista — config resuelto por componente
+
+```swift
+struct LoansView: View {
+    @Environment(\.labTheme) private var labTheme
+
+    var body: some View {
+        LabEmptyState(icon: "banknote", title: "…", message: "…",
+                      config: labTheme.config(for: EmptyStatesPattern.self))
+        LabTextField(placeholder: "Nombre", text: $name,
+                     config: labTheme.config(for: FormsPattern.self))
+    }
+}
+```
+
+`config(for:)` devuelve los defaults del componente + los tokens globales del tema (accent, corner style, elevación, spacing escalado por densidad, duración escalada por velocidad de animación) + el override que el usuario haya guardado para ese componente. Nunca `PatternConfig(accentColor: .accentColor)` suelto: eso desconecta la vista del panel.
+
+| Componente | Pattern para `config(for:)` |
+|---|---|
+| `LabButton` | `ButtonsPattern` |
+| `LabCard` · `LabNestedCard` · `LabDashboardCards` | `CardsPattern` |
+| `LabList` | `ListsPattern` |
+| `LabTodoList` | `TodoListPattern` |
+| `LabTextField` | `FormsPattern` |
+| `LabTabBar` | `NavigationPattern` |
+| `LabToggleRow` | `TogglesPattern` |
+| `LabCheckboxGroup` · `LabRadioGroup` | `CheckboxRadioPattern` |
+| `LabProgressIndicator` | `LoadingPattern` |
+| `LabEmptyState` | `EmptyStatesPattern` |
+| `LabOnboardingStep` | `OnboardingPattern` |
+| `LabBadge` | `BadgePattern` |
+
+### Valores visuales propios de la app
+
+Lo que no es un `Lab*` también lee del tema: `labTheme.accentColor.color`, `labTheme.cornerStyle`, `labTheme.elevation` (`.labShadow(labTheme.elevation)`), `labTheme.density.scale`, `labTheme.motionSpeedMultiplier`. Si una vista necesita un control propio en el panel, adopta `InspectablePattern` y se registra una vez: `LabPatternRegistry.register(MiPantallaPattern.self)` — aparece en la pestaña **Componentes** junto a los `Lab*`.
+
+### El panel (Debug)
+
+Se abre con **shake** en iOS, **⌥⌘D** en Mac, o el botón flotante. Tres pestañas:
+
+- **Tema** — color (accent, fondo, modo), forma y elevación, tipografía e iconos, densidad y motion, material de ventana, blur y transparencia.
+- **Componentes** — un inspector por `Lab*` registrado; cada cambio queda como override del tema activo.
+- **Temas** — guardar, actualizar, renombrar, borrar, **Exportar JSON** (se copia al portapapeles y en iOS se puede compartir), importar del portapapeles, reset.
+
+**Ciclo:** afinas en la app → Exportar JSON → lo pegas en `Themes/<nombre>.json` → Jonny lo adopta en `STYLE_BRIEF.md` → PatternLibrary y el resto de apps lo ven con `/update-team`. El panel y todo `DevTools/` están bajo `#if DEBUG`: no existen en el archive de Release, e Ivan lo verifica en `/app-store-ready`.
 
 ## Tokens del sistema
 

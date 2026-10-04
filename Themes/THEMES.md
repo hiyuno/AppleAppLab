@@ -115,3 +115,9 @@ Woz:
 2. Exportar: `python3 -c "import subprocess, json, plistlib; ..."` (ver setup de repo)
 3. Agregar la entrada a este archivo con descripción, tokens y uso típico
 4. Commit al repo
+
+## Cómo se cargan y cómo vuelven
+
+- **En la app:** el JSON del tema se empaqueta como recurso (`project.yml` → `- path: ../../Themes/<tema>.json`, `buildPhase: resources`) y `LabThemeStore.bundledThemes()` lo carga; `initial:` elige cuál arranca activo. Los archivos de esta carpeta decodifican tal cual como `LabTheme` (hay test que lo garantiza en el paquete).
+- **En Debug:** el panel de Dev Tools (`.labDevTools(store)`; shake en iOS, ⌥⌘D en Mac) edita el tema activo en vivo — tokens globales en la pestaña Tema, overrides por componente en Componentes — y **Exportar JSON** lo copia al portapapeles con el mismo formato de aquí.
+- **De vuelta al repo:** el JSON exportado se guarda como `Themes/<nombre>.json` (nombre en kebab-case, el que sugiere `suggestedFileName`), Jonny actualiza `STYLE_BRIEF.md` y esta tabla si es un tema nuevo, y `/update-team` lo lleva a los demás proyectos. PatternLibrary lo ve también porque lee la misma carpeta.

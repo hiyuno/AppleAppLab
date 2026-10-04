@@ -7,6 +7,7 @@ import AppleAppLabUI
 /// (DESIGN_LIQUID.md). Modeled as `Subscription.kind == .service` — see
 /// PROJECT_LEARNINGS.md for the modeling decision.
 struct ServicesView: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Query(sort: \Subscription.name) private var allSubscriptions: [Subscription]
@@ -23,7 +24,7 @@ struct ServicesView: View {
                     icon: "house.fill",
                     title: "Sin servicios todavía",
                     message: "Agrega renta, luz u otro pago del hogar para que se calcule solo en cada quincena",
-                    config: PatternConfig(accentColor: .accentColor)
+                    config: labTheme.config(for: EmptyStatesPattern.self)
                 )
             } else {
                 List {

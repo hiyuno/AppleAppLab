@@ -1,3 +1,4 @@
+import AppleAppLabUI
 import Observation
 
 enum SidebarSelection: Hashable {

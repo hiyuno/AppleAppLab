@@ -6,6 +6,7 @@ import AppleAppLabUI
 /// (DESIGN_LIQUID.md § "Tarjetas de crédito"). Revolving debt — no direction (always
 /// `.expense`, unlike `Loan`), no fixed term, its own `CreditCardEngine`.
 struct CreditCardsView: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Query(sort: \CreditCard.name) private var allCards: [CreditCard]
@@ -24,7 +25,7 @@ struct CreditCardsView: View {
                     icon: "creditcard.fill",
                     title: "Sin tarjetas todavía",
                     message: "Registra una tarjeta para ver su saldo, utilización y pago mínimo sugerido automáticamente",
-                    config: PatternConfig(accentColor: .accentColor)
+                    config: labTheme.config(for: EmptyStatesPattern.self)
                 )
             } else {
                 List {
@@ -226,6 +227,7 @@ struct UtilizationProgressBar: View {
 }
 
 struct CreditCardEditSheet: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Environment(\.dismiss) private var dismiss
@@ -298,7 +300,7 @@ struct CreditCardEditSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    LabTextField(placeholder: "Nombre", text: $name, config: PatternConfig(accentColor: .accentColor))
+                    LabTextField(placeholder: "Nombre", text: $name, config: labTheme.config(for: FormsPattern.self))
 
                     VStack(alignment: .leading, spacing: 6) {
                         TextField("Últimos 4 dígitos (opcional)", text: $lastFourDigits)
@@ -346,7 +348,7 @@ struct CreditCardEditSheet: View {
                 }
 
                 Section {
-                    LabToggleRow(title: "Activa", isOn: $isActive, config: PatternConfig(accentColor: .accentColor))
+                    LabToggleRow(title: "Activa", isOn: $isActive, config: labTheme.config(for: TogglesPattern.self))
                 }
             }
             .navigationTitle(card == nil ? "Nueva tarjeta" : "Editar tarjeta")

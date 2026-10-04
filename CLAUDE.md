@@ -130,3 +130,4 @@ Herramientas compatibles y sus archivos de entrada:
 - Mínimo iOS 17 / macOS 14
 - Arquitectura: MVVM con Observable macro por defecto
 - Sin dependencias externas si SwiftUI o Foundation lo resuelven
+- **Ningún valor visual hardcodeado.** Toda app nace con `LabThemeStore` (`.labTheme(store)` en la raíz) y el tema de `Themes/*.json` empaquetado; cada vista resuelve su config con `labTheme.config(for: XPattern.self)`. El panel de Dev Tools (`.labDevTools(store)`, shake / ⌥⌘D, solo Debug) mueve toda la UI en vivo y exporta JSON que vuelve a `Themes/`. Detalle en `PATTERNS.md` §"Tema y Dev Tools"

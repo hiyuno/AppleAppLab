@@ -3,6 +3,7 @@ import SwiftData
 import AppleAppLabUI
 
 struct OverviewView: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Query private var periods: [Period]
@@ -39,7 +40,7 @@ struct OverviewView: View {
                     icon: "chart.bar",
                     title: "Sin quincenas todavía",
                     message: "Captura tu primera quincena para ver el resumen aquí",
-                    config: PatternConfig(accentColor: .accentColor)
+                    config: labTheme.config(for: EmptyStatesPattern.self)
                 )
             } else {
                 List {

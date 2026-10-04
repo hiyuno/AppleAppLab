@@ -9,6 +9,7 @@ import AppleAppLabUI
 /// Expenses asks which of the three a new entry is; Income has no such picker (Services/
 /// Subscriptions are expense-only).
 struct RecurringListView: View {
+    @Environment(\.labTheme) private var labTheme
     let kind: LineKind
 
     @Environment(\.modelContext) private var context
@@ -50,7 +51,7 @@ struct RecurringListView: View {
                     message: kind == .income
                         ? "Agrega tu sueldo u otro ingreso fijo para proyectarlo automáticamente"
                         : "Agrega un servicio, una suscripción u otro gasto fijo para proyectarlo automáticamente",
-                    config: PatternConfig(accentColor: .accentColor)
+                    config: labTheme.config(for: EmptyStatesPattern.self)
                 )
             } else {
                 List {
@@ -331,6 +332,7 @@ private enum FrequencyKind: String, CaseIterable, Identifiable {
 }
 
 private struct RecurringEditSheet: View {
+    @Environment(\.labTheme) private var labTheme
     @Environment(\.modelContext) private var context
     @Environment(ExchangeRateStore.self) private var rateStore
     @Environment(\.dismiss) private var dismiss
@@ -378,7 +380,7 @@ private struct RecurringEditSheet: View {
         NavigationStack {
             Form {
                 Section {
-                    LabTextField(placeholder: "Descripción", text: $title, config: PatternConfig(accentColor: .accentColor))
+                    LabTextField(placeholder: "Descripción", text: $title, config: labTheme.config(for: FormsPattern.self))
                     HStack {
                         // Coordinator (2026-09-17): `LabDecimalField` — centralized fix for
                         // "0.00 isn't a placeholder, has to be deleted by hand".

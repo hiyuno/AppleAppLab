@@ -246,6 +246,7 @@ grep -rni "lorem ipsum\|TODO\|placeholder\|test123\|coming soon" --include="*.sw
 - Sin contenido placeholder, "próximamente", features que no funcionan (2.1 — *incomplete*)
 - Sin menciones a otras plataformas ("también en Android") en la app o en metadata (2.3.10)
 - dSYMs incluidos en el archive (para crash reports)
+- Sin Dev Tools del equipo en Release: `nm -gU <ejecutable del archive> | grep -c LabDevTools` = 0 (el panel es `#if DEBUG`; si aparece, alguien lo referenció fuera del guard). Igual para `Sparkle` en la edición App Store de macOS
 
 Salida de la fase: tabla *check → estado → evidencia*.
 

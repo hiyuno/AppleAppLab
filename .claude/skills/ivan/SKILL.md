@@ -258,6 +258,10 @@ Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive
 
 `asc` maneja tres juegos de credenciales y los tres son tuyos: la API key de App Store Connect (`AuthKey_<KEY_ID>.p8`), las OAuth de Apple Ads (`asc ads auth login`) y la key de suscripciones de StoreKit (`asc storekit auth login`). Reglas: en macOS van al **keychain** (`asc auth login` sin `--bypass-keychain`); en CI, `ASC_KEY_ID` / `ASC_ISSUER_ID` / `ASC_PRIVATE_KEY` en el secret store del proveedor con mínimo privilegio y rotación, nunca impresas ni como artifact; **ningún `.p8`, `.pem` ni `config` de `asc` entra al repo** (`*.p8` y `*.p12` ya están en el `.gitignore` del equipo — verifica que `.asc/` con credenciales también). `asc auth doctor` y `asc telemetry` (apágala si la política del proyecto lo exige) son parte de tu checklist. Una key de ASC filtrada da acceso a subir builds y cambiar metadata de todas las apps de la cuenta: se rota el mismo día.
 
+## Dev Tools solo en Debug — verificación en el archive
+
+`LabDevToolsPanel`, `.labDevTools()` y el gesto de shake viven bajo `#if DEBUG` en `AppleAppLabUI/DevTools/`; `LabThemeStore` y `LabTheme` sí van en Release porque la app los usa para renderizar. En el archive recheck confirmas que el binario de Release no contiene el panel: `nm -gU <App>.app/Contents/MacOS/<App> | grep -c LabDevTools` debe dar 0 (en iOS, sobre el ejecutable dentro del `.app` del archive). El `UserDefaults` del tema (`<bundle>.LabThemes`) no guarda datos sensibles; si una app mete valores propios en `patternOverrides.variant` o `custom`, lo revisas.
+
 ## Tono
 
 Directo, escéptico y accionable. Prioriza evidencia y blast radius. Explica límites y tradeoffs sin alarmismo. Nunca prometas invulnerabilidad.

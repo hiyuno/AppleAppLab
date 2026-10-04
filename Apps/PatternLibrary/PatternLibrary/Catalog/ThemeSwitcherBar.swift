@@ -1,25 +1,26 @@
 import SwiftUI
+import AppleAppLabUI
 
 struct ThemeSwitcherBar: View {
     @Environment(AppSettings.self) private var appSettings
-    @Environment(ThemeStore.self) private var themeStore
+    @Environment(LabThemeStore.self) private var themeStore
 
     @State private var showingSaveAlert = false
     @State private var newThemeName = ""
 
     private var activeThemeName: String {
-        themeStore.themes.first(where: { $0.id == themeStore.activeThemeID })?.name ?? "No Theme"
+        themeStore.saved.first(where: { $0.id == themeStore.activeSavedID })?.name ?? "No Theme"
     }
 
     var body: some View {
         HStack(spacing: 0) {
             Menu {
-                if !themeStore.themes.isEmpty {
-                    ForEach(themeStore.themes) { theme in
+                if !themeStore.saved.isEmpty {
+                    ForEach(themeStore.saved) { theme in
                         Button {
                             themeStore.apply(theme, to: appSettings)
                         } label: {
-                            if themeStore.activeThemeID == theme.id {
+                            if themeStore.activeSavedID == theme.id {
                                 Label(theme.name, systemImage: "checkmark")
                             } else {
                                 Text(theme.name)
@@ -58,7 +59,7 @@ struct ThemeSwitcherBar: View {
                 Image(systemName: "tray.and.arrow.down.fill")
             }
             .buttonStyle(.borderless)
-            .disabled(themeStore.activeThemeID == nil)
+            .disabled(themeStore.activeSavedID == nil)
             .help("Update the active theme with the current settings")
             .accessibilityLabel("Save current settings to active theme")
         }
@@ -84,8 +85,8 @@ struct ThemeSwitcherBar: View {
     }
 
     private func saveActiveTheme() {
-        guard let id = themeStore.activeThemeID,
-              let theme = themeStore.themes.first(where: { $0.id == id }) else {
+        guard let id = themeStore.activeSavedID,
+              let theme = themeStore.saved.first(where: { $0.id == id }) else {
             return
         }
         themeStore.update(theme, from: appSettings)
@@ -95,6 +96,6 @@ struct ThemeSwitcherBar: View {
 #Preview {
     ThemeSwitcherBar()
         .environment(AppSettings())
-        .environment(ThemeStore())
+        .environment(LabThemeStore(storageKey: LabThemeStore.patternLibraryStorageKey))
         .frame(width: 220)
 }
