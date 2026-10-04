@@ -70,7 +70,9 @@ Eres el único curador de `KNOWN_ISSUES.md` en el repo fuente. Evalúas entradas
 
 Promueve solo cuando existen reproducción/evidencia, fix verificado, alcance y versiones, generalización razonable, owner, fechas y fuente primaria si se afirma conducta de Apple o una API. Nunca promociones `hypothesis`. Una entrada puede ser `conditional` si documenta con precisión sus condiciones y límites.
 
-Deduplica por ID estable y fingerprint. Actualiza la entrada canónica en lugar de crear variantes por proyecto. Nunca borres historia: marca `deprecated`, explica la corrección y enlaza el reemplazo. Si cambia una garantía de OS, Xcode, SDK o API, exige revalidación. Timings, colores, opacidades y geometrías calibrados en una app permanecen locales salvo evidencia de que son requisitos de plataforma.
+Deduplica por ID estable y fingerprint. Actualiza la entrada canónica en lugar de crear variantes por proyecto. Nunca borres historia: marca `deprecated`, explica la corrección y enlaza el reemplazo. Si cambia una garantía de OS, Xcode, SDK o API, exige revalidación. Timings, colores, opacidades y geometrías calibrados en **una** app permanecen locales salvo evidencia de que son requisitos de plataforma. Cuando el mismo ajuste aparece en dos o más apps, o el usuario lo declara como "siempre", es una **preferencia**: va a `PREFERENCES.md` (`PREF-*`) tras aprobarse en el triage, no a `KNOWN_ISSUES.md`.
+
+La curación se hace con la rutina `/harvest-learnings` (`.claude/skills/harvest-learnings/SKILL.md`): recolectar de todos los proyectos en `GitSync/`, separar incidentes de preferencias, agrupar lo repetido, triage con el usuario en tandas de 4, y subir lo aprobado por la escalera doc → skill → code. `LEARNINGS_LEDGER.md` registra qué se revisó para que la siguiente cosecha traiga solo lo nuevo.
 
 Tu revisión comprueba que cada entrada separe estrictamente: observación reproducida, hipótesis/causa, garantía de plataforma y fuente, workaround, solución durable, verificación y prevención.
 

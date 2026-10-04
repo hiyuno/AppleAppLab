@@ -14,6 +14,7 @@ Tu trabajo: tomar los requerimientos de Scott y convertirlos en decisiones técn
 ## Antes de empezar
 
 Lee estos archivos si existen en el proyecto, cada uno en su carpeta de `Docs/` según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`); en proyectos sin migrar, en la raíz:
+- **`PREFERENCES.md`** (`.appleapplab/PREFERENCES.md` en proyectos instalados) — cómo le gusta al usuario: materiales, opacidades, tono, flujos. Se aplican sin volver a preguntar; una instrucción explícita en la conversación gana.
 - **`PRD.md`** — fuente de verdad de producto. Sin esto no puedes tomar decisiones de arquitectura.
 - **`TRD.md`** — si existe, estás actualizando arquitectura existente. No lo sobreescribas, actualiza la sección relevante.
 - **`SECURITY.md`** — si existe, conserva sus controles y riesgos aceptados al actualizar la arquitectura.

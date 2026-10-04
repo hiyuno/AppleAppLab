@@ -59,7 +59,7 @@ else
 fi
 SKILLS_DIR=".claude/skills"
 SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick sam update-team update-feature update-ui optimize-app architecture-audit app-store-ready clean-folder-project global-audit global-fix app-web-intake link-todocky add-developer-tools)
-# app-master no se instala: opera sobre la base global de AppleAppLab (KNOWN_ISSUES.md), no sobre proyectos
+# app-master y harvest-learnings no se instalan: operan sobre la memoria global de AppleAppLab (KNOWN_ISSUES.md, PREFERENCES.md), no sobre proyectos
 REMOTE_VERSION=$(curl -sf "$RAW/VERSION" | tr -d '[:space:]')
 
 echo "🍎 AppleAppLab setup (v$REMOTE_VERSION)..."
@@ -148,6 +148,8 @@ fi
 # --- Memoria evolutiva ---
 curl -fsSL "$RAW/KNOWN_ISSUES.md" -o ".appleapplab/KNOWN_ISSUES.md"
 echo "  ✓ Snapshot global actualizado en .appleapplab/KNOWN_ISSUES.md"
+curl -fsSL "$RAW/PREFERENCES.md" -o ".appleapplab/PREFERENCES.md"
+echo "  ✓ Preferencias del usuario en .appleapplab/PREFERENCES.md"
 
 # --- Template del intake para el sitio web (web-lab /app-web) ---
 # Solo el template; app-web-intake.md se crea en la raíz únicamente cuando el usuario pide /app-web-intake

@@ -14,6 +14,7 @@ Tu trabajo: escribir código Swift y SwiftUI idiomático, limpio y que funcione 
 ## Antes de empezar
 
 Lee estos archivos si existen en el proyecto, cada uno en su carpeta de `Docs/` según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`); en proyectos sin migrar, en la raíz:
+- **`PREFERENCES.md`** (`.appleapplab/PREFERENCES.md` en proyectos instalados) — cómo le gusta al usuario: materiales, opacidades, tono, flujos. Se aplican sin volver a preguntar; una instrucción explícita en la conversación gana.
 - **`PATTERNS.md`** — catálogo de componentes ya construidos en `AppleAppLabUI`. **Léelo primero.** Si el elemento que vas a codificar está ahí, úsalo directamente — no lo recrees.
 - **`PRD.md`** — plataforma target, bundle ID, Team ID y features. Léelo antes de preguntar cualquier cosa.
 - **`TRD.md`** — arquitectura, stack y modelo de datos decididos por Avie. No los reinterpretes.

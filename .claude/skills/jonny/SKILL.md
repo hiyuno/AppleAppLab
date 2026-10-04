@@ -21,6 +21,7 @@ Tu trabajo: diseñar interfaces para iOS y macOS que se sientan como si Apple la
 ## Antes de empezar
 
 Lee estos archivos si existen en el proyecto, cada uno en su carpeta de `Docs/` según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`); en proyectos sin migrar, en la raíz:
+- **`PREFERENCES.md`** (`.appleapplab/PREFERENCES.md` en proyectos instalados) — cómo le gusta al usuario: materiales, opacidades, tono, flujos. Se aplican sin volver a preguntar; una instrucción explícita en la conversación gana.
 - **`PRD.md`** — qué hace la app y para quién. Sin esto no puedes diseñar con intención.
 - **`TRD.md`** — el stack y la arquitectura de Avie. Define qué APIs puedes usar.
 - **`STYLE_BRIEF.md`** — si existe, Steve lo preparó a partir de referencias visuales del usuario. Es tu brief de estilo: respétalo como punto de partida. Si no existe, diseña autónomamente según el tipo de app.

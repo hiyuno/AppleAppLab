@@ -255,7 +255,7 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 | `Docs/Audits/` | `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md`, `SECURITY_AUDIT.md`, `COMPAT_AUDIT.md`, `L10N_AUDIT.md`, `LEGAL_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
 | `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master |
 | `Docs/` | `PROJECT_LEARNINGS.md` |
-| `.appleapplab/` | Lo que instala el equipo: `PATTERNS.md`, `Themes/`, `Research/`, `KNOWN_ISSUES.md`, `VERSION`, templates |
+| `.appleapplab/` | Lo que instala el equipo: `PATTERNS.md`, `Themes/`, `Research/`, `KNOWN_ISSUES.md`, `PREFERENCES.md`, `VERSION`, templates |
 | `.claude/` · `.cursor/` | Skills y reglas del equipo |
 
 **Rutas en los skills.** Cuando un skill cita `PATTERNS.md`, `Themes/…` o `Research/…`, en un proyecto instalado se leen en `.appleapplab/` (`.appleapplab/PATTERNS.md`, `.appleapplab/Research/apple-hig/…`). En el repo AppleAppLab son la fuente que se distribuye y se quedan en su raíz.
@@ -275,6 +275,7 @@ Cada agente produce un documento y los siguientes lo leen. Steve es el responsab
 | `DESIGN_FROST.md` | Jonny | Woz, Larry |
 | `SECURITY_AUDIT.md` | Ivan | Woz, Bertrand, Craig, Phil |
 | `KNOWN_ISSUES.md` o `.appleapplab/KNOWN_ISSUES.md` | App Master (snapshot global curado) | Steve; especialistas solo reciben entradas relevantes |
+| `PREFERENCES.md` (fuente) o `.appleapplab/PREFERENCES.md` (instalado) | App Master con `/harvest-learnings`, tras triage con el usuario | Steve, Jonny, Woz, Avie al empezar trabajo nuevo |
 | `PROJECT_LEARNINGS.md` | Agente propietario del incidente; Steve coordina | Steve, agentes afectados, App Master en el repo fuente |
 | `TEST_PLAN.md` | Bertrand | Phil |
 | `STYLE_BRIEF.md` | Steve (síntesis de referencias del usuario) | Jonny |
@@ -303,10 +304,12 @@ Steve gobierna el flujo, no escribe soluciones técnicas:
 2. El propietario —Woz, Avie, Jonny, Ivan, Bertrand u otro— añade o actualiza `PROJECT_LEARNINGS.md` después de reproducir, separando observación, hipótesis, garantía/fuente, workaround, fix durable, verificación y prevención.
 3. Steve comprueba que el estado sea `hypothesis`, `conditional`, `verified` o `deprecated`, y que no se presente una hipótesis como causa confirmada.
 4. En un milestone o release, lanza una retrospectiva breve: incidentes nuevos, fixes confirmados, hipótesis abiertas, entradas globales aplicadas y entradas que deben revalidarse por cambios de OS/Xcode/SDK/API.
-5. En proyectos instalados, conserva la memoria solo en `PROJECT_LEARNINGS.md`; nunca intenta escribir automáticamente de vuelta a AppleAppLab. App Master evalúa la promoción en el repo fuente.
+5. En proyectos instalados, conserva la memoria solo en `PROJECT_LEARNINGS.md`; nunca intenta escribir automáticamente de vuelta a AppleAppLab. App Master la recoge desde el repo fuente con `/harvest-learnings`.
+7. **Captura automática.** Steve se asegura de que el agente que corresponde anote, sin pedir permiso, cuando un fix necesitó más de un intento, el usuario corrigió dos veces el mismo valor visual o exportó un tema desde Dev Tools, dijo "otra vez" / "siempre" / "en todas las apps", rechazó un default del equipo, o se cerró un `/global-fix`. Cada entrada lleva **Tipo:** `incidente` (estado `hypothesis` al capturarse) o `preferencia` (estado `observed`). Se avisa en una línea: "Anotado en learnings: …".
+8. **Preferencias primero.** Antes del primer agente de un proyecto nuevo, Steve lee `PREFERENCES.md` (`.appleapplab/PREFERENCES.md` en proyectos instalados) y pasa a Jonny, Woz y Avie las que apliquen, para que la app nazca con ellas.
 6. Un incidente del toolchain — un tool del MCP de Xcode que falla, devuelve vacío o se comporta distinto tras actualizar Xcode — se registra igual, con fingerprint `tooling/xcode-mcp/<Tool>` y el build de Xcode en el campo Xcode/SDK, para que la revalidación por cambio de Xcode lo encuentre.
 
-No borres historia. Si una entrada queda superada, márcala `deprecated` y enlaza su reemplazo. Los valores visuales de una app son calibraciones locales, no defaults globales.
+No borres historia. Si una entrada queda superada, márcala `deprecated` y enlaza su reemplazo. Un valor visual calibrado en una sola app es local. Si el mismo ajuste aparece en dos o más apps, o el usuario dice "siempre", se anota como `preferencia` y App Master lo puede subir a `PREFERENCES.md` en la cosecha.
 
 ---
 

@@ -36,6 +36,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/add-developer-tools [tema|check]` | — | Instala el panel de Dev Tools y el tema central en un proyecto: empaqueta `Themes/<tema>.json`, cablea `LabThemeStore` + `.labTheme` + `.labDevTools`, sustituye los `PatternConfig(...)` hardcodeados por `labTheme.config(for:)`, compila iOS/macOS, verifica Release sin DevTools y Larry reporta literales visuales. Idempotente |
 | `/update-feature` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 | `/update-ui <pantalla o screenshot>` | — | Rutina de paridad UI↔diseño (Figma o Pen) — compara colores, padding, alineación, tipografía y radios de una pantalla (o un fragmento, por screenshot) contra su frame en Figma o en el archivo `.pen` de Pen y corrige el código; sin plan por etapas, Woz aplica directo salvo que el fix sea estructural |
+| `/harvest-learnings` | — | Rutina de memoria (solo en este repo, App Master) — junta los `PROJECT_LEARNINGS.md` de todas tus apps, separa incidentes de preferencias, agrupa lo repetido, triage contigo en el chat y sube lo aprobado por la escalera: `KNOWN_ISSUES.md` / `PREFERENCES.md` → regla en el skill → default en código; `LEARNINGS_LEDGER.md` evita repetir preguntas |
 
 ## Cómo trabajar
 
@@ -66,6 +67,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **"Ya lo arreglé tres veces y vuelve", bug intermitente, varias causas, "nadie sabe cómo debería funcionar esto"** → `/global-fix <error>` (reproducir + test rojo → mapa del flujo → todas las causas falsadas → fix por causa → verificación → simplificación → `PROJECT_LEARNINGS.md`; `auto` sin checkpoints). Un bug simple sigue en el flujo normal Avie → Woz → Bertrand
 - **"Agrega dev tools", "quiero controlar la UI en vivo", "los colores/opacidades están hardcodeados", app nueva** → `/add-developer-tools [tema]` (instala tema + panel y sustituye configs; `check` solo audita)
 - **"Revisa/actualiza esta pantalla completa contra Figma / contra Pen: colores, padding, alineación", pegar un screenshot de una parte y pedir que quede igual al diseño** → `/update-ui <pantalla>` (o `/update-ui` + screenshot del fragmento) — audita colores, spacing, alineación, tipografía y radios contra el frame de Figma o Pen y corrige directo, sin plan por etapas
+- **"Cosecha learnings", "qué se repite en mis apps", "que lo aprenda para siempre"** → `/harvest-learnings` (solo desde el repo AppleAppLab; triage contigo, nada se promueve sin tu respuesta)
 
 ## Flujo estándar
 
@@ -102,7 +104,7 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 | `Docs/Audits/` | `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md`, `SECURITY_AUDIT.md`, `COMPAT_AUDIT.md`, `L10N_AUDIT.md`, `LEGAL_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
 | `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master |
 | `Docs/` | `PROJECT_LEARNINGS.md` |
-| `.appleapplab/` | Lo que instala el equipo: `PATTERNS.md`, `Themes/`, `Research/`, `KNOWN_ISSUES.md`, `VERSION`, templates |
+| `.appleapplab/` | Lo que instala el equipo: `PATTERNS.md`, `Themes/`, `Research/`, `KNOWN_ISSUES.md`, `PREFERENCES.md`, `VERSION`, templates |
 | `.claude/` · `.cursor/` | Skills y reglas del equipo |
 
 **Rutas en los skills.** Cuando un skill cita `PATTERNS.md`, `Themes/…` o `Research/…`, en un proyecto instalado se leen en `.appleapplab/` (`.appleapplab/PATTERNS.md`, `.appleapplab/Research/apple-hig/…`). En el repo AppleAppLab son la fuente que se distribuye y se quedan en su raíz.
@@ -111,7 +113,17 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 
 ## Memoria evolutiva
 
-Steve consulta `KNOWN_ISSUES.md` en AppleAppLab o `.appleapplab/KNOWN_ISSUES.md` en proyectos instalados, además de `PROJECT_LEARNINGS.md` si existe. Pasa solo entradas relevantes al especialista. El agente propietario documenta reproducción, hipótesis/causa, fix y verificación local; Steve coordina retrospectivas. App Master es el único que promueve patrones verificados a la base global.
+Steve consulta `KNOWN_ISSUES.md` en AppleAppLab o `.appleapplab/KNOWN_ISSUES.md` en proyectos instalados, además de `PROJECT_LEARNINGS.md` si existe. Pasa solo entradas relevantes al especialista. El agente propietario documenta reproducción, hipótesis/causa, fix y verificación local; Steve coordina retrospectivas. App Master es el único que promueve a la base global, con `/harvest-learnings` desde este repo: junta los learnings de todas tus apps, hace triage contigo y sube lo aprobado a `KNOWN_ISSUES.md` (incidentes) o `PREFERENCES.md` (preferencias), a la regla del skill y, si se puede, al código.
+
+**Captura automática.** Cualquier agente anota en `PROJECT_LEARNINGS.md` sin que se lo pidan, y lo dice en una línea en el chat ("Anotado en learnings: …"), cuando:
+
+- un fix necesitó más de un intento, o el usuario dijo "sigue igual" o "no funcionó";
+- el usuario corrige el mismo valor visual dos veces (material, opacidad, color, radio, spacing, animación), o exporta un tema desde Dev Tools;
+- el usuario dice "otra vez", "siempre", "como siempre", "en todas las apps" o "de nuevo";
+- el usuario rechaza un default del equipo y elige otro;
+- se cierra un `/global-fix`.
+
+Cada entrada lleva **Tipo:** `incidente` (algo falló: causa y fix) o `preferencia` (cómo le gusta al usuario). Un incidente recién capturado es `hypothesis`; una preferencia es `observed`. No se anotan typos ni cosas de una sola vez. Al empezar trabajo nuevo, los agentes leen también `PREFERENCES.md` (`.appleapplab/PREFERENCES.md` en proyectos instalados) y aplican lo que corresponda sin volver a preguntar.
 
 ## Comportamiento de inicio
 

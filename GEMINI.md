@@ -42,6 +42,7 @@ Cuando el usuario necesite un agente específico, lee su skill file y adopta ese
 | `/add-developer-tools [tema\|check]` (rutina) | `.claude/skills/add-developer-tools/SKILL.md` | Instala Dev Tools y tema central en un proyecto: Steve sonda y elige tema, Woz empaqueta `Themes/<tema>.json`, cablea `LabThemeStore` + `.labTheme` + `.labDevTools` y sustituye `PatternConfig(...)` por `labTheme.config(for: XPattern.self)` con script de referencia; Bertrand compila iOS/macOS y abre el panel; Ivan verifica `nm | grep LabDevTools` = 0 en Release; Larry reporta literales visuales restantes. Idempotente; `check` solo audita | `TRD.md` + `STYLE_BRIEF.md` actualizados |
 | `/global-audit` (rutina paraguas) | `.claude/skills/global-audit/SKILL.md` | Steve hace triage por etapa del proyecto y omite con razón las auditorías que no hacen falta (un proyecto nuevo no recibe arquitectura, limpieza ni performance); corre las necesarias en diagnóstico compartiendo inventarios, Avie reconcilia los cruces, Steve entrega un tablero con los cuatro veredictos y una secuencia global de `go` en rondas arquitectura → limpieza → performance → App Store; `go <n>` delega a la rutina dueña; `status` refresca sin re-auditar | `GLOBAL_AUDIT.md` |
 | `/update-ui <pantalla o screenshot>` (rutina) | `.claude/skills/update-ui/SKILL.md` | Paridad UI↔diseño (Figma o Pen) — Steve compara una pantalla (por nombre) o un fragmento (por screenshot) contra su frame en Figma o en el archivo `.pen` de Pen: colores, padding, alineación, tipografía, radios, iconografía; Woz aplica directo, sin plan por etapas, salvo que el fix sea estructural; Steve verifica con build + screenshot en simulador | sin documento — reporta lo corregido por categoría en el chat |
+| `/harvest-learnings` (rutina, solo repo fuente) | `.claude/skills/harvest-learnings/SKILL.md` | App Master cosecha los `PROJECT_LEARNINGS.md` de todas las apps en `GitSync/`, separa incidentes de preferencias, agrupa lo repetido entre apps, hace triage con el usuario en tandas de 4 y sube lo aprobado por la escalera doc → skill → code | `KNOWN_ISSUES.md`, `PREFERENCES.md`, `LEARNINGS_LEDGER.md` |
 
 ## Dónde vive cada documento
 
@@ -56,12 +57,24 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 | `Docs/Audits/` | `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md`, `SECURITY_AUDIT.md`, `COMPAT_AUDIT.md`, `L10N_AUDIT.md`, `LEGAL_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
 | `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master |
 | `Docs/` | `PROJECT_LEARNINGS.md` |
-| `.appleapplab/` | Lo que instala el equipo: `PATTERNS.md`, `Themes/`, `Research/`, `KNOWN_ISSUES.md`, `VERSION`, templates |
+| `.appleapplab/` | Lo que instala el equipo: `PATTERNS.md`, `Themes/`, `Research/`, `KNOWN_ISSUES.md`, `PREFERENCES.md`, `VERSION`, templates |
 | `.claude/` · `.cursor/` | Skills y reglas del equipo |
 
 **Rutas en los skills.** Cuando un skill cita `PATTERNS.md`, `Themes/…` o `Research/…`, en un proyecto instalado se leen en `.appleapplab/` (`.appleapplab/PATTERNS.md`, `.appleapplab/Research/apple-hig/…`). En el repo AppleAppLab son la fuente que se distribuye y se quedan en su raíz.
 
 **Proyectos sin migrar.** Si los documentos todavía están en la raíz, se leen ahí y no se crea un duplicado en `Docs/`. Steve propone `/clean-folder-project docs` una vez.
+
+## Memoria evolutiva
+
+**Captura automática.** Cualquier agente anota en `PROJECT_LEARNINGS.md` sin que se lo pidan, y lo dice en una línea en el chat ("Anotado en learnings: …"), cuando:
+
+- un fix necesitó más de un intento, o el usuario dijo "sigue igual" o "no funcionó";
+- el usuario corrige el mismo valor visual dos veces (material, opacidad, color, radio, spacing, animación), o exporta un tema desde Dev Tools;
+- el usuario dice "otra vez", "siempre", "como siempre", "en todas las apps" o "de nuevo";
+- el usuario rechaza un default del equipo y elige otro;
+- se cierra un `/global-fix`.
+
+Cada entrada lleva **Tipo:** `incidente` (algo falló: causa y fix) o `preferencia` (cómo le gusta al usuario). Un incidente recién capturado es `hypothesis`; una preferencia es `observed`. No se anotan typos ni cosas de una sola vez. Al empezar trabajo nuevo, los agentes leen también `PREFERENCES.md` (`.appleapplab/PREFERENCES.md` en proyectos instalados) y aplican lo que corresponda sin volver a preguntar.
 
 ## Cadena de documentos
 
@@ -76,6 +89,7 @@ Cada agente produce un documento y los siguientes lo leen:
 | `DESIGN_FROST.md` | Jonny | Woz, Larry |
 | `SECURITY_AUDIT.md` | Ivan | Woz, Bertrand, Craig, Phil |
 | `KNOWN_ISSUES.md` o `.appleapplab/KNOWN_ISSUES.md` | App Master | Steve filtra entradas relevantes |
+| `PREFERENCES.md` (fuente) o `.appleapplab/PREFERENCES.md` (instalado) | App Master con `/harvest-learnings`, tras triage con el usuario | Steve, Jonny, Woz, Avie al empezar trabajo nuevo |
 | `PROJECT_LEARNINGS.md` | Agente propietario; Steve coordina | Equipo del proyecto |
 | `TEST_PLAN.md` | Bertrand | Phil |
 | `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
