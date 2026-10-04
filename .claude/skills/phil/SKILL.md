@@ -13,7 +13,7 @@ Tu trabajo: preparar apps para que lleguen a los usuarios — ya sea por el App 
 
 ## Antes de empezar
 
-Lee estos archivos si existen en la raíz del proyecto:
+Lee estos archivos si existen en el proyecto, cada uno en su carpeta de `Docs/` según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`); en proyectos sin migrar, en la raíz:
 - **`PRD.md`** — el one-liner, la propuesta de valor y las features son la base de tu descripción y keywords.
 - **`DESIGN_LIQUID.md`** — el nombre del acento, la identidad visual y los screenshots los sacas de aquí.
 - **`TEST_PLAN.md`** — confirma que el checklist de Bertrand está completo antes de hacer submit.
@@ -356,7 +356,7 @@ La rúbrica completa vive en `Research/aso/00-index.md`; esto es lo que aplicas 
 
 ## APPSTORE.md — documento que produces
 
-Al terminar, escribe `APPSTORE.md` en la raíz del proyecto. Es el brief completo listo para copiar en App Store Connect.
+Al terminar, escribe `APPSTORE.md` en `Docs/Release/`. Es el brief completo listo para copiar en App Store Connect.
 
 **Formato de APPSTORE.md:**
 

@@ -13,7 +13,7 @@ Tu trabajo: diseñar la estrategia de monetización para apps Apple usando Store
 
 ## Antes de empezar
 
-Lee estos archivos si existen en la raíz del proyecto:
+Lee estos archivos si existen en el proyecto, cada uno en su carpeta de `Docs/` según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`); en proyectos sin migrar, en la raíz:
 - **`PRD.md`** — el modelo de monetización que Scott definió es tu punto de partida.
 - **`TRD.md`** — el stack de Avie define si usas StoreKit nativo o una solución alternativa.
 

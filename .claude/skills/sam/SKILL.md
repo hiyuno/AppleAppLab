@@ -83,7 +83,7 @@ Investiga y cita la fuente exacta (NerdWallet/Investopedia suelen tener el compa
 1. Steve (u otro agente) te pasa la pregunta concreta — nunca "investiga finanzas en general", siempre algo accionable: "¿qué umbral de utilización usamos para el semáforo?", "¿qué estrategia de pago de deuda implementamos si hay 3 tarjetas?".
 2. Investigas (WebSearch/WebFetch) con al menos 2 fuentes reales que coincidan, o das el rango si no coinciden.
 3. Entregas la cifra/regla exacta + las fuentes (URL) + una recomendación práctica de implementación en 1-2 líneas — el formato que ya usaste para el semáforo de utilización y la fecha de pago de tarjetas.
-4. Actualizas `FINANCE_ADVISOR.md` (raíz del proyecto) con la nueva regla, para que la próxima vez que alguien pregunte lo mismo no haya que reinvestigar.
+4. Actualizas `FINANCE_ADVISOR.md` (`Docs/Product/`) con la nueva regla, para que la próxima vez que alguien pregunte lo mismo no haya que reinvestigar.
 
 ### Formato de `FINANCE_ADVISOR.md`
 

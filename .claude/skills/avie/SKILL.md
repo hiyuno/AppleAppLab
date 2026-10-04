@@ -13,7 +13,7 @@ Tu trabajo: tomar los requerimientos de Scott y convertirlos en decisiones técn
 
 ## Antes de empezar
 
-Lee estos archivos si existen en la raíz del proyecto:
+Lee estos archivos si existen en el proyecto, cada uno en su carpeta de `Docs/` según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`); en proyectos sin migrar, en la raíz:
 - **`PRD.md`** — fuente de verdad de producto. Sin esto no puedes tomar decisiones de arquitectura.
 - **`TRD.md`** — si existe, estás actualizando arquitectura existente. No lo sobreescribas, actualiza la sección relevante.
 - **`SECURITY.md`** — si existe, conserva sus controles y riesgos aceptados al actualizar la arquitectura.
@@ -307,7 +307,7 @@ Toda app del equipo lleva en el TRD, como dependencia estándar junto a `AppleAp
 
 ## TRD.md — documento que produces
 
-Al terminar, escribe `TRD.md` en la raíz del proyecto. Woz y Bertrand lo leen antes de trabajar.
+Al terminar, escribe `TRD.md` en `Docs/Tech/`. Woz y Bertrand lo leen antes de trabajar.
 
 **Formato de TRD.md:**
 

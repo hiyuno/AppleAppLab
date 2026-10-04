@@ -43,6 +43,26 @@ Cuando el usuario necesite un agente específico, lee su skill file y adopta ese
 | `/global-audit` (rutina paraguas) | `.claude/skills/global-audit/SKILL.md` | Steve hace triage por etapa del proyecto y omite con razón las auditorías que no hacen falta (un proyecto nuevo no recibe arquitectura, limpieza ni performance); corre las necesarias en diagnóstico compartiendo inventarios, Avie reconcilia los cruces, Steve entrega un tablero con los cuatro veredictos y una secuencia global de `go` en rondas arquitectura → limpieza → performance → App Store; `go <n>` delega a la rutina dueña; `status` refresca sin re-auditar | `GLOBAL_AUDIT.md` |
 | `/update-ui <pantalla o screenshot>` (rutina) | `.claude/skills/update-ui/SKILL.md` | Paridad UI↔diseño (Figma o Pen) — Steve compara una pantalla (por nombre) o un fragmento (por screenshot) contra su frame en Figma o en el archivo `.pen` de Pen: colores, padding, alineación, tipografía, radios, iconografía; Woz aplica directo, sin plan por etapas, salvo que el fix sea estructural; Steve verifica con build + screenshot en simulador | sin documento — reporta lo corregido por categoría en el chat |
 
+## Dónde vive cada documento
+
+La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda limpia: solo lo que las herramientas exigen ahí y lo que compila. Cada documento del equipo tiene una carpeta fija; un agente que crea un documento lo crea ahí, y crea la carpeta si no existe.
+
+| Carpeta | Qué vive ahí |
+|---------|--------------|
+| raíz | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (las herramientas los buscan ahí), `README.md`, `project.yml`, `Makefile`, `.gitignore`, `app-web-intake.md` (contrato con web-lab) y el código de la app |
+| `Docs/Product/` | `PRD.md`, `GROWTH.md`, `FINANCE_ADVISOR.md`, monetización, ideas y roadmaps |
+| `Docs/Tech/` | `TRD.md`, `SECURITY.md`, `PROJECT_STRUCTURE.md`, `TEST_PLAN.md`, `AI_SPEC.md`, `ANALYTICS.md`, planes de versión |
+| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, archivos `.pen` |
+| `Docs/Audits/` | `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md`, `SECURITY_AUDIT.md`, `COMPAT_AUDIT.md`, `L10N_AUDIT.md`, `LEGAL_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
+| `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master |
+| `Docs/` | `PROJECT_LEARNINGS.md` |
+| `.appleapplab/` | Lo que instala el equipo: `PATTERNS.md`, `Themes/`, `Research/`, `KNOWN_ISSUES.md`, `VERSION`, templates |
+| `.claude/` · `.cursor/` | Skills y reglas del equipo |
+
+**Rutas en los skills.** Cuando un skill cita `PATTERNS.md`, `Themes/…` o `Research/…`, en un proyecto instalado se leen en `.appleapplab/` (`.appleapplab/PATTERNS.md`, `.appleapplab/Research/apple-hig/…`). En el repo AppleAppLab son la fuente que se distribuye y se quedan en su raíz.
+
+**Proyectos sin migrar.** Si los documentos todavía están en la raíz, se leen ahí y no se crea un duplicado en `Docs/`. Steve propone `/clean-folder-project docs` una vez.
+
 ## Cadena de documentos
 
 Cada agente produce un documento y los siguientes lo leen:

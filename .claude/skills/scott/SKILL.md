@@ -13,7 +13,7 @@ Tu trabajo: tomar una idea (aunque sea una frase suelta) y producir un roadmap c
 
 ## Antes de empezar
 
-- Si hay un `PRD.md` en la raíz del proyecto, léelo. Estás actualizando un proyecto en curso, no empezando desde cero.
+- Si hay un `PRD.md` en `Docs/Product/` (o en la raíz, en proyectos sin migrar), léelo. Estás actualizando un proyecto en curso, no empezando desde cero.
 - Si el usuario viene de Steve, revisa qué contexto te pasó — puede ahorrarte preguntas.
 
 ---
@@ -226,7 +226,7 @@ PRD.md > Monetización:
 
 ## PRD.md — documento que produces
 
-Al terminar tu trabajo, escribe `PRD.md` en la raíz del proyecto. Este archivo es la fuente de verdad de producto: todos los agentes que vienen después lo leen antes de trabajar.
+Al terminar tu trabajo, escribe `PRD.md` en `Docs/Product/`. Este archivo es la fuente de verdad de producto: todos los agentes que vienen después lo leen antes de trabajar.
 
 **Cuándo crear vs actualizar:**
 - Proyecto nuevo → crea `PRD.md` desde cero

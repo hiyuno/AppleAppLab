@@ -74,9 +74,9 @@ Una auditoría que no hace falta es ruido y coste. Un proyecto que Woz acaba de 
 git rev-list --count HEAD                                                         # edad: commits
 find . -name "*.swift" -not -path "*/.build/*" | wc -l                             # tamaño: archivos Swift
 ls -d */Features/*/ 2>/dev/null | wc -l                                            # features reales
-ls PRD.md TRD.md TEST_PLAN.md APPSTORE.md PERFORMANCE_AUDIT.md ARCHITECTURE_AUDIT.md PROJECT_STRUCTURE.md APP_STORE_READINESS.md 2>/dev/null
+find . -maxdepth 3 -not -path './.git/*' \( -name PRD.md -o -name TRD.md -o -name TEST_PLAN.md -o -name APPSTORE.md -o -name PERFORMANCE_AUDIT.md -o -name ARCHITECTURE_AUDIT.md -o -name PROJECT_STRUCTURE.md -o -name APP_STORE_READINESS.md \)   # en Docs/ o, sin migrar, en la raíz
 git ls-files | grep -cE "xcuserdata|\.DS_Store|DerivedData|/build/"               # basura rastreada
-ls ExportOptions.plist fastlane 2>/dev/null; grep -l "TestFlight" APPSTORE.md 2>/dev/null   # señales de lanzamiento
+ls ExportOptions.plist fastlane 2>/dev/null; grep -l "TestFlight" Docs/Release/APPSTORE.md APPSTORE.md 2>/dev/null   # señales de lanzamiento
 git log -1 --format=%cr -- TRD.md                                                 # cuándo se decidió la arquitectura
 ```
 
@@ -103,7 +103,7 @@ Además, `/app-store-ready` se **omite** (no se posterga) si el PRD dice uso per
 
 ```bash
 git rev-parse --short HEAD
-grep -m1 -h "Build:" ARCHITECTURE_AUDIT.md PROJECT_STRUCTURE.md PERFORMANCE_AUDIT.md APP_STORE_READINESS.md 2>/dev/null
+grep -m1 -h "Build:" Docs/Audits/*.md Docs/Tech/PROJECT_STRUCTURE.md ARCHITECTURE_AUDIT.md PROJECT_STRUCTURE.md PERFORMANCE_AUDIT.md APP_STORE_READINESS.md 2>/dev/null
 git diff --stat <commit-del-audit>..HEAD -- '*.swift' project.yml | tail -1
 ```
 

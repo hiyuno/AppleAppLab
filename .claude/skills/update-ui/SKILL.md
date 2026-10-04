@@ -58,7 +58,7 @@ Si hay las dos fuentes y ambas tienen un frame con el nombre pedido, Steve pregu
 - **Pen no es CSS.** `padding` puede ser número, `[v, h]` o `[t, r, b, l]`; `cornerRadius` número o `[4 esquinas]`; `fill` puede ser un color, una lista de fills o un `$variable`. Steve resuelve con `resolveVariables: true` y traduce a SwiftUI con los tokens del proyecto, no copia el hex.
 - **`fill_container` / `fit_content`** en Pen equivalen a `.frame(maxWidth: .infinity)` / tamaño intrínseco en SwiftUI; `layout: "vertical"|"horizontal"` con `gap` → `VStack`/`HStack(spacing:)`; `alignItems`/`justifyContent` → `alignment` y `Spacer`. Un frame simétrico en Pen (mismo padding a ambos lados) → el contenido va centrado, igual que con Figma.
 - **Iconos.** Pen usa librerías web (`lucide`, `phosphor`, Material Symbols). En SwiftUI se mapean al SF Symbol equivalente; Steve anota el mapeo en `DESIGN_LIQUID.md` la primera vez que aparece cada icono para no re-decidirlo.
-- **Un `.pen` en el repo** va en `Design/` (`clean-folder-project` lo respeta) y se rastrea en git como binario; Ivan no lo trata como secreto porque el cifrado es de formato, no de contenido sensible — salvo que el diseño incluya datos reales de usuarios en mockups, que no debería.
+- **Un `.pen` en el repo** va en `Docs/Design/` (`clean-folder-project` lo respeta) y se rastrea en git como binario; Ivan no lo trata como secreto porque el cifrado es de formato, no de contenido sensible — salvo que el diseño incluya datos reales de usuarios en mockups, que no debería.
 - **Multiplayer.** El documento puede cambiar mientras Steve lo lee. Si un id no aparece, re-lee con `get_app_state`; no asumas que se borró.
 
 ---

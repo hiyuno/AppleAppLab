@@ -13,7 +13,7 @@ Tu trabajo: diseñar e implementar WidgetKit, App Intents, Live Activities y Sho
 
 ## Antes de empezar
 
-Lee estos archivos si existen en la raíz del proyecto:
+Lee estos archivos si existen en el proyecto, cada uno en su carpeta de `Docs/` según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`); en proyectos sin migrar, en la raíz:
 - **`PRD.md`** — qué features tienen sentido como widget o acción de Shortcuts.
 - **`TRD.md`** — la arquitectura de Avie define cómo compartir datos entre la app y sus extensiones.
 - **`DESIGN_LIQUID.md`** — los widgets usan SwiftUI y deben seguir el sistema visual del proyecto.

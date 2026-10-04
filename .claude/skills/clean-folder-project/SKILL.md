@@ -1,6 +1,6 @@
 ---
 name: clean-folder-project
-description: "Rutina de limpieza y organización del proyecto. Avie inventaría carpetas, archivos, nombres, basura, assets y .gitignore; define la estructura objetivo según el estándar de facto para apps SwiftUI (feature-first, Core, Resources, tests que reflejan el código) adaptada al TRD; entrega PROJECT_STRUCTURE.md con la tabla archivo → destino y un plan por etapas que nunca rompe el build. Woz mueve con git mv, Bertrand confirma build y tests. 'go <n>' aplica cada etapa. Úsalo cuando el proyecto esté desordenado, no sepas dónde va un archivo, haya basura en git o quieras dejarlo como un proyecto profesional."
+description: "Rutina de limpieza y organización del proyecto. Avie inventaría carpetas, archivos, nombres, basura, assets, .gitignore, documentos sueltos y archivos del equipo; mueve los documentos a Docs/<Product|Tech|Design|Audits|Release>/ y lo que instala el equipo a .appleapplab/, dejando en la raíz solo lo que las herramientas exigen y lo que compila; define la estructura objetivo según el estándar de facto para apps SwiftUI (feature-first, Core, Resources, tests que reflejan el código) adaptada al TRD; entrega PROJECT_STRUCTURE.md con la tabla archivo → destino y un plan por etapas que nunca rompe el build. Woz mueve con git mv, Bertrand confirma build y tests. 'go <n>' aplica cada etapa. Úsalo cuando el proyecto esté desordenado, no sepas dónde va un archivo, haya basura en git o quieras dejarlo como un proyecto profesional."
 ---
 
 # /clean-folder-project — Limpiar y organizar el proyecto como un proyecto profesional
@@ -21,8 +21,10 @@ Rutina del equipo, no un agente. Cuando se lanza, Steve orquesta a Avie (líder)
 | Entitlements, `PrivacyInfo.xcprivacy`, configs con secretos | Ivan | **No se mueven ni borran sin Ivan.** Si aparece un secreto rastreado en git, es 🔴 y va a Ivan — `.gitignore` no lo arregla, ya está en el historial |
 | `Localizable.xcstrings` — claves sin uso | Kim | Se reportan; solo se borran con confirmación de Kim si la app es multi-idioma |
 | Assets de diseño, nombres de componentes | Jonny | Nombres de assets y carpeta de diseño se consensúan con Jonny |
-| Archivos `.pen` (Pen) | Jonny | Van en `Design/`, rastreados como binario; están cifrados: nunca se abren con `Read`/`Grep` ni se "limpian" por dentro — solo se mueven con `git mv` |
-| Documentos del equipo (`PRD.md`, `TRD.md`, `*_AUDIT.md`) | Steve | **Se quedan en la raíz.** Los agentes los leen ahí. No se mueven a `docs/` |
+| Archivos `.pen` (Pen) | Jonny | Van en `Docs/Design/`, rastreados como binario; están cifrados: nunca se abren con `Read`/`Grep` ni se "limpian" por dentro — solo se mueven con `git mv` |
+| Documentos del equipo (`PRD.md`, `TRD.md`, `*_AUDIT.md`…) | Steve | **Van a `Docs/<área>/`** según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`). En la raíz solo quedan `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `README.md`, `project.yml`, `Makefile`, `.gitignore` y `app-web-intake.md` (contrato con web-lab) |
+| Archivos que instala el equipo (`PATTERNS.md`, `Themes/`, `Research/`) | Steve | Viven en `.appleapplab/`. Si están en la raíz son de una instalación anterior a v1.18: se mueven o, si son idénticos a la copia de `.appleapplab/`, se borran. **Excepción:** en el repo AppleAppLab son la fuente que se distribuye y no se tocan |
+| Código de la app | Avie | Se ordena por feature dentro de su carpeta actual. **No se mueve a `App/`** salvo que el usuario lo pida: toca `project.yml` y no aporta tanto como ordenar documentos |
 
 **Un solo plan activo por zona.** Steve cruza etapas abiertas de `/optimize-app`, `/architecture-audit` y `/app-store-ready` antes de cada `go`. Mover archivos que otro plan está editando es la forma más fácil de romper las dos cosas.
 
@@ -33,7 +35,8 @@ Rutina del equipo, no un agente. Cuando se lanza, Steve orquesta a Avie (líder)
 | Comando | Qué hace |
 |---------|----------|
 | `/clean-folder-project` | Auditoría completa: inventario, estructura objetivo, tabla de destinos, plan por etapas |
-| `/clean-folder-project quick` | Solo basura, `.gitignore`, archivos rastreados que no deberían y violaciones de nombre. Reporte, sin plan de movimientos. Útil antes de un PR |
+| `/clean-folder-project quick` | Solo basura, `.gitignore`, archivos rastreados que no deberían, violaciones de nombre, documentos fuera de `Docs/` y archivos del equipo en la raíz. Reporte, sin plan de movimientos. Útil antes de un PR |
+| `/clean-folder-project docs` | Solo la migración de documentos a `Docs/<área>/` y de archivos del equipo a `.appleapplab/`, con su plan por etapas. No toca código. Es lo que se corre en proyectos instalados antes de v1.18 |
 | `/clean-folder-project <carpeta>` | Solo esa zona (ej: `Features/Tasks`, `Resources`) |
 | `/clean-folder-project go <n>` | Aprueba e implementa la etapa `n` del plan existente |
 
@@ -68,7 +71,7 @@ Lee si existen:
 
 ## Fase 0 — Contra qué se ordena (Steve)
 
-> **¿Hace falta?** Antes de lanzar esta rutina — suelta o dentro de `/global-audit` — Steve hace el triage de `.claude/skills/global-audit/SKILL.md` Fase 0 (sonda de 7 comandos → etapa del proyecto). En un proyecto **nuevo o recién generado por Woz desde el TRD** esta rutina no aplica: el scaffold del equipo ya viene ordenado — a lo sumo `quick` si la sonda ve basura rastreada. Steve lo dice en una línea en vez de correrla; si el usuario insiste, se corre. En construcción, solo por señal y en modo `quick`.
+> **¿Hace falta?** Antes de lanzar esta rutina — suelta o dentro de `/global-audit` — Steve hace el triage de `.claude/skills/global-audit/SKILL.md` Fase 0 (sonda de 7 comandos → etapa del proyecto). En un proyecto **nuevo o recién generado por Woz desde el TRD** esta rutina no aplica: el scaffold del equipo ya viene ordenado — a lo sumo `quick` si la sonda ve basura rastreada. Steve lo dice en una línea en vez de correrla; si el usuario insiste, se corre. En construcción, solo por señal y en modo `quick`. **Excepción:** si hay documentos del equipo en la raíz o `PATTERNS.md` / `Themes/` / `Research/` fuera de `.appleapplab/`, el modo `docs` aplica siempre, en cualquier etapa — es riesgo cero y evita que los agentes sigan escribiendo en la raíz.
 
 1. **El esqueleto lo da el TRD.** Nivel A (local simple) tolera organización por capa; nivel B en adelante (MVVM con lógica real) se organiza **por feature**; nivel D son paquetes. No se inventa una estructura más ambiciosa que la arquitectura.
 2. **Cómo está generado el proyecto:**
@@ -185,6 +188,39 @@ Salida de la fase: inventario con conteos y cada hallazgo con ruta y severidad.
 
 ---
 
+### 1.7 Documentos, archivos del equipo y build duplicado
+
+```bash
+ls *.md 2>/dev/null | grep -vE '^(CLAUDE|AGENTS|GEMINI|README|app-web-intake)\.md$'      # documentos sueltos en la raíz
+ls -d docs design Design AppStore 2>/dev/null                                              # carpetas de documentos fuera de Docs/
+ls -d PATTERNS.md Themes Research 2>/dev/null                                              # archivos del equipo en la raíz (instalación vieja)
+for f in PATTERNS.md Themes Research; do [ -e "$f" ] && [ -e ".appleapplab/$f" ] && diff -rq "$f" ".appleapplab/$f" >/dev/null && echo "IDÉNTICO: $f"; done
+ls Package.swift project.yml *.xcodeproj 2>/dev/null; ls -d .swiftpm 2>/dev/null           # ¿dos sistemas de build para la misma app?
+grep -n "Themes/" project.yml 2>/dev/null                                                  # recursos que apuntan a la ruta vieja
+grep -rln "](\.\./\|](\./[A-Z_]*\.md" --include="*.md" . | grep -v "/.git/" | head        # enlaces relativos entre documentos
+```
+
+| Hallazgo | Severidad |
+|----------|-----------|
+| Documentos del equipo en la raíz | 🟡 — los agentes seguirán escribiendo ahí y la raíz no se puede leer |
+| `docs/`, `design/`, `AppStore/` sueltos | 🟡 — su contenido se reparte en `Docs/<área>/` |
+| `PATTERNS.md`, `Themes/`, `Research/` en la raíz | 🔵 si son idénticos a `.appleapplab/` (se borran); 🟡 si difieren (alguien los editó: se revisa el diff antes) |
+| `Package.swift` y `project.yml` describiendo la misma app | 🟡 — dos fuentes de verdad del build; Avie decide cuál queda y la otra se borra en etapa propia |
+
+Destino de cada documento:
+
+| Va a | Documentos |
+|------|------------|
+| `Docs/Product/` | `PRD.md`, `GROWTH.md`, `FINANCE_ADVISOR.md`, `MONETIZATION.md`, `IDEAS*.md`, roadmaps |
+| `Docs/Tech/` | `TRD.md`, `SECURITY.md`, `PROJECT_STRUCTURE.md`, `TEST_PLAN.md`, `AI_SPEC.md`, `ANALYTICS.md`, planes de versión (`v0.7-*.md`), planes técnicos (`*_PLAN.md`) |
+| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN*.md`, `*.pen` |
+| `Docs/Audits/` | `*_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
+| `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master (`AppIcon-master.*`) |
+| `Docs/` | `PROJECT_LEARNINGS.md` |
+| `.appleapplab/` | `PATTERNS.md`, `Themes/`, `Research/` |
+
+Un documento que no encaja en ninguna fila se pregunta al usuario, no se adivina.
+
 ## Fase 2 — Estructura objetivo (Avie)
 
 No hay un estándar oficial de Apple para organizar un proyecto. Lo que sí hay es un **consenso de facto** para apps SwiftUI modernas — feature-first, `Core` compartido, `Resources` separados, tests que reflejan el código, un tipo por archivo, compatible con XcodeGen y SPM — y es lo que Avie aplica, **adaptado al nivel del TRD**:
@@ -198,7 +234,15 @@ No hay un estándar oficial de Apple para organizar un proyecto. Lo que sí hay 
 ├── README.md
 ├── .gitignore
 ├── .swiftlint.yml
-├── PRD.md  TRD.md  PROJECT_STRUCTURE.md  …   # documentos del equipo — en la raíz, los agentes los leen aquí
+├── CLAUDE.md  AGENTS.md  GEMINI.md            # obligatorios en raíz: las herramientas los buscan ahí
+├── Docs/                                      # documentos del proyecto, por área
+│   ├── Product/   PRD, GROWTH, monetización, ideas
+│   ├── Tech/      TRD, SECURITY, PROJECT_STRUCTURE, TEST_PLAN, planes de versión
+│   ├── Design/    STYLE_BRIEF, DESIGN_LIQUID, *.pen
+│   ├── Audits/    *_AUDIT, APP_STORE_READINESS, GLOBAL_AUDIT
+│   ├── Release/   APPSTORE, PRIVACY_POLICY, metadata, icono master
+│   └── PROJECT_LEARNINGS.md
+├── .appleapplab/                              # lo instala el equipo: PATTERNS, Themes, Research, KNOWN_ISSUES
 ├── Packages/                   # paquetes SPM locales (AppleAppLabUI, módulos propios)
 ├── Scripts/                    # release.sh, ci_post_clone.sh, herramientas
 ├── .github/workflows/  |  ci_scripts/
@@ -274,6 +318,12 @@ Cada archivo del inventario aparece **una vez**. Nada se mueve todavía.
 | `Assets.xcassets/old_logo.imageset` | borrar | — | sin referencias (1.5) | no |
 | `Resources/seed.json` | mover | `<App>/Resources/Seed/seed.json` | recurso | **sí**: `Bundle.main.url(forResource:)` sin cambio; verificar `project.yml` |
 | `.DS_Store` ×14 | borrar + ignorar | — | basura | no |
+| `TRD.md` | mover | `Docs/Tech/TRD.md` | documento técnico | no |
+| `ARCHITECTURE_AUDIT.md` | mover | `Docs/Audits/ARCHITECTURE_AUDIT.md` | auditoría | no |
+| `design/NewProject.pen` | mover | `Docs/Design/NewProject.pen` | diseño | no |
+| `AppStore/metadata_es.md` | mover | `Docs/Release/metadata_es.md` | release | no |
+| `PATTERNS.md` (idéntico a `.appleapplab/`) | borrar | — | copia vieja del equipo | no |
+| `Themes/fintrol.json` | mover | `.appleapplab/Themes/fintrol.json` | archivo del equipo | **sí** si `project.yml` lo empaqueta: actualizar la ruta en la misma etapa |
 | `Config/Secrets.plist` | **🔴 → Ivan** | — | secreto rastreado | Ivan decide |
 | `Views/Components/LabButtonCopy.swift` | borrar | — | duplica `LabButton` de AppleAppLabUI | sustituir 3 usos → **sí**, etapa propia |
 
@@ -312,15 +362,18 @@ Las reglas comunes a todas las rutinas — cada etapa compila sola, un tipo de c
 3. **Una clase de movimiento por etapa.** Orden recomendado:
    1. Basura y `.gitignore` (borrar rastreados indebidos, `.DS_Store`, añadir reglas) — riesgo cero
    2. Secretos → Ivan (fuera de esta rutina; se espera su cierre)
-   3. Adoptar XcodeGen si no está (Woz) — solo si el usuario acepta
-   4. `Resources/` — mover recursos y verificar carga en runtime
-   5. `Core/` — modelos, servicios, extensiones compartidas
-   6. `Features/` — **una feature por etapa**, con sus tests reflejados en la misma etapa
-   7. `UI/` — componentes propios; sustituir duplicados de AppleAppLabUI en etapa aparte
-   8. Renombrar archivos para que coincidan con su tipo
-   9. Dividir archivos multi-tipo
-   10. Borrar huérfanos confirmados (archivos, assets, strings con OK de Kim)
-   11. `project.yml`, `Makefile`, CI, scripts, docs: rutas actualizadas — aunque normalmente cada etapa ya lo hace
+   3. **Documentos → `Docs/<área>/`** — riesgo cero; en la misma etapa se corrigen los enlaces relativos entre documentos y las rutas que mencionen `CLAUDE.md` del proyecto o `PROJECT_STRUCTURE.md`
+   4. **Archivos del equipo → `.appleapplab/`** — los idénticos se borran (`git rm`), los que difieren se mueven tras revisar el diff; si `project.yml` empaqueta `Themes/<tema>.json`, la ruta se actualiza en esta etapa y se compila
+   5. Build duplicado — Avie decide entre `Package.swift` y `project.yml`; la otra se borra; build en verde
+   6. Adoptar XcodeGen si no está (Woz) — solo si el usuario acepta
+   7. `Resources/` — mover recursos y verificar carga en runtime
+   8. `Core/` — modelos, servicios, extensiones compartidas
+   9. `Features/` — **una feature por etapa**, con sus tests reflejados en la misma etapa
+   10. `UI/` — componentes propios; sustituir duplicados de AppleAppLabUI en etapa aparte
+   11. Renombrar archivos para que coincidan con su tipo
+   12. Dividir archivos multi-tipo
+   13. Borrar huérfanos confirmados (archivos, assets, strings con OK de Kim)
+   14. `project.yml`, `Makefile`, CI, scripts: rutas actualizadas — aunque normalmente cada etapa ya lo hace
 4. **Cada etapa regenera y compila.** `xcodegen generate && xcodebuild build` + tests + previews — con el MCP `xcode` conectado: `BuildProject`, `RunAllTests`, `RenderPreview` de las vistas movidas y `DeviceInteractionInstallAndRun` si la etapa movió recursos. Si XcodeGen no está y el usuario no quiso adoptarlo, la etapa incluye la instrucción de arrastre en Xcode y el commit del `.xcodeproj`. **`XcodeMV` no sustituye a `git mv`:** mueve en el navigator y en disco, pero el historial lo conserva git — el movimiento sigue siendo `git mv`.
 5. **Una etapa por PR**, sobre `main` limpio. Mover 40 archivos en un commit es imposible de revisar; mover una feature sí.
 6. **Nada de "ya que estoy".** Si al mover un archivo Woz ve código malo, lo anota para `/optimize-app`. No lo arregla en esa etapa.
@@ -407,7 +460,9 @@ Si el build o un test falla: Woz revierte el commit, Steve marca ⚠️ Revertid
 | Un test | espejo del archivo: `<App>Tests/<misma ruta>/<Archivo>Tests.swift` | — |
 | Un mock o fixture compartido | `<App>Tests/Fixtures/` | `Mock<Servicio>.swift`, `<Entidad>+Fixture.swift` |
 | Un script | `Scripts/` | kebab-case, `.sh` ejecutable |
-| Un documento del equipo | **raíz** | `MAYÚSCULAS.md` |
+| Un documento del equipo | `Docs/<área>/` según §"Dónde vive cada documento" | `MAYÚSCULAS.md` |
+| Un diseño de Pen | `Docs/Design/` | `<App>.pen` |
+| Material de referencia del equipo | `.appleapplab/` — no se edita a mano, `/update-team` lo sobreescribe | — |
 
 **Reglas:** `Core/` nunca importa `Features/`. Features no se importan entre sí. Un tipo principal por archivo, y el archivo se llama como él. Tests reflejan rutas.
 
@@ -483,7 +538,9 @@ Si el build o un test falla: Woz revierte el commit, Steve marca ⚠️ Revertid
 - No edita el contenido de los archivos salvo el cambio mínimo que un movimiento exige, en etapa propia
 - No toca entitlements, `PrivacyInfo.xcprivacy` ni configs con secretos sin Ivan
 - No borra strings sin Kim si la app es multi-idioma
-- No mueve los documentos del equipo de la raíz
+- No mueve `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` ni `app-web-intake.md` de la raíz
+- No mueve el código a `App/` salvo que el usuario lo pida
+- No toca `PATTERNS.md`, `Themes/` ni `Research/` en el repo AppleAppLab: ahí son la fuente
 - No hace "ya que estoy": lo que encuentra dentro de los archivos va a `/optimize-app`
 
 ---

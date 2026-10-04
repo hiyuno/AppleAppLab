@@ -78,25 +78,28 @@ mkdir -p ".appleapplab"
 echo "$REMOTE_VERSION" > ".appleapplab/VERSION"
 echo "  ✓ Versión $REMOTE_VERSION registrada en .appleapplab/VERSION"
 
+# --- Lo que instala el equipo vive en .appleapplab/ — la raíz queda para el proyecto ---
+TEAM=".appleapplab"
+
 # --- Temas predefinidos ---
-mkdir -p "Themes"
+mkdir -p "$TEAM/Themes"
 for theme in fintrol todocky todo-project test; do
-  curl -sf "$RAW/Themes/${theme}.json" -o "Themes/${theme}.json" && true
+  curl -sf "$RAW/Themes/${theme}.json" -o "$TEAM/Themes/${theme}.json" && true
 done
-curl -sf "$RAW/Themes/THEMES.md" -o "Themes/THEMES.md"
-echo "  ✓ Temas instalados en Themes/ (Fintrol, Todocky, ToDo Project, Test)"
+curl -sf "$RAW/Themes/THEMES.md" -o "$TEAM/Themes/THEMES.md"
+echo "  ✓ Temas en $TEAM/Themes/ (Fintrol, Todocky, ToDo Project, Test)"
 
 # --- Catálogo de patterns ---
-curl -sf "$RAW/PATTERNS.md" -o "PATTERNS.md"
-echo "  ✓ PATTERNS.md instalado (catálogo de componentes AppleAppLabUI)"
+curl -sf "$RAW/PATTERNS.md" -o "$TEAM/PATTERNS.md"
+echo "  ✓ $TEAM/PATTERNS.md (catálogo de componentes AppleAppLabUI)"
 
 # --- Research/ (HIG, Xcode 27 MCP y demás documentación de referencia que los skills citan) ---
-mkdir -p "Research"
+mkdir -p "$TEAM/Research"
 if curl -sfL "https://github.com/hiyuno/AppleAppLab/archive/refs/heads/main.tar.gz" \
-    | tar -xz --strip-components=2 -C "Research" "AppleAppLab-main/Research" 2>/dev/null; then
-  echo "  ✓ Research/ sincronizado (HIG, Xcode 27 MCP, etc.)"
+    | tar -xz --strip-components=2 -C "$TEAM/Research" "AppleAppLab-main/Research" 2>/dev/null; then
+  echo "  ✓ $TEAM/Research/ sincronizado (HIG, Xcode 27 MCP, asc, ASO, canales de lanzamiento)"
 else
-  echo "  ⚠ No se pudo sincronizar Research/ — revisa conexión y reintenta con /update-team"
+  echo "  ⚠ No se pudo sincronizar $TEAM/Research/ — revisa conexión y reintenta con /update-team"
 fi
 
 # --- Skills oficiales de Apple (Xcode ≥ 27) — export local con sello de build; nunca entran al repo ---
@@ -139,7 +142,7 @@ if command -v asc >/dev/null 2>&1; then
   echo "  ✓ asc $(asc version 2>/dev/null | head -1) detectado — /app-store-ready usará App Store Connect desde la terminal"
   echo "    → skills del proveedor para agentes (25): asc install-skills"
 else
-  echo "  ↩ asc no instalado (opcional): brew install asc — Research/asc-cli/00-index.md"
+  echo "  ↩ asc no instalado (opcional): brew install asc — .appleapplab/Research/asc-cli/00-index.md"
 fi
 
 # --- Memoria evolutiva ---
@@ -151,11 +154,22 @@ echo "  ✓ Snapshot global actualizado en .appleapplab/KNOWN_ISSUES.md"
 curl -fsSL "$RAW/APP_WEB_INTAKE_TEMPLATE.md" -o ".appleapplab/app-web-intake-template.md"
 echo "  ✓ Template de app-web-intake en .appleapplab/ (se usa con /app-web-intake)"
 
-if [ ! -f "PROJECT_LEARNINGS.md" ]; then
-  curl -fsSL "$RAW/PROJECT_LEARNINGS_TEMPLATE.md" -o "PROJECT_LEARNINGS.md"
-  echo "  ✓ PROJECT_LEARNINGS.md creado"
-else
+# --- Documentos del proyecto: Docs/<área>/ (ver "Dónde vive cada documento" en CLAUDE.md) ---
+mkdir -p Docs/Product Docs/Tech Docs/Design Docs/Audits Docs/Release
+if [ -f "Docs/PROJECT_LEARNINGS.md" ] || [ -f "PROJECT_LEARNINGS.md" ]; then
   echo "  ↩ PROJECT_LEARNINGS.md preservado"
+else
+  curl -fsSL "$RAW/PROJECT_LEARNINGS_TEMPLATE.md" -o "Docs/PROJECT_LEARNINGS.md"
+  echo "  ✓ Docs/PROJECT_LEARNINGS.md creado"
+fi
+
+# --- Proyectos instalados antes de v1.18: avisar, nunca borrar por su cuenta ---
+LEGACY=""
+for f in PATTERNS.md Themes Research; do [ -e "$f" ] && LEGACY="$LEGACY $f"; done
+DOCS_AT_ROOT=$(ls *.md 2>/dev/null | grep -vcE '^(CLAUDE|AGENTS|GEMINI|README|app-web-intake)\.md$' || true)
+if [ -n "$LEGACY" ] || [ "${DOCS_AT_ROOT:-0}" -gt 0 ]; then
+  echo "  ⚠ Organización anterior detectada:${LEGACY:+ copias viejas del equipo en la raíz ($LEGACY)}${LEGACY:+ ·} $DOCS_AT_ROOT documento(s) sueltos en la raíz"
+  echo "    → corre /clean-folder-project docs para moverlos a Docs/ y .appleapplab/ con git mv"
 fi
 
 # --- AGENTS.md (OpenAI Codex) ---
@@ -199,6 +213,13 @@ else
   # Proyecto con CLAUDE.md propio — inyectar solo el bloque de Steve al final
   printf '\n\n---\n\n%s\n' "$STEVE_BLOCK" >> "CLAUDE.md"
   echo "  ✓ Steve agregado a CLAUDE.md existente"
+fi
+
+# --- Tabla "Dónde vive cada documento" en CLAUDE.md existentes que no la tengan ---
+if [ -f "CLAUDE.md" ] && ! grep -q "Dónde vive cada documento" "CLAUDE.md" 2>/dev/null; then
+  if TABLE=$(curl -fsSL "$RAW/CLAUDE.md" | awk '/^## Dónde vive cada documento/{p=1} p&&/^## /&&!/Dónde vive/{exit} p'); then
+    [ -n "$TABLE" ] && printf '\n\n---\n\n%s\n' "$TABLE" >> "CLAUDE.md" && echo "  ✓ Tabla de ubicaciones agregada a CLAUDE.md"
+  fi
 fi
 
 echo ""

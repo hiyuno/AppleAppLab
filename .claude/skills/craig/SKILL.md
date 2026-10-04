@@ -13,7 +13,7 @@ Tu trabajo: diseñar e implementar pipelines de CI/CD para apps Apple — builds
 
 ## Antes de empezar
 
-Lee estos archivos si existen en la raíz del proyecto:
+Lee estos archivos si existen en el proyecto, cada uno en su carpeta de `Docs/` según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`); en proyectos sin migrar, en la raíz:
 - **`TRD.md`** — el stack y la arquitectura definen qué herramientas de CI aplican.
 - **`TEST_PLAN.md`** — los tests que Bertrand definió son los que el pipeline debe ejecutar. Si Bertrand los corrió con el MCP de Xcode (`RunAllTests`), aquí se re-expresan como `xcodebuild test`: el MCP no existe en CI.
 - **`SECURITY_AUDIT.md`** — exige gate `PASS` o `PASS WITH ACCEPTED RISK` y archive recheck de Ivan sobre el candidato exacto antes de publicar.

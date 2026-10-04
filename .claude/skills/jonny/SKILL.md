@@ -20,7 +20,7 @@ Tu trabajo: diseñar interfaces para iOS y macOS que se sientan como si Apple la
 
 ## Antes de empezar
 
-Lee estos archivos si existen en la raíz del proyecto:
+Lee estos archivos si existen en el proyecto, cada uno en su carpeta de `Docs/` según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`); en proyectos sin migrar, en la raíz:
 - **`PRD.md`** — qué hace la app y para quién. Sin esto no puedes diseñar con intención.
 - **`TRD.md`** — el stack y la arquitectura de Avie. Define qué APIs puedes usar.
 - **`STYLE_BRIEF.md`** — si existe, Steve lo preparó a partir de referencias visuales del usuario. Es tu brief de estilo: respétalo como punto de partida. Si no existe, diseña autónomamente según el tipo de app.
@@ -239,7 +239,7 @@ struct GlassCompat: ViewModifier {
 - Cuando se toma una decisión de diseño que afecta a toda la app
 - Cuando Woz necesita saber exactamente cómo implementar algo visual
 
-**Ambos archivos viven en la raíz del proyecto. Son independientes de cualquier IA y deben ser legibles por cualquier desarrollador sin contexto adicional.**
+**Ambos archivos viven en `Docs/Design/`. Son independientes de cualquier IA y deben ser legibles por cualquier desarrollador sin contexto adicional.**
 
 **`DESIGN_LIQUID.md`** — Especifica materiales, efectos, motion y componentes para iOS 26+ / macOS 26+ (Tahoe). Referencia `liquid-glass-swiftui.md` (nativo) o `liquid-glass-ui.md` (Electron) según el stack.
 
@@ -2182,7 +2182,7 @@ Al terminar el diseño y cuando el icono y el logo existan como archivos, escrib
 
 ## Pen (pen.dev) como fuente de diseño
 
-Además de Figma, el equipo acepta **Pen** — la app de escritorio `Pen.app` con archivos `.pen` que se leen y escriben solo por el MCP `pencil` (están cifrados; nunca `Read`/`Grep`). Si el proyecto diseña en Pen: el `.pen` vive en `Design/` del repo; los tokens del `STYLE_BRIEF.md` se declaran como variables del documento (`SetVariables`, con temas `mode: light/dark`) para que `/update-ui` los lea con `GetVariables()` en vez de hexes sueltos; cada pantalla es un frame raíz con el **mismo nombre** que la vista SwiftUI (`Home`, `Settings — Startup`) para que Steve la ubique por nombre; los componentes repetidos son `reusable: true` e instancias `ref`; los iconos son de `lucide`/`phosphor` y tú anotas su SF Symbol equivalente en `DESIGN_LIQUID.md` la primera vez. Antes de diseñar en el canvas lee la skill `pen-dev` del MCP (`read_skill`) — el `.pen` no es CSS: `fill_container`/`fit_content`, sin porcentajes, sin margin. Cuando `/update-ui` encuentre algo ambiguo o incompleto en el diseño, quien lo corrige en Pen eres tú; la rutina solo toca código.
+Además de Figma, el equipo acepta **Pen** — la app de escritorio `Pen.app` con archivos `.pen` que se leen y escriben solo por el MCP `pencil` (están cifrados; nunca `Read`/`Grep`). Si el proyecto diseña en Pen: el `.pen` vive en `Docs/Design/` del repo; los tokens del `STYLE_BRIEF.md` se declaran como variables del documento (`SetVariables`, con temas `mode: light/dark`) para que `/update-ui` los lea con `GetVariables()` en vez de hexes sueltos; cada pantalla es un frame raíz con el **mismo nombre** que la vista SwiftUI (`Home`, `Settings — Startup`) para que Steve la ubique por nombre; los componentes repetidos son `reusable: true` e instancias `ref`; los iconos son de `lucide`/`phosphor` y tú anotas su SF Symbol equivalente en `DESIGN_LIQUID.md` la primera vez. Antes de diseñar en el canvas lee la skill `pen-dev` del MCP (`read_skill`) — el `.pen` no es CSS: `fill_container`/`fit_content`, sin porcentajes, sin margin. Cuando `/update-ui` encuentre algo ambiguo o incompleto en el diseño, quien lo corrige en Pen eres tú; la rutina solo toca código.
 
 ## El tema es un JSON, y vuelve del panel
 

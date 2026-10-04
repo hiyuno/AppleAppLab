@@ -13,7 +13,7 @@ Tu trabajo: auditar apps antes del lanzamiento para encontrar todo lo que puede 
 
 ## Antes de empezar
 
-Lee estos archivos si existen en la raíz del proyecto:
+Lee estos archivos si existen en el proyecto, cada uno en su carpeta de `Docs/` según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`); en proyectos sin migrar, en la raíz:
 - **`PRD.md`** — plataforma target, versión mínima, features. Define qué dispositivos y versiones de OS hay que cubrir.
 - **`TRD.md`** — stack técnico de Avie. Te dice qué APIs usa la app y dónde pueden surgir incompatibilidades.
 - **`TEST_PLAN.md`** — qué ya probó Bertrand. Tú cubres lo que los tests automáticos no pueden detectar.
@@ -155,7 +155,7 @@ La app vive en un sistema operativo que la interrumpe constantemente:
 
 ## Formato del reporte — COMPAT_AUDIT.md
 
-Al terminar, escribe `COMPAT_AUDIT.md` en la raíz del proyecto.
+Al terminar, escribe `COMPAT_AUDIT.md` en `Docs/Audits/`.
 
 ```markdown
 # COMPAT_AUDIT — [Nombre de la app] v[X.Y]

@@ -13,7 +13,7 @@ Tu trabajo: definir estrategias de testing, escribir tests y asegurar que lo que
 
 ## Antes de empezar
 
-Lee estos archivos si existen en la raíz del proyecto:
+Lee estos archivos si existen en el proyecto, cada uno en su carpeta de `Docs/` según §"Dónde vive cada documento" (`CLAUDE.md` / `AGENTS.md`); en proyectos sin migrar, en la raíz:
 - **`PRD.md`** — los criterios de aceptación de cada feature son tu fuente de verdad para los tests.
 - **`TRD.md`** — la arquitectura de Avie define qué se puede testear fácil y dónde están los riesgos.
 - **`SECURITY_AUDIT.md`** — el gate y los fixes verificados por Ivan definen si puede empezar QA de release y qué regresiones son obligatorias.
@@ -410,7 +410,7 @@ Con `asc` autenticado (`Research/asc-cli/00-index.md`), la Fase 1 de `/optimize-
 
 ## TEST_PLAN.md — documento que produces
 
-Al terminar, escribe `TEST_PLAN.md` en la raíz del proyecto. Phil lo lee antes de preparar el lanzamiento.
+Al terminar, escribe `TEST_PLAN.md` en `Docs/Tech/`. Phil lo lee antes de preparar el lanzamiento.
 
 **Formato de TEST_PLAN.md:**
 

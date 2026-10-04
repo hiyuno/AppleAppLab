@@ -40,7 +40,7 @@ Rutina ejecutable, no auditoría. Woz hace el cableado, Bertrand compila, Larry 
 grep -n "AppleAppLabUI" project.yml Package.swift 2>/dev/null          # ¿depende del paquete? ¿path local o URL?
 grep -rn "labDevTools\|LabThemeStore" --include="*.swift" . | head     # ¿ya cableado?
 grep -rn "PatternConfig(" --include="*.swift" . | grep -v "Packages/" | wc -l   # configs hardcodeados
-ls Themes/*.json 2>/dev/null; grep -n "Themes/" STYLE_BRIEF.md 2>/dev/null       # tema disponible / elegido
+ls .appleapplab/Themes/*.json Themes/*.json 2>/dev/null; grep -n "Themes/" Docs/Design/STYLE_BRIEF.md STYLE_BRIEF.md 2>/dev/null   # tema disponible / elegido
 grep -rn "^@main" --include="*.swift" -l .                              # App.swift
 cat .appleapplab/VERSION 2>/dev/null                                    # ≥ 1.16.0 para tener LabThemeStore
 ```
@@ -48,7 +48,7 @@ cat .appleapplab/VERSION 2>/dev/null                                    # ≥ 1.
 **Decisiones:**
 - **Sin el paquete** → esto no aplica: Avie lo añade primero (es dependencia estándar del TRD). Steve lo dice y para.
 - **Paquete por path local** desactualizado (sin `Theme/LabThemeStore.swift`) → `/update-team` o `git pull` en AppleAppLab antes de seguir.
-- **Tema:** el que diga `STYLE_BRIEF.md`; si no hay, el argumento; si tampoco, Steve pregunta **una vez** mostrando los de `Themes/THEMES.md`. Si el usuario no quiere ninguno, se usa `.default` y no se empaqueta JSON.
+- **Tema:** el que diga `STYLE_BRIEF.md`; si no hay, el argumento; si tampoco, Steve pregunta **una vez** mostrando los de `.appleapplab/Themes/THEMES.md`. Si el usuario no quiere ninguno, se usa `.default` y no se empaqueta JSON.
 - **Ya cableado** → salta a los pasos 4–7 (sustitución y verificación), que es lo que suele faltar.
 
 ---
@@ -60,7 +60,7 @@ En `project.yml`, dentro de `sources:` del target principal (no del de tests):
 ```yaml
 sources:
   - path: <App>
-  - path: ../../Themes/<tema>.json      # ruta relativa a Themes/ del repo instalado
+  - path: .appleapplab/Themes/<tema>.json   # proyecto instalado; en el monorepo AppleAppLab: ../../Themes/<tema>.json
     buildPhase: resources
 ```
 
