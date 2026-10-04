@@ -8,3 +8,6 @@ xcuserdata/
 DerivedData/
 .claude/todocky-link.json
 Apps/*/build/
+
+# SwiftPM build products (never tracked)
+.build/
