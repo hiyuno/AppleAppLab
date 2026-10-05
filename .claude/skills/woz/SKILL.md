@@ -80,6 +80,22 @@ Cuando un incidente técnico quede reproducido, actualiza su entrada en `PROJECT
 
 ---
 
+## Known issues que aplicas siempre
+
+Detalle en `KNOWN_ISSUES.md` (`.appleapplab/KNOWN_ISSUES.md` en proyectos instalados). Aquí solo la regla.
+
+- **AAL-DATA-001** — abrir el `ModelContainer` nunca hace `fatalError`: store en ruta explícita, fallback local-only si falla CloudKit, `Recovery/` si falla la apertura local, atributos nuevos opcionales o con default.
+- **AAL-UX-001** — una acción que puede fallar devuelve resultado y la vista anima éxito solo con éxito; nada de `try?` en escrituras del usuario; errores con copy humano, nunca un código de dominio.
+- **AAL-TEST-002** — la URL del store se inyecta; el Debug lleva bundle id `.debug` (ya en el template de `project.yml`).
+- **AAL-SEC-001** — todo `Process`: ruta absoluta del bundle (PATH solo en DEBUG), `environment` en allowlist, argumentos escapados con una sola función, temporales en namespace propio con `defer` o barrido.
+- **AAL-MAC-016** — todo `NSEvent` monitor se retira en cada salida del modo que lo instala; en gestos continuos, comparar antes de mutar y throttlear.
+- **AAL-MAC-017** — un `NSViewRepresentable` delante de un `.onDrop` no registra dragged types; una vista con `.fixedSize()`+`.offset()` da `zIndex` explícito a sus hermanos interactivos.
+- **AAL-SWIFT-001/002/003** — `loadUnaligned` en parsers binarios; protocolo inyectado con métodos `async` en un tipo `@MainActor` declara `: Sendable`; `case a, b where` repite el `where` en cada patrón.
+- **AAL-BUILD-001** — `PRODUCT_MODULE_NAME` explícito; en targets multiplataforma, `TEST_HOST`/`BUNDLE_LOADER` con `[sdk=macosx*]`.
+
+---
+
+
 ## Stack preferido
 
 | Capa | Tecnología |
@@ -391,11 +407,15 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ejemplo.AppName
+        PRODUCT_MODULE_NAME: AppName     # igual al `@testable import` (AAL-BUILD-001)
         INFOPLIST_FILE: AppName/Info.plist
         CODE_SIGN_ENTITLEMENTS: AppName/AppName.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         TARGETED_DEVICE_FAMILY: "1,2"   # 1=iPhone, 2=iPad
+      configs:
+        Debug:
+          PRODUCT_BUNDLE_IDENTIFIER: com.ejemplo.AppName.debug   # contenedor propio: Debug nunca toca datos reales (AAL-TEST-002)
     scheme:
       testTargets:
         - AppNameTests
@@ -425,11 +445,26 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ejemplo.AppName
+        PRODUCT_MODULE_NAME: AppName
         INFOPLIST_FILE: AppName/Info.plist
         CODE_SIGN_ENTITLEMENTS: AppName/AppName.entitlements
         ENABLE_HARDENED_RUNTIME: YES     # Requerido para notarización
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      configs:
+        Debug:
+          PRODUCT_BUNDLE_IDENTIFIER: com.ejemplo.AppName.debug
 ```
+
+**Target único iOS + macOS** (`supportedDestinations: [iOS, macOS]`) — XcodeGen deriva el `TEST_HOST` con layout de bundle iOS; en el test target fíjalo para macOS (AAL-BUILD-001):
+```yaml
+  AppNameTests:
+    settings:
+      base:
+        TEST_HOST[sdk=macosx*]: $(BUILT_PRODUCTS_DIR)/AppName.app/Contents/MacOS/AppName
+        BUNDLE_LOADER[sdk=macosx*]: $(TEST_HOST)
+```
+
+Con iCloud, el entitlement de contenedor del Debug apunta a un contenedor `.debug` propio; un rebrand de bundle id es una migración de contenedor (AAL-REL-001).
 
 ---
 

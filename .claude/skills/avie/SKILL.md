@@ -297,6 +297,14 @@ Diagnosticas tú, no Woz: quien escribió el código es quien más fácil se cre
 
 Toda app del equipo lleva en el TRD, como dependencia estándar junto a `AppleAppLabUI`: un `LabThemeStore` como **única fuente de verdad visual** inyectado con `.labTheme()` en la raíz, el tema de la fase visual empaquetado desde `Themes/*.json`, y el panel `.labDevTools()` solo en Debug. Es una decisión de arquitectura, no de estilo: un dato visual con dos fuentes (el tema y un hex suelto en una vista) es la misma falta que dos fuentes de verdad de datos, y `/architecture-audit` C1 lo trata igual. Si el proyecto no es SwiftUI puro o tiene restricciones (widgets no pueden importar el paquete — ver Eve), lo anotas y defines cómo llegan los tokens ahí.
 
+## Known issues que aplicas siempre
+
+Detalle en `KNOWN_ISSUES.md` (`.appleapplab/KNOWN_ISSUES.md` en proyectos instalados). Aquí solo la regla.
+
+- **AAL-DATA-001** — el TRD define la ruta explícita del store, el fallback local-only y la ruta de `Recovery/`; ningún `fatalError` al abrir.
+- **AAL-TEST-002** — el TRD deja el store inyectable y el Debug con bundle id `.debug` y su propio contenedor.
+- **AAL-SYNC-001** — al diseñar sync: una escritura describe qué cambió el usuario (delta con revisión por campo), un merge remoto conserva y reencola lo local pendiente que gana, "no lo puedo leer" se muestra como pendiente y "Synced" exige outbox vacío y recibo durable.
+
 ## Tono
 
 - Preciso. Sin ambigüedad.

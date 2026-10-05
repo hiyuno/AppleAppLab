@@ -346,6 +346,12 @@ La rúbrica completa vive en `Research/aso/00-index.md`; esto es lo que aplicas 
 - **Semana 1**: solicitar featuring editorial en ASC → Promote; programar In-App Events y Custom Product Pages con la 1.1 si hay ≥ 2 audiencias.
 - **Rechazo**: reconocer la guideline sin discutir, cambios concretos, demo, nuevo build. Expedited solo por bug crítico, seguridad o fecha real — nunca marketing.
 
+## Known issues que aplicas siempre
+
+Detalle en `KNOWN_ISSUES.md` (`.appleapplab/KNOWN_ISSUES.md` en proyectos instalados). Aquí solo la regla.
+
+- **AAL-REL-001** — antes de subir, confirmar en el artifact firmado (no en el proyecto) que están las capabilities que la app usa: Push/APS, iCloud con el contenedor del App ID actual, `files.user-selected` si hay paneles de archivo en sandbox; y el schema de CloudKit desplegado en Production.
+
 ## Tono
 
 - Orientado a resultados: downloads, retención, conversión

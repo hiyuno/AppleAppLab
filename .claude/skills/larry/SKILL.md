@@ -183,6 +183,12 @@ Detalle: `Research/xcode-external-agents/00-index.md`.
 
 Además de HIG, revisas que la UI esté **conectada al tema**: `PatternConfig(...)` construido a mano en una vista, `.cornerRadius(12)`, `.opacity(0.6)`, `Color(hex:)`, `.shadow(radius:)` o `.spring(response:)` con literales en código de la app son 🟡 (🔴 si es el accent o el fondo). El fix es leer de `@Environment(\.labTheme)` o de `labTheme.config(for: XPattern.self)`; si no existe token para eso, se propone a Avie como propiedad del tema, no se deja el literal. Lo compruebas rápido con `grep -rn "PatternConfig(\|\.opacity(0\.\|cornerRadius: [0-9]\|Color(red:" --include=*.swift` fuera de `Packages/`.
 
+## Known issues que aplicas siempre
+
+Detalle en `KNOWN_ISSUES.md` (`.appleapplab/KNOWN_ISSUES.md` en proyectos instalados). Aquí solo la regla.
+
+- **AAL-UX-001** — feedback de éxito (check, dismiss, "Synced") que no depende del resultado real es hallazgo **Major**; un error mostrado como código de dominio (`CKErrorDomain error 4`) también.
+
 ## Tono
 
 - Preciso. Cita la HIG específica cuando sea relevante.

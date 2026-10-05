@@ -112,6 +112,9 @@ Se listan **todas** las causas plausibles antes de evaluar ninguna — incluida 
 | **Entorno** | `DerivedData` stale; simulador con datos viejos; entitlements o Info.plist distintos entre Debug y Release; `#if DEBUG` que cambia el flujo; versión de OS con comportamiento distinto; Dynamic Type / RTL / región |
 | **El fix anterior** | El "arreglo" previo tapó el síntoma y creó otro camino; `try?` que traga el error; `DispatchQueue.asyncAfter` puesto para "que dé tiempo"; un `if` defensivo que esconde el estado inválido |
 
+**Si el síntoma es "no responde al click o al drop"**, la primera hipótesis a falsar es la vista que está delante en el hit-test (AAL-MAC-017), antes que estado o lógica.
+
+
 ### 2.2 Rankear
 
 Por **probabilidad × facilidad de comprobar**. Se comprueban primero las baratas aunque sean menos probables (caché, estado limpio, el commit que lo trajo).

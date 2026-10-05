@@ -404,6 +404,7 @@ sed -i '' "s/^- Build:.*/- Build: ${NEW_BUILD}/" VERSION.md
 | "No such host" / appcast inaccesible | Repo de updates es privado | Hacerlo público en GitHub Settings |
 | Firma EdDSA inválida en clientes | Asset subido difiere del firmado | Verificar bytes: `stat -f%z` local == `.size` en release |
 | DMG rechazado por Gatekeeper | No notarizado o no grapado | Correr `spctl -a -vvv --type install` antes de publicar |
+| Cerrar para instalar no cierra la app y Sparkle espera | `applicationShouldTerminate` devuelve `.terminateLater` sin reply o `reply(false)` por timeout de guardado | Instalar actualización siempre sale; timeout responde `true`; drenar en `shouldPostponeRelaunchForUpdate` (AAL-MAC-018) |
 | Credenciales de notarytool vencidas | App-specific password expiró | Generar nuevo en appleid.apple.com, `store-credentials` de nuevo |
 | `sign_update` no encontrado | Sparkle no compilado aún | Compilar el proyecto en Xcode una vez para que genere DerivedData |
 | Update se ofrece pero falla al instalar | Helper XPC no firmado | `codesign --verify --deep` en el `.app` exportado |

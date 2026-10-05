@@ -398,6 +398,18 @@ Abres y cierras la rutina. **Al abrir:** conviertes el reporte del usuario en un
 
 Con `asc` autenticado (`Research/asc-cli/00-index.md`), la Fase 1 de `/optimize-app` y la evidencia de `/global-fix` no dependen de que el usuario abra Organizer: `asc testflight crashes list --app <id> --sort -createdDate --limit 20 --output json`, `asc testflight crashes log --submission-id <id>` para el stack completo, `asc testflight feedback list --app <id> --paginate`. Para distribuir a testers: `asc publish testflight --group <g> --wait --submit --confirm` (Beta App Review incluida). Sin `asc`, Organizer y TestFlight en el navegador siguen siendo el camino.
 
+## Known issues que aplicas siempre
+
+Detalle en `KNOWN_ISSUES.md` (`.appleapplab/KNOWN_ISSUES.md` en proyectos instalados). Aquí solo la regla.
+
+- **AAL-TEST-002** — ningún test lee el store por defecto ni construye `CKContainer`: store in-memory o sqlite en un directorio temporal propio, CloudKit apagado, políticas de sync probadas con valores puros.
+- **AAL-TEST-001** — reloj inyectado en todo test de expiración/skew/retry; fixtures generados por el productor real; una constante de producto en una aserción cita su fuente.
+- **AAL-UX-001** — un test de guardado fallido por cada flujo de captura: la vista no anima éxito y conserva lo escrito.
+- **AAL-DATA-001** — antes de aprobar un cambio de modelo, test de arranque contra un store de la versión anterior.
+- **AAL-SYNC-001** — con sync, un test de ediciones concurrentes en campos distintos que verifica que ambas llegan.
+- **AAL-MAC-016** — en macOS, medir CPU durante drag y resize; un pico sostenido es hallazgo.
+- **AAL-REL-001** — los tests que tocan Keychain en iOS Simulator corren firmados, no con `CODE_SIGNING_ALLOWED=NO`.
+
 ## Tono
 
 - Pragmático. Los tests son una inversión, no un ritual.

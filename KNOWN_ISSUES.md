@@ -24,6 +24,19 @@ Base curada de problemas reutilizables en apps Apple. No sustituye la documentac
 | AAL-MAC-014 | verified | SwiftUI/macOS | `editMode` no está disponible en macOS |
 | AAL-MAC-015 | verified | SwiftUI/AppKit layout | Capa de ventana completa como `.overlay` desborda por el safe area del titlebar |
 | AAL-TEST-001 | verified | Testing/codecs | Fixtures válidos y `#require` evitan traps del host de pruebas |
+| AAL-TEST-002 | verified | Testing/persistencia | Tests y builds Debug nunca tocan los datos reales |
+| AAL-UX-001 | verified | UX/persistencia | La UI no afirma éxito sin el resultado de la operación |
+| AAL-DATA-001 | verified | SwiftData/CloudKit | Abrir el store nunca hace `fatalError` |
+| AAL-SEC-001 | verified | Seguridad/helpers | `Process` con ruta fija, entorno mínimo y temporales propios |
+| AAL-MAC-016 | conditional | AppKit/ciclo de vida | Monitores de eventos con teardown en cada salida y sin trabajo por evento |
+| AAL-MAC-017 | verified | SwiftUI/AppKit | Un control que no responde: revisar quién está delante en el hit-test |
+| AAL-MAC-018 | verified | Sparkle | `applicationShouldTerminate` no puede bloquear la instalación |
+| AAL-BUILD-001 | verified | XcodeGen | Nombre de módulo y `TEST_HOST` explícitos |
+| AAL-REL-001 | conditional | Firma/release | Capabilities y firma se verifican en el artifact firmado |
+| AAL-SYNC-001 | conditional | Sync | Escribir intenciones y mostrar solo lo confirmado |
+| AAL-SWIFT-001 | verified | Swift | Parsers binarios usan `loadUnaligned` |
+| AAL-SWIFT-002 | verified | Swift 6 | Protocolo inyectado `async` en `@MainActor` declara `Sendable` |
+| AAL-SWIFT-003 | verified | Swift | `case a, b where` solo aplica al último patrón |
 
 ## Entradas verificadas
 
@@ -110,7 +123,8 @@ Base curada de problemas reutilizables en apps Apple. No sustituye la documentac
 - **Solución durable:** construir fixtures desde un payload válido y completo, modificar solo los campos objetivo y usar `try #require(...)` para prerrequisitos críticos del test.
 - **Verificación:** test focalizado, suite macOS completa, build iOS Simulator y ausencia de nuevos `.ips` tras la corrección.
 - **Prevención:** cada cambio estricto de codec actualiza en la misma entrega el corpus válido, los casos inválidos explícitos y sus expectativas; no usar `!` sobre resultados de parseo, validación o fetch.
-- **Relacionadas:** —
+- **Ampliación (cosecha 2026-10-05, Todocky `APP-TODOPRO-011`/`-020`, NewProject `APP-NPR-001`):** tests deterministas — (1) todo test de expiración, skew o retry inyecta un reloj fijo y pasa la misma fecha al validador; nunca dos lecturas de `Date.now` cerca de un límite; (2) los fixtures salen del productor real (el repositorio tras la operación), no escritos a mano; (3) una constante de producto en una aserción cita su fuente (PRD, roadmap) junto a la aserción; si test y código discrepan falta una decisión, no un número.
+- **Relacionadas:** AAL-TEST-002
 
 ### AAL-MAC-015 — Capas de ventana completa dentro del contenedor que ignora el safe area
 
@@ -128,6 +142,176 @@ Base curada de problemas reutilizables en apps Apple. No sustituye la documentac
 - **Verificación:** chequeo de los cuatro bordes con frames reales (accesibilidad) contra el diseño; captura con margen fuera de la ventana; UI test de margen inferior (ver `/bertrand`).
 - **Prevención:** cambiar la forma de presentación (sheet ↔ overlay ↔ inline) es un cambio de layout: re-verificar bordes de la vista y de su ventana (`/woz`, `/update-ui` Fase 6). Agrandar el titlebar (p. ej. reposicionar traffic lights) agranda el safe area y hace el problema más visible.
 - **Relacionadas:** AAL-MAC-007 (cada `NSHostingView` es un árbol separado), AAL-MAC-010.
+
+### AAL-TEST-002 — Tests y builds Debug nunca tocan los datos reales
+
+- **Fingerprint:** `testing/hosted-tests-share-real-store+debug-shares-bundle-id`
+- **Categoría:** testing / persistencia / entorno
+- **Plataformas:** macOS 14+ e iOS 17+; Core Data, SwiftData, archivos en contenedor; Xcode 17C519 / 26.3
+- **Proyecto fuente / fechas:** Inspoflow (`INSP-QA-002`, 2026-09-18), NewProject (`APP-NPR-006`, `APP-NPR-007`), ToDoPro (`APP-TODOPRO-009`, 2026-08-20); cosechado 2026-10-05
+- **Owner / status:** Bertrand + Woz / `verified`
+- **Síntoma:** un test espera 2 ítems y recibe el board real (~36); tests alojados borran archivos semilla del usuario; una migración "de prueba" en Debug corre sobre los datos reales; un test de estado inicializa el container real de CloudKit y cierra el host.
+- **Reproducción/evidencia:** los tests alojados en la app comparten su contenedor sandbox, su store por defecto y CloudKit; un build Debug con el mismo bundle id que Release lee y escribe el mismo contenedor.
+- **Hipótesis/causa raíz:** confirmada en las tres apps: la ubicación del store no era inyectable y el Debug no tenía identidad propia.
+- **Garantía de plataforma/fuente:** el contenedor sandbox y el contenedor de CloudKit siguen al bundle id / App ID; un test bundle alojado corre dentro del proceso de la app.
+- **Workaround:** copiar los datos a mano antes de probar (no sirve si el Debug sigue apuntando al contenedor real).
+- **Solución durable:** (1) la URL del store se inyecta; cada test usa un store in-memory o un sqlite en un directorio temporal propio, con CloudKit apagado; (2) los tests de políticas de sync dependen de valores puros o protocolos, nunca construyen `CKContainer`; (3) el Debug lleva `PRODUCT_BUNDLE_IDENTIFIER` con sufijo `.debug` y su propio contenedor; probar una migración = copiar datos al contenedor `.debug`.
+- **Verificación:** Inspoflow: tests de migración en verde con sqlite en temp; ToDoPro: 47/47 sin `CKContainer` en el test; NewProject: migración probada en la copia `.debug`.
+- **Prevención:** Bertrand rechaza un test que lea el store por defecto; el scaffold de Woz nace con sufijo `.debug`.
+- **Relacionadas:** AAL-TEST-001, AAL-DATA-001
+
+### AAL-UX-001 — La UI no afirma éxito sin el resultado de la operación
+
+- **Fingerprint:** `ux/false-success/unchecked-save+fake-synced+raw-error-code`
+- **Categoría:** UX / persistencia / sync
+- **Plataformas:** iOS 17+, macOS 14+; SwiftData, CloudKit
+- **Proyecto fuente / fechas:** Fintrol (`FINTROL-2026-001`, 2026-08-28), ToDoPro (`CK-NET-001`, `TIMER-EXCLUSIVE-001`, `TIMER-STAGE-001`), Todocky (`APP-TODOPRO-016`); cosechado 2026-10-05
+- **Owner / status:** Woz + Larry + Bertrand / `verified`
+- **Síntoma:** el sheet anima el check y se cierra aunque `save()` falló (dato perdido); Settings dice "Synced" sin recibo; Play no hace nada sin alerta; el usuario ve `CKErrorDomain error 4`.
+- **Reproducción/evidencia:** Fintrol: forzar un store no escribible → éxito animado y dato perdido; ToDoPro: errores del ledger tragados con `try?` y copy genérico.
+- **Hipótesis/causa raíz:** confirmada: la vista no lee el resultado de la operación, o el resultado se pierde en un `try?`.
+- **Garantía de plataforma/fuente:** ninguna; es contrato de la app.
+- **Workaround:** —
+- **Solución durable:** la acción devuelve resultado (`Bool`/`throws`) y la vista anima éxito solo con éxito; con fallo se queda abierta y conserva lo escrito; nada de `try?` en escrituras del usuario; "Synced" exige outbox vacío y recibo durable; los errores se traducen a copy humano accionable (nunca un código de dominio crudo).
+- **Verificación:** Fintrol `RegresionBugsCriticosTests` 5/5; ToDoPro `DatabaseSyncServiceTests` 45/45 (sin `CKErrorDomain error N` en UI).
+- **Prevención:** Bertrand escribe un test de guardado fallido por cada flujo de captura; Larry marca cualquier feedback de éxito no condicionado al resultado.
+- **Relacionadas:** AAL-DATA-001, AAL-SYNC-001
+
+### AAL-DATA-001 — Abrir el store nunca hace `fatalError`
+
+- **Fingerprint:** `persistence/swiftdata/fatalerror-on-open`
+- **Categoría:** persistencia / SwiftData / CloudKit
+- **Plataformas:** iOS 17+, macOS 14+; Xcode 26.3
+- **Proyecto fuente / fechas:** Fintrol (`FINTROL-2026-003`, 2026-08-28), ToDoPro (`APP-TODOPRO-001` 2026-08-11, `APP-TODOPRO-005` 2026-08-12); cosechado 2026-10-05
+- **Owner / status:** Avie + Woz + Bertrand / `verified`
+- **Síntoma:** la app cierra al arrancar (SIGTRAP) en el primer run firmado contra un Team real, o tras añadir atributos a un modelo con datos.
+- **Reproducción/evidencia:** Fintrol: `ModelContainer(cloudKitDatabase: .automatic)` falla por aprovisionamiento y `makeContainer()` hace `fatalError`; ToDoPro: atributos nuevos obligatorios sin valor en filas existentes impiden la migración ligera.
+- **Hipótesis/causa raíz:** confirmada: cualquier error de apertura se trataba como imposible.
+- **Garantía de plataforma/fuente:** `ModelContainer.init` lanza; la migración ligera de SwiftData necesita valor para atributos no opcionales.
+- **Workaround:** borrar el store (pierde datos del usuario).
+- **Solución durable:** ruta de store explícita en Application Support; si falla la capa CloudKit, reintentar local-only sobre el mismo `storeURL` y marcar el estado de sync; si falla la apertura local, mover store y sidecars a `Recovery/` e informar; atributos nuevos opcionales o con default (o `VersionedSchema` + plan de migración).
+- **Verificación:** Fintrol `PersistenceControllerFallbackTests` 2/2; ToDoPro: arranque contra el store existente y la app firmada tras reinicio limpio sin crash report.
+- **Prevención:** test de arranque contra un store de la versión anterior antes de cada cambio de modelo.
+- **Relacionadas:** AAL-TEST-002, AAL-UX-001
+
+### AAL-SEC-001 — `Process` con ruta fija, entorno mínimo y temporales propios
+
+- **Fingerprint:** `security/process/path-env-args-tempfiles`
+- **Categoría:** seguridad / helpers externos
+- **Plataformas:** macOS 13+ sin sandbox; Swift 6.2
+- **Proyecto fuente / fechas:** Bingen (`BINGEN-2026-001`, `BINGEN-2026-006`, 2026-09-06), Inspoflow (`INSP-SEC-002`, 2026-09-19); cosechado 2026-10-05
+- **Owner / status:** Ivan + Woz / `verified`
+- **Síntoma:** el helper hereda el entorno completo del usuario (variables que cambian su comportamiento), puede tomarse de `PATH`, lee configuración del usuario, recibe strings sin escapar y deja temporales sueltos.
+- **Reproducción/evidencia:** auditorías de Ivan en ambas apps (S-001/S-003/S-004/S-009 en Bingen; SEC-PROC-001/002 en Inspoflow).
+- **Hipótesis/causa raíz:** confirmada: los defaults de `Process` heredan entorno y la app no tenía allowlist ni namespace temporal.
+- **Garantía de plataforma/fuente:** `Process.environment` hereda el del padre si no se fija.
+- **Workaround:** —
+- **Solución durable:** ejecutable por ruta absoluta dentro del bundle (fallback a `PATH` solo en DEBUG); `environment` explícito en allowlist; desactivar config de usuario del helper (p. ej. `--ignore-config`); todo string libre interpolado en argumentos pasa por una función de escape única que también filtra caracteres de control; temporales en un subdirectorio propio de `temporaryDirectory`, con `defer` si se consumen en la misma función o barrido por edad si los consume otra app; listeners locales (OAuth loopback) solo en `127.0.0.1`.
+- **Verificación:** Bingen 53/53 + 4/4; Inspoflow 35 tests (args, loopback, env).
+- **Prevención:** Ivan incluye `Process` en el threat model; Woz no crea un `Process` sin estos cinco puntos.
+- **Relacionadas:** AAL-REL-001
+
+### AAL-MAC-017 — Un control que no responde: revisar quién está delante en el hit-test
+
+- **Fingerprint:** `ui/hit-testing/front-view-steals-click-or-drop`
+- **Categoría:** SwiftUI / AppKit / interacción
+- **Plataformas:** macOS 14+; Xcode 17C519, macOS 15.8
+- **Proyecto fuente / fechas:** Inspoflow (`INSP-UI-001`, 2026-10-02), Todocky (`APP-TODOPRO-024`, 2026-09-28); cosechado 2026-10-05
+- **Owner / status:** Woz / `verified`
+- **Síntoma:** soltar archivos de Finder sobre tarjetas no hace nada (solo en los huecos); el checkbox de completar no responde, solo en filas con nombre largo.
+- **Reproducción/evidencia:** Inspoflow: `.onDrop` de SwiftUI vive en una vista AppKit detrás del contenido y el `NSImageView` de la miniatura, delante, registra tipos y rechaza; Todocky: un botón con `.fixedSize()` + `.offset()` (marquee) crece fuera de su slot y gana el hit-test al hermano declarado antes.
+- **Hipótesis/causa raíz:** confirmada en ambas con test rojo / reproducción en vivo.
+- **Garantía de plataforma/fuente:** AppKit entrega el drag a la vista de delante con tipos coincidentes; en SwiftUI, a igual `zIndex` el orden de declaración decide.
+- **Workaround:** —
+- **Solución durable:** un `NSViewRepresentable` delante de un `.onDrop` no registra dragged types (subclase que los anula) o acepta él el drop; cualquier vista con `.fixedSize()`+`.offset()` junto a controles interactivos les da `zIndex` explícito.
+- **Verificación:** Inspoflow test rojo→verde; Todocky dos tasks reales completan al primer click, 243/243.
+- **Prevención:** ante "no responde al click/drop" la primera hipótesis a falsar es la vista de delante, antes que estado o lógica.
+- **Relacionadas:** AAL-MAC-007
+
+### AAL-BUILD-001 — XcodeGen: nombre de módulo y `TEST_HOST` explícitos
+
+- **Fingerprint:** `xcodegen/module-name-case+multiplatform-test-host`
+- **Categoría:** build system / testing
+- **Plataformas:** macOS 26, XcodeGen 2.45.4, Xcode 17C519 / 27
+- **Proyecto fuente / fechas:** Fintrol (`FIN-2026-001`, `FIN-2026-002`, 2026-09-15), Inspoflow (`INSP-QA-001`, 2026-09-18); cosechado 2026-10-05
+- **Owner / status:** Woz / `verified`
+- **Síntoma:** `no such module 'Inspoflow'` en tests aunque la app compila; `Could not find test host … Fintrol.app/Fintrol` al testear en macOS un target multiplataforma; AppleAppLabUI no compilaba para iOS.
+- **Reproducción/evidencia:** Inspoflow: `PRODUCT_NAME` `InspoFlow` vs `@testable import Inspoflow` (scanner case-sensitive); Fintrol: XcodeGen deriva `TEST_HOST` con layout de bundle iOS para `supportedDestinations: [iOS, macOS]`.
+- **Hipótesis/causa raíz:** módulo: confirmada. `TEST_HOST`: comportamiento observado de XcodeGen, no confirmado en su código fuente.
+- **Garantía de plataforma/fuente:** el bundle macOS lleva el ejecutable en `Contents/MacOS/`.
+- **Workaround:** —
+- **Solución durable:** `PRODUCT_MODULE_NAME` explícito igual al `@testable import`; en el test target de un app multiplataforma, `TEST_HOST[sdk=macosx*]: $(BUILT_PRODUCTS_DIR)/App.app/Contents/MacOS/App` y `BUNDLE_LOADER[sdk=macosx*]: $(TEST_HOST)`; AppleAppLabUI se compila para iOS además de macOS antes de publicar cambios (`make ui-check`).
+- **Verificación:** Fintrol 49/49 en macOS y en iPhone Simulator; Inspoflow `TEST SUCCEEDED`, 18 tests.
+- **Prevención:** el template de `project.yml` de Woz ya trae ambos ajustes.
+- **Relacionadas:** —
+
+### AAL-SWIFT-001 — Parsers binarios usan `loadUnaligned`
+
+- **Fingerprint:** `swift/unsafe-raw/load-unaligned-offset-trap`
+- **Categoría:** Swift / parsing binario
+- **Plataformas:** Swift 5.7+ (macOS 13+, iOS 16+); observado con Swift 6.2.4
+- **Proyecto fuente / fechas:** Bingen (`BINGEN-2026-008`, 2026-09-06); cosechado 2026-10-05
+- **Owner / status:** Woz / `verified`
+- **Síntoma:** el proceso aborta (signal 5, no catcheable) al leer un STL binario con 2+ triángulos.
+- **Reproducción/evidencia:** cada triángulo STL mide 50 bytes; desde el segundo, los `Float`/`UInt32` quedan en offsets no alineados.
+- **Hipótesis/causa raíz:** confirmada: `load(fromByteOffset:as:)` exige alineación del tipo y trapea si no la hay.
+- **Garantía de plataforma/fuente:** documentación de `UnsafeRawPointer.load(fromByteOffset:as:)` y `loadUnaligned` (SE-0349).
+- **Workaround:** —
+- **Solución durable:** `loadUnaligned(fromByteOffset:as:)` por defecto en cualquier formato de terceros; no envolver el parser primario en `try?` que caiga a un fallback y oculte "archivo corrupto".
+- **Verificación:** 123 XCTest, incluidos 2, 4 y 1000 triángulos y STL truncado.
+- **Prevención:** revisar `load(fromByteOffset:` en code review salvo offset alineado demostrable.
+- **Relacionadas:** AAL-UX-001
+
+### AAL-SWIFT-002 — Protocolo inyectado con métodos `async` en un tipo `@MainActor` declara `Sendable`
+
+- **Fingerprint:** `swift/concurrency/existential-async-mainactor-sendable`
+- **Categoría:** Swift 6 / concurrencia / testabilidad
+- **Plataformas:** Swift 6.0–6.2 modo estricto
+- **Proyecto fuente / fechas:** Bingen (`BINGEN-2026-007`, 2026-09-06); cosechado 2026-10-05
+- **Owner / status:** Woz / `verified`
+- **Síntoma:** al cambiar `let service: OpenSCADService` por `let service: any RenderEngine` en un ViewModel `@MainActor`, ~15 llamadas `await` fallan con `sending 'self.service' risks causing data races`.
+- **Reproducción/evidencia:** con el tipo concreto el compilador infiere `Sendable`; con el existencial no puede.
+- **Hipótesis/causa raíz:** confirmada: el existencial no aporta la garantía de `Sendable`.
+- **Garantía de plataforma/fuente:** reglas de region-based isolation de Swift 6.
+- **Workaround:** —
+- **Solución durable:** `protocol RenderEngine: Sendable` desde el inicio, y la conformidad declarada en la declaración del tipo concreto (no en una extensión de otro archivo).
+- **Verificación:** `swift build` sin warnings; 67 XCTest + 4 Swift Testing.
+- **Prevención:** todo seam de protocolo para tests sobre un ViewModel `@MainActor` nace `Sendable` si sus requisitos son `async`.
+- **Relacionadas:** AAL-MAC-012
+
+### AAL-SWIFT-003 — `case a, b where cond:` solo aplica el `where` al último patrón
+
+- **Fingerprint:** `swift/pattern-matching/where-clause-scoped-to-last-pattern`
+- **Categoría:** Swift / corrección
+- **Plataformas:** Swift 6
+- **Proyecto fuente / fechas:** Todocky (`APP-TODOPRO-023`, 2026-09-28); cosechado 2026-10-05
+- **Owner / status:** Woz / `verified`
+- **Síntoma:** un atajo de teclado se dispara sin la condición para uno de los patrones; el compilador avisa "'where' only applies to the second pattern match in this 'case'".
+- **Reproducción/evidencia:** `case "]", "}" where canvasFocused:` ejecuta con `"]"` aunque `canvasFocused` sea `false`.
+- **Hipótesis/causa raíz:** confirmada: semántica del lenguaje.
+- **Garantía de plataforma/fuente:** The Swift Programming Language, Patterns.
+- **Workaround:** —
+- **Solución durable:** repetir el `where` en cada patrón o separar los `case`.
+- **Verificación:** build sin el warning; 243/243.
+- **Prevención:** ese warning se trata como error en revisión.
+- **Relacionadas:** —
+
+### AAL-MAC-018 — Sparkle: `applicationShouldTerminate` no puede bloquear la instalación
+
+- **Fingerprint:** `updater/sparkle/terminateLater-timeout-blocks-install`
+- **Categoría:** updater / ciclo de vida
+- **Plataformas:** macOS 14+, Sparkle 2
+- **Proyecto fuente / fechas:** ToDoPro (`SPARKLE-QUIT-001`, 2026-09-16); cosechado 2026-10-05
+- **Owner / status:** Woz / `verified`
+- **Síntoma:** al pulsar Cerrar para instalar una actualización, la app no termina y Sparkle se queda esperando.
+- **Reproducción/evidencia:** un gate de persistencia devolvía `.terminateLater` y, ante timeout de flush, `reply(false)`; un segundo `terminate` con reply pendiente devolvía `.terminateLater` otra vez sin responder.
+- **Hipótesis/causa raíz:** confirmada: Sparkle necesita que el proceso muera para instalar.
+- **Garantía de plataforma/fuente:** contrato de `NSApplicationDelegate.applicationShouldTerminate(_:)` / `reply(toApplicationShouldTerminate:)`.
+- **Workaround:** forzar salida desde Activity Monitor.
+- **Solución durable:** política "instalar actualización" que siempre sale; timeout de flush responde `true`; drenar el guardado en `updater(_:shouldPostponeRelaunchForUpdate:untilInvokingBlock:)`; nunca devolver `.terminateLater` dos veces sin un reply; sin trabajo pendiente, `.terminateNow`.
+- **Verificación:** `AppStateSaveQueueTests` 8/8.
+- **Prevención:** `/update-feature` lo revisa en toda app con `applicationShouldTerminate`.
+- **Relacionadas:** —
 
 ## Entradas condicionales
 
@@ -232,6 +416,57 @@ Base curada de problemas reutilizables en apps Apple. No sustituye la documentac
 - **Verificación:** build con strict concurrency y tests de cancelación/ciclo de vida de la animación.
 - **Prevención:** enlazar la garantía primaria en comentarios del boundary y revalidarla al cambiar SDK.
 - **Relacionadas:** AAL-MAC-010
+
+### AAL-REL-001 — Capabilities y firma se verifican en el artifact firmado
+
+- **Fingerprint:** `release/effective-entitlements-vs-source`
+- **Categoría:** firma / release / CloudKit
+- **Plataformas:** iOS 17+, macOS 14+; Xcode 26.3 / 27
+- **Proyecto fuente / fechas:** ToDoPro/Todocky (`APP-TODOPRO-012`, `-013`, `-015`, `-019`, 2026-08-21 → 2026-09-23), Fintrol (`FIN-2026-006`, `FINTROL-2026-003`), Inspoflow (`INSP-SEC-004`, hypothesis); cosechado 2026-10-05
+- **Owner / status:** Ivan + Craig + Phil / `conditional`
+- **Síntoma:** el proyecto declara Push/iCloud pero el binario no tiene APS; `fileExporter` trapea en `AppKitBreakInDebugger`; tras un rebrand todo sync da `permissionFailure`; un build Production dice `Sync failed`; Keychain falla en tests de iOS Simulator sin firma; un helper con hardened runtime no carga su framework.
+- **Reproducción/evidencia:** en cada caso el `.entitlements`/`.pbxproj` fuente era correcto y el artifact firmado no (perfil sin la capability, contenedor de otro App ID, schema no desplegado en Production, binario sin firmar).
+- **Hipótesis/causa raíz:** confirmada en ToDoPro/Todocky y Fintrol; Inspoflow pendiente de verificación con Developer ID.
+- **Garantía de plataforma/fuente:** los entitlements efectivos salen del perfil de aprovisionamiento al firmar; el contenedor de CloudKit sigue al App ID; Production solo conoce el schema desplegado.
+- **Workaround:** —
+- **Solución durable:** tras cada cambio de capability, bundle id o firma: `codesign -d --entitlements - <App.app>` (y de cada helper anidado) sobre el artifact; sandbox macOS con `fileImporter`/`fileExporter`/paneles declara `com.apple.security.files.user-selected.read-write` en todas las configuraciones; un rebrand de bundle id es una migración de contenedor; el gate de archive compara el schema exportado contra Production; tests de Keychain en iOS Simulator corren firmados, no con `CODE_SIGNING_ALLOWED=NO`; helpers de terceros re-firmados con hardened runtime llevan su propio `.entitlements`.
+- **Verificación:** ToDoPro: artifact con el entitlement, export App Store Connect build 8, Push y Production convergiendo en dos equipos; Todocky 242/242 + migración de contenedor en vivo; Fintrol 96/96 firmado.
+- **Prevención:** Ivan (archive recheck), Craig (paso de CI) y Phil (pre-submission) leen entitlements del artifact, no del fuente.
+- **Relacionadas:** AAL-DATA-001, AAL-SEC-001
+
+### AAL-SYNC-001 — Sync local-first: escribir intenciones y mostrar solo lo confirmado
+
+- **Fingerprint:** `sync/write-intent-not-disk-state+honest-status`
+- **Categoría:** sincronización / persistencia / UI de estado
+- **Plataformas:** macOS 14+, iOS 17+; iCloud Drive y CKSyncEngine
+- **Proyecto fuente / fechas:** NewProject (`APP-NPR-008`, `APP-NPR-010`), ToDoPro/Todocky (`APP-TODOPRO-004` 2026-08-12, `APP-TODOPRO-016` implemented-unverified); cosechado 2026-10-05
+- **Owner / status:** Avie + Woz / `conditional`
+- **Síntoma:** guardar en una Mac pisa lo que otra Mac acababa de cambiar; una edición local pendiente deja de enviarse tras recibir un cambio remoto; un ítem editado en otra Mac desaparece de la lista y vuelve; "Synced" aparece sin que la otra Mac reciba todo.
+- **Reproducción/evidencia:** NewProject guardaba "todo lo que difiere del disco"; ToDoPro marcaba la entidad como sincronizada tras un merge por campo; un archivo en descarga se trataba como inexistente.
+- **Hipótesis/causa raíz:** confirmada para las escrituras (ambas apps); el estado "Synced" falso confirmado en código, divergencia física pendiente.
+- **Garantía de plataforma/fuente:** ninguna; es contrato de la app sobre datos que cambian fuera del proceso.
+- **Workaround:** —
+- **Solución durable:** (1) una escritura describe qué cambió el usuario (delta por campo con revisión), no cómo debe quedar el disco; un merge remoto conserva y reencola los campos locales pendientes que ganan; (2) "no lo puedo leer ahora" no es "no existe": mostrar lo último conocido marcado como pendiente; "Synced" exige outbox vacío y recibo durable.
+- **Verificación:** NewProject en dos Macs; ToDoPro `remoteMergeRetainsNewerPendingFieldAndPropagatesBothEdits`.
+- **Prevención:** Avie revisa estos dos puntos al diseñar cualquier sync; Bertrand prueba ediciones concurrentes en campos distintos.
+- **Relacionadas:** AAL-UX-001
+
+### AAL-MAC-016 — Monitores de eventos con teardown en cada salida y sin trabajo por evento
+
+- **Fingerprint:** `appkit/nsevent-monitor/lifecycle-and-throttle`
+- **Categoría:** AppKit / ciclo de vida / rendimiento
+- **Plataformas:** macOS 14+
+- **Proyecto fuente / fechas:** NewProject (`APP-NPR-003`, 2026-09-02), Todocky (`APP-TODOPRO-018`, 2026-08-28, implemented-unverified); cosechado 2026-10-05
+- **Owner / status:** Woz + Bertrand / `conditional`
+- **Síntoma:** la grabación de un shortcut sigue capturando teclas al cambiar de pane; 101% de CPU y Energy Impact "Very High" al arrastrar una tarjeta.
+- **Reproducción/evidencia:** el monitor solo se retiraba en `deinit` y cambiar de pane no desmonta el modelo; un monitor y `dropUpdated` mutaban cursor/layout en cada evento sin comparar con el estado actual.
+- **Hipótesis/causa raíz:** teardown confirmado; throttle con prueba de CPU en vivo (pico 24%, media 2%), falta drag físico del propietario.
+- **Garantía de plataforma/fuente:** `NSEvent.addLocalMonitorForEvents` devuelve un token que hay que pasar a `removeMonitor(_:)`.
+- **Workaround:** —
+- **Solución durable:** todo `NSEvent` monitor u observer de C API se retira en cada salida del modo que lo instala (cancel, save, cambio de vista o pane, cierre de ventana); `deinit` es solo red de seguridad; en gestos continuos comparar estado deseado vs actual antes de mutar y throttlear por distancia o tiempo el trabajo caro.
+- **Verificación:** NewProject: regresión de cambio de pane; Todocky: muestreo de CPU durante drag simulado.
+- **Prevención:** Bertrand mide CPU durante drag/resize en apps macOS.
+- **Relacionadas:** AAL-MAC-017
 
 ## Mitos corregidos
 

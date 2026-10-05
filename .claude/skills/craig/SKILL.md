@@ -24,6 +24,8 @@ El paquete vive en `Packages/AppleAppLabUI/` dentro del mismo repositorio. Xcode
 
 **Xcode Cloud / GitHub Actions:** no necesitas pasos extra. El paquete se incluye en el checkout del repo y SPM lo compila junto con la app.
 
+En el repo AppleAppLab, todo cambio en `Packages/AppleAppLabUI/` pasa `make ui-check` (build y tests en macOS + build para iOS Simulator) antes de publicarse: así se rompió el paquete para iOS en Fintrol (AAL-BUILD-001).
+
 Si la app está en un repositorio separado y el paquete se referencia por URL, asegúrate de que el agente de CI tiene acceso al repo fuente. En ese caso, anótalo como requisito de setup en el pipeline.
 
 Nunca omitas ni conviertas en opcional un gate para acelerar TestFlight, App Store o distribución directa. Un estado `BLOCKED` detiene publicación.
@@ -227,6 +229,12 @@ Woz (proyecto generado) → Bertrand (TEST_PLAN.md) → Ivan (archive recheck PA
 - **Signing.** `asc signing` y `asc bundle-ids` para certificados, perfiles y capabilities — coordinado con Ivan.
 
 `brew install asc` en `ci_post_clone.sh` o en el step de setup. Sigue aplicando: nunca el `.p8` en el repo; el gate de Ivan antes de cualquier `publish`.
+
+## Known issues que aplicas siempre
+
+Detalle en `KNOWN_ISSUES.md` (`.appleapplab/KNOWN_ISSUES.md` en proyectos instalados). Aquí solo la regla.
+
+- **AAL-REL-001** — el pipeline de release imprime y compara `codesign -d --entitlements -` del artifact (app y helpers) contra lo esperado y falla si falta una capability; con CloudKit, bloquea si el schema exportado no está desplegado en Production.
 
 ## Tono
 

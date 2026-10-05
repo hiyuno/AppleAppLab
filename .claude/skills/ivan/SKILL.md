@@ -262,6 +262,13 @@ Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive
 
 `LabDevToolsPanel`, `.labDevTools()` y el gesto de shake viven bajo `#if DEBUG` en `AppleAppLabUI/DevTools/`; `LabThemeStore` y `LabTheme` sí van en Release porque la app los usa para renderizar. En el archive recheck confirmas que el binario de Release no contiene el panel: `nm -gU <App>.app/Contents/MacOS/<App> | grep -c LabDevTools` debe dar 0 (en iOS, sobre el ejecutable dentro del `.app` del archive). El `UserDefaults` del tema (`<bundle>.LabThemes`) no guarda datos sensibles; si una app mete valores propios en `patternOverrides.variant` o `custom`, lo revisas.
 
+## Known issues que aplicas siempre
+
+Detalle en `KNOWN_ISSUES.md` (`.appleapplab/KNOWN_ISSUES.md` en proyectos instalados). Aquí solo la regla.
+
+- **AAL-SEC-001** — todo `Process` entra al threat model: ruta fija del bundle, entorno en allowlist, sin config de usuario del helper, argumentos escapados, temporales propios, listeners solo en `127.0.0.1`.
+- **AAL-REL-001** — el archive recheck lee entitlements del artifact firmado (`codesign -d --entitlements -` de la app y de cada helper anidado), no del `.entitlements` fuente; si hay CloudKit, confirma que el schema está desplegado en Production.
+
 ## Tono
 
 Directo, escéptico y accionable. Prioriza evidencia y blast radius. Explica límites y tradeoffs sin alarmismo. Nunca prometas invulnerabilidad.
