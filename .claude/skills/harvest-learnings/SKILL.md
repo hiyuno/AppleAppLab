@@ -1,6 +1,6 @@
 ---
 name: harvest-learnings
-description: "Cosecha de learnings de todos los proyectos del usuario. App Master lee los PROJECT_LEARNINGS.md de cada app en GitSync/, separa incidentes de preferencias, agrupa lo repetido entre apps, descarta lo ya decidido según LEARNINGS_LEDGER.md, y hace triage en el chat en tandas de 4: quedarse, descartar o editar. Lo aprobado sube por la escalera: KNOWN_ISSUES.md o PREFERENCES.md, regla en el skill del agente, y si se puede, default en el código. Solo corre en el repo AppleAppLab. Úsalo con 'cosecha learnings', 'revisa lo aprendido', 'qué se repite en mis apps'."
+description: "Cosecha de learnings de todos los proyectos del usuario. App Master lee los PROJECT_LEARNINGS.md de cada app en GitSync/, separa incidentes de preferencias, agrupa lo repetido entre apps, descarta lo ya decidido según LEARNINGS_LEDGER.md, y decide solo lo técnico con criterios fijos y solo te pregunta preferencias y cambios de código, en lenguaje simple. Lo aprobado sube por la escalera: KNOWN_ISSUES.md o PREFERENCES.md, regla en el skill del agente, y si se puede, default en el código. Solo corre en el repo AppleAppLab. Úsalo con 'cosecha learnings', 'revisa lo aprendido', 'qué se repite en mis apps'."
 ---
 
 # /harvest-learnings — Lo que una app aprende, lo saben todas
@@ -23,6 +23,8 @@ captura automática en cada app → /harvest-learnings → triage contigo → es
 | `/harvest-learnings <proyecto>` | Solo ese proyecto |
 | `/harvest-learnings prefs` | Solo preferencias |
 | `/harvest-learnings status` | Cuánto hay pendiente por proyecto, sin triage |
+| `/harvest-learnings ask-all` | Te pregunta todo, incluido lo técnico |
+| `/harvest-learnings undo <ID>` | Revierte una decisión |
 
 ---
 
@@ -83,16 +85,53 @@ Para cada grupo, una propuesta con tres partes:
 
 Reglas de calidad que App Master sigue igual que antes: un incidente solo sube a `verified` con verificación explícita en algún proyecto; una `hypothesis` puede quedar como `doc` marcada así, nunca como `code`. Una **calibración visual vista en una sola app sigue siendo local**; se vuelve preferencia global cuando aparece en dos o más apps o el usuario la declara como "siempre".
 
-## Fase 4 — Triage contigo
+## Fase 4 — App Master decide, tú solo ves lo tuyo
 
-Con `AskUserQuestion`, en tandas de hasta 4 grupos, empezando por los de más apps. Cada pregunta muestra la regla, en cuántas apps se vio y el escalón propuesto. Opciones:
+El usuario no tiene por qué entender un incidente de XcodeGen o de Keychain. **App Master decide solo todo lo técnico** con los criterios de abajo y pregunta únicamente lo que es gusto del usuario o lo que cambia sus apps de forma visible.
 
-- **Quedarse** — con el escalón propuesto
-- **Quedarse solo como doc** — sin regla de skill ni código
-- **Descartar** — fue algo de esa app, no se repite
-- *Otro* — el usuario edita la regla o el alcance con sus palabras
+### Lo que App Master decide sin preguntar
 
-Lo que el usuario edita se reescribe así antes de promover. No se promueve nada sin respuesta.
+Cada grupo pasa por estas preguntas en orden. La primera que aplica decide.
+
+| # | Pregunta | Si la respuesta es sí |
+|---|----------|-----------------------|
+| 1 | ¿Ya lo cubre un `AAL-*` o `PREF-*`? | **Fusionar**: se añade el proyecto como evidencia a la entrada existente |
+| 2 | ¿Es lógica de negocio de esa app? (cálculos, reglas de su dominio, una API que solo ella usa, nombres de sus modelos) | **Descartar**: se queda en el proyecto |
+| 3 | ¿Está `deprecated`, o es `hypothesis` vista en una sola app? | **Diferir**: queda en el ledger y vuelve si aparece en otra app o pasa a `verified` |
+| 4 | ¿Es `verified` o `conditional` y trata de algo que toda app Apple puede tocar? (SwiftUI, AppKit, SwiftData, CloudKit, Keychain, concurrencia, XcodeGen, firma, tests, Xcode, App Store, seguridad de procesos) | **Quedarse** como `doc` en `KNOWN_ISSUES.md`, y como `skill` en el agente que lo previene (Woz, Bertrand, Avie, Ivan, Craig) |
+| 5 | ¿Apareció en dos o más apps, aunque sea `hypothesis`? | **Quedarse** como `doc` marcado `hypothesis`, con todas las apps como evidencia |
+| 6 | Ninguna de las anteriores | **Diferir** |
+
+Ejemplos con entradas reales:
+
+- "Banxico responde 400 con token inválido" → regla 2, se descarta: solo Fintrol usa Banxico.
+- "`LoanEngine` off-by-one en plazo" → regla 2, se descarta: es el cálculo de esa app.
+- "XcodeGen genera `TEST_HOST` incorrecto en targets multiplataforma" → regla 4, se queda: le pasa a cualquier app con iOS y macOS.
+- "Tests de Keychain fallan en el simulador sin firma" → regla 4, se queda, con una regla para Bertrand.
+- "Hardened runtime bloquea Python de yt-dlp", `hypothesis` en una app → regla 3, se difiere.
+
+### Lo único que se le pregunta al usuario
+
+1. **Preferencias.** Material de ventana, opacidad, tono de textos, orden de pantallas, cualquier gusto. Solo el usuario sabe si es "siempre" o fue cosa de esa app.
+2. **Cambios de código en AppleAppLabUI o en el tema por defecto.** Cambian cómo se ven o se comportan todas sus apps.
+3. **Contradicciones.** Una entrada nueva choca con una regla que el usuario ya aprobó.
+
+Las preguntas van **en lenguaje de usuario, sin jerga**: qué notaría en sus apps, no cómo se implementa.
+
+> ❌ "¿Promover INSP-UI-001 (`NSImageView` swallows drop) a `KNOWN_ISSUES` con escalón skill?"
+> ✅ "En Inspoflow, arrastrar fotos desde Finder no hacía nada si soltabas encima de una tarjeta. ¿Quieres que todas tus apps Mac acepten soltar archivos en cualquier parte de la tarjeta?"
+
+Con `AskUserQuestion`, en tandas de hasta 4, empezando por lo visto en más apps. Opciones: **Sí, en todas mis apps** · **Solo en ese tipo de app** · **No, fue cosa de esa app** · *Otro* para que lo diga con sus palabras.
+
+### Reporte de lo decidido
+
+Antes de aplicar, App Master muestra **una tabla corta** de lo que decidió solo: cuántos se quedaron, se fusionaron, se descartaron y se difirieron, y una línea en lenguaje simple por cada "se queda". No pide aprobación de esa tabla. Si el usuario dice "regresa X" o "ese no", se revierte en ese momento o con `/harvest-learnings undo <ID>`.
+
+### Modos
+
+- `/harvest-learnings` — App Master decide lo técnico, tú lo tuyo (por defecto)
+- `/harvest-learnings ask-all` — te pregunta todo, como antes
+- `/harvest-learnings undo <ID>` — revierte una decisión: quita la entrada promovida y marca el ledger `reverted`
 
 ## Fase 5 — Aplicar la escalera
 
@@ -110,11 +149,12 @@ Después:
 
 ## Cierre
 
-> "Cosecha: 83 entradas en 11 apps, 31 nuevas. 9 grupos: aprobaste 6, descartaste 2, 1 quedó como doc. Escalera: 3 a code (foco en `LabTextField`, tema por defecto en Frost, …), 2 a skill, 1 doc. Ledger al día. Commit `abc1234`, v1.19.1 — corre `/update-team` en tus apps para recibirlo."
+> "Cosecha: 77 entradas en 11 apps. Decidí solo: 14 se quedan, 6 se fusionan, 41 se descartan por ser de una sola app, 9 diferidas. Te pregunté 4 preferencias: aprobaste 3. Escalera: 3 a code (foco en `LabTextField`, tema por defecto en Frost, …), 2 a skill, 1 doc. Ledger al día. Commit `abc1234`, v1.19.1 — corre `/update-team` en tus apps para recibirlo."
 
 ## Lo que NO hace
 
 - No escribe en los repos de los proyectos
-- No promueve sin tu respuesta en el triage
+- No te pregunta lo técnico: lo decide con criterios fijos y te lo reporta
+- No cambia código ni preferencias sin tu respuesta
 - No convierte una `hypothesis` en código
 - No borra historia: lo superado se marca `deprecated` y se enlaza
