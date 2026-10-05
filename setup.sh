@@ -224,6 +224,16 @@ if [ -f "CLAUDE.md" ] && ! grep -q "Dónde vive cada documento" "CLAUDE.md" 2>/d
   fi
 fi
 
+# --- Sección "Jerarquía — quién decide qué" en CLAUDE.md y GEMINI.md existentes que no la tengan ---
+# (AGENTS.md y .cursor/rules se sobreescriben completos y ya la traen)
+for F in CLAUDE.md GEMINI.md; do
+  if [ -f "$F" ] && ! grep -q "^## Jerarquía" "$F" 2>/dev/null; then
+    if HIER=$(curl -fsSL "$RAW/$F" | awk '/^## Jerarquía/{p=1;print;next} p&&/^## /{exit} p'); then
+      [ -n "$HIER" ] && printf '\n\n---\n\n%s\n' "$HIER" >> "$F" && echo "  ✓ Jerarquía del equipo agregada a $F"
+    fi
+  fi
+done
+
 echo ""
 echo "Equipo listo:"
 echo "  /steve    → Orquestador"

@@ -2,9 +2,9 @@
 
 Bitácora local y acumulativa del proyecto. Registra incidentes sin frenar el trabajo normal; el agente propietario actualiza la entrada después de reproducir y verificar. Steve asegura el flujo y coordina retrospectivas, pero no redacta soluciones técnicas.
 
-> Estados permitidos: `hypothesis`, `conditional`, `verified`, `deprecated` para incidentes; `observed` para preferencias. No borres entradas: marca las reemplazadas y enlaza su sucesora.
+> Estados permitidos: `hypothesis`, `conditional`, `verified`, `deprecated` para incidentes; `observed` para preferencias; `proposed` para propuestas al equipo. No borres entradas: marca las reemplazadas y enlaza su sucesora.
 >
-> **Se escribe solo.** Los agentes anotan sin que se lo pidan cuando un fix necesitó más de un intento, corriges dos veces el mismo valor visual, dices "otra vez" o "siempre", rechazas un default, o se cierra un `/global-fix`. App Master cosecha estas entradas desde AppleAppLab con `/harvest-learnings`.
+> **Se escribe solo.** Los agentes anotan sin que se lo pidan cuando un fix necesitó más de un intento, corriges dos veces el mismo valor visual, dices "otra vez" o "siempre", rechazas un default, o se cierra un `/global-fix`. Si un agente ve algo mejorable en un skill, regla o proceso del equipo, lo anota como `propuesta` en lugar de editar el skill: los skills de esta app son copia de AppleAppLab. App Master cosecha estas entradas desde AppleAppLab con `/harvest-learnings`.
 
 ## Índice
 
@@ -39,6 +39,16 @@ Bitácora local y acumulativa del proyecto. Registra incidentes sin frenar el tr
 - **Qué hizo o dijo el usuario:** [la corrección, el valor que eligió, o la frase; cita corta]
 - **Valor elegido:** [el valor concreto: `.frost`, opacidad 0.35, radio 14…]
 - **Contexto:** [pantalla o componente; si aplica a toda la app]
+- **Veces en este proyecto:** [n]
+
+## APP-AAAA-003 — [Propuesta en una frase]
+
+- **Tipo:** `propuesta`
+- **Fingerprint:** `team/[skill o proceso]/[tema]` (ej. `team/steve/arranque`, `team/woz/checklist-foco`)
+- **Estado:** `proposed`
+- **Quién propone:** [Steve / Woz / Avie…]
+- **Qué cambiaría:** [skill, regla o proceso, y el cambio en una o dos frases]
+- **Por qué:** [qué pasó en este proyecto que lo motiva; IDs relacionados]
 - **Veces en este proyecto:** [n]
 
 ## Retrospectiva — [milestone/release] — YYYY-MM-DD

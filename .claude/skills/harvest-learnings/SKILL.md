@@ -52,7 +52,7 @@ for f in sorted(set(files)):
         symptom = field(body, "Síntoma")
         fp = hashlib.sha1((title + symptom).encode()).hexdigest()[:8]
         if (proj, eid, fp) in seen: continue
-        kind = field(body, "Tipo") or ("preferencia" if re.search(r"\bpreferencia\b", body, re.I) else "incidente")
+        kind = field(body, "Tipo") or ("preferencia" if re.search(r"\bpreferencia\b", body, re.I) else "propuesta" if re.search(r"\bpropuesta\b", body, re.I) else "incidente")
         state = re.search(r"`(hypothesis|conditional|verified|deprecated|observed)`", field(body, "Owner / status") + field(body, "Estado"))
         rows.append((proj, eid, fp, kind, state.group(1) if state else "?", field(body, "Categoría")[:24], field(body, "Fingerprint")[:40], title[:90], symptom[:140]))
 print(f"{total} entradas en {len(set(files))} proyectos · {len(rows)} nuevas o cambiadas")
@@ -64,7 +64,7 @@ Lee también `KNOWN_ISSUES.md`, `PREFERENCES.md` y el ledger: lo que ya está cu
 
 ## Fase 2 — Separar y agrupar
 
-1. **Tipo.** Cada entrada es un **incidente** (algo falló, tiene causa y fix) o una **preferencia** (cómo le gusta al usuario: un material, una opacidad, un orden, un estilo de texto, un flujo). Si la entrada no lo dice, lo decides por el contenido.
+1. **Tipo.** Cada entrada es un **incidente** (algo falló, tiene causa y fix), una **preferencia** (cómo le gusta al usuario: un material, una opacidad, un orden, un estilo de texto, un flujo) o una **propuesta** (Steve o un especialista propone cambiar un skill, una regla o un proceso del equipo; los agentes de una app no editan skills, ver "Jerarquía" en `CLAUDE.md`). Si la entrada no lo dice, lo decides por el contenido.
 2. **Grupos.** Junta las entradas que describen lo mismo aunque cada proyecto le haya puesto otro nombre: primero por fingerprint, después por síntoma y causa. "TextField no responde", "campo bloqueado al abrir el sheet" y "no puedo escribir en el buscador" son un grupo si la causa es el foco.
 3. **Ranking.** Ordena por número de apps donde aparece × impacto. Lo visto en 3 apps va antes que lo visto en 1.
 4. **Contra lo existente.** Por grupo: ¿ya existe un `AAL-*` o `PREF-*` que lo cubre? ¿Lo contradice? ¿Lo amplía a otra versión de OS?
@@ -115,6 +115,7 @@ Ejemplos con entradas reales:
 1. **Preferencias.** Material de ventana, opacidad, tono de textos, orden de pantallas, cualquier gusto. Solo el usuario sabe si es "siempre" o fue cosa de esa app.
 2. **Cambios de código en AppleAppLabUI o en el tema por defecto.** Cambian cómo se ven o se comportan todas sus apps.
 3. **Contradicciones.** Una entrada nueva choca con una regla que el usuario ya aprobó.
+4. **Propuestas que cambian cómo trabaja el equipo.** El rol de un agente, el orden del flujo, qué se pregunta y qué no. Una propuesta que solo añade una línea técnica a un checklist (Woz, Bertrand, Ivan) la decide App Master con la tabla de arriba, como un incidente.
 
 Las preguntas van **en lenguaje de usuario, sin jerga**: qué notaría en sus apps, no cómo se implementa.
 
@@ -153,7 +154,7 @@ Después:
 
 ## Lo que NO hace
 
-- No escribe en los repos de los proyectos
+- No escribe en los repos de los proyectos: App Master nunca entra a una app
 - No te pregunta lo técnico: lo decide con criterios fijos y te lo reporta
 - No cambia código ni preferencias sin tu respuesta
 - No convierte una `hypothesis` en código

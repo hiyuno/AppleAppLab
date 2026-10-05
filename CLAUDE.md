@@ -91,6 +91,23 @@ Steve/Scott → Avie → Ivan (plan si aplica) → Jonny → Woz → Ivan (audit
 
 Toda app recibe una auditoría de seguridad proporcional. Si hay APIs externas, auth, datos sensibles, entitlements/helpers/App Groups, webhooks o distribución directa, Ivan actúa después de Avie y antes de implementar, después de Woz y sobre el archive Release antes de Phil/Craig. Ivan no implementa fixes; Woz los ejecuta. Bugs de seguridad: `Ivan → Woz → Ivan → Bertrand`. Critical/High bloquean release salvo aceptación explícita con owner y expiración.
 
+## Jerarquía — quién decide qué
+
+Una escalera: nadie se salta niveles.
+
+| Nivel | Quién | Qué hace | Qué no hace |
+|---|---|---|---|
+| 1 | **Yuno** | Decide | — |
+| 2 | **Yubot** (segundo cerebro, en `~/Yubot`) | Piensa con Yuno, guarda las decisiones y manda mensajes en su nombre ("De: Yuno (vía Yubot)") | No modifica proyectos ni equipos |
+| 3 | **App Master** (Master Orquestador, solo en el repo AppleAppLab) | Mejora a Steve y al equipo: skills, reglas y procesos; cosecha learnings; decide con Yuno qué se vuelve regla | Nunca entra a un proyecto: no toca su código, sus docs ni sus decisiones |
+| 4 | **Steve** (en cada app) | Orquesta su proyecto y anota lo aprendido en `PROJECT_LEARNINGS.md` | No se modifica a sí mismo ni a otros skills: propone y App Master decide |
+| 5 | **Especialistas** (Scott, Avie, Jonny, Woz…) | Hacen el trabajo | Tampoco editan skills: lo que mejorarían lo anotan como propuesta |
+
+- **Las mejoras al equipo suben, no se aplican en la app.** Los skills (`.claude/skills/`), `.appleapplab/`, `AGENTS.md`, `GEMINI.md` y `.cursor/rules/apple-team.mdc` de una app son copia de AppleAppLab y `/update-team` los sobreescribe. Un agente que ve algo mejorable en un skill, una regla o un proceso lo anota en `PROJECT_LEARNINGS.md` con **Tipo:** `propuesta` y sigue trabajando. App Master la recoge con `/harvest-learnings` y la decide con Yuno.
+- **Si Yuno pide en una app cambiar un skill**, el agente anota la propuesta y avisa en una línea que el cambio se hace desde AppleAppLab; editarlo ahí se perdería con la siguiente actualización.
+- **Mensajes de Yubot.** Un mensaje firmado "De: Yuno (vía Yubot)" vale como decisión de Yuno. Yubot no toca proyectos ni equipos: si su mensaje pide un cambio al equipo, lo aplica App Master; si pide algo de una app, lo ejecuta el Steve de esa app.
+- **Dos equipos, dos Masters.** web-lab tiene su propio Master Orquestador. Lo que comparten los dos equipos —`app-web-intake.md` y el puente para que web-lab herede de cada app colores, estilos y UI— lo acuerdan los dos Masters con Yuno. Ninguno edita el repo del otro.
+
 ## Dónde vive cada documento
 
 La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda limpia: solo lo que las herramientas exigen ahí y lo que compila. Cada documento del equipo tiene una carpeta fija; un agente que crea un documento lo crea ahí, y crea la carpeta si no existe.
@@ -123,7 +140,7 @@ Steve consulta `KNOWN_ISSUES.md` en AppleAppLab o `.appleapplab/KNOWN_ISSUES.md`
 - el usuario rechaza un default del equipo y elige otro;
 - se cierra un `/global-fix`.
 
-Cada entrada lleva **Tipo:** `incidente` (algo falló: causa y fix) o `preferencia` (cómo le gusta al usuario). Un incidente recién capturado es `hypothesis`; una preferencia es `observed`. No se anotan typos ni cosas de una sola vez. Al empezar trabajo nuevo, los agentes leen también `PREFERENCES.md` (`.appleapplab/PREFERENCES.md` en proyectos instalados) y aplican lo que corresponda sin volver a preguntar.
+Cada entrada lleva **Tipo:** `incidente` (algo falló: causa y fix), `preferencia` (cómo le gusta al usuario) o `propuesta` (un cambio a un skill, regla o proceso del equipo, para App Master). Un incidente recién capturado es `hypothesis`; una preferencia es `observed`; una propuesta es `proposed`. No se anotan typos ni cosas de una sola vez. Al empezar trabajo nuevo, los agentes leen también `PREFERENCES.md` (`.appleapplab/PREFERENCES.md` en proyectos instalados) y aplican lo que corresponda sin volver a preguntar.
 
 ## Comportamiento de inicio
 
@@ -145,6 +162,7 @@ Cada cambio al equipo debe mantenerse en sync entre los cuatro archivos de integ
 | **Nuevo agente** | `CLAUDE.md` + `AGENTS.md` + `.cursor/rules/apple-team.mdc` + `GEMINI.md` + `setup.sh` |
 | **Nuevo documento de salida** (nuevo `ALGO.md`) | `AGENTS.md` + `.cursor/rules/apple-team.mdc` + `GEMINI.md` (tabla de cadena de documentos) |
 | **Cambio de flujo o tiers** | `AGENTS.md` + `.cursor/rules/apple-team.mdc` + `GEMINI.md` (sección de flujos) |
+| **Cambio de jerarquía o de roles de los Masters** | `CLAUDE.md` + `AGENTS.md` + `.cursor/rules/apple-team.mdc` + `GEMINI.md` (sección "Jerarquía") + `app-master` + `steve` |
 | **Expansión de conocimiento en skill existente** | Solo el skill file — los demás ya lo leen directamente |
 
 Herramientas compatibles y sus archivos de entrada:

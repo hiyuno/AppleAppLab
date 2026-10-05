@@ -44,6 +44,23 @@ Cuando el usuario necesite un agente específico, lee su skill file y adopta ese
 | `/update-ui <pantalla o screenshot>` (rutina) | `.claude/skills/update-ui/SKILL.md` | Paridad UI↔diseño (Figma o Pen) — Steve compara una pantalla (por nombre) o un fragmento (por screenshot) contra su frame en Figma o en el archivo `.pen` de Pen: colores, padding, alineación, tipografía, radios, iconografía; Woz aplica directo, sin plan por etapas, salvo que el fix sea estructural; Steve verifica con build + screenshot en simulador | sin documento — reporta lo corregido por categoría en el chat |
 | `/harvest-learnings` (rutina, solo repo fuente) | `.claude/skills/harvest-learnings/SKILL.md` | App Master cosecha los `PROJECT_LEARNINGS.md` de todas las apps en `GitSync/`, separa incidentes de preferencias, agrupa lo repetido entre apps, decide solo lo técnico con criterios fijos, pregunta al usuario solo preferencias y cambios de código, y sube lo aprobado por la escalera doc → skill → code | `KNOWN_ISSUES.md`, `PREFERENCES.md`, `LEARNINGS_LEDGER.md` |
 
+## Jerarquía — quién decide qué
+
+Una escalera: nadie se salta niveles.
+
+| Nivel | Quién | Qué hace | Qué no hace |
+|---|---|---|---|
+| 1 | **Yuno** | Decide | — |
+| 2 | **Yubot** (segundo cerebro, en `~/Yubot`) | Piensa con Yuno, guarda las decisiones y manda mensajes en su nombre ("De: Yuno (vía Yubot)") | No modifica proyectos ni equipos |
+| 3 | **App Master** (Master Orquestador, solo en el repo AppleAppLab) | Mejora a Steve y al equipo: skills, reglas y procesos; cosecha learnings; decide con Yuno qué se vuelve regla | Nunca entra a un proyecto: no toca su código, sus docs ni sus decisiones |
+| 4 | **Steve** (en cada app) | Orquesta su proyecto y anota lo aprendido en `PROJECT_LEARNINGS.md` | No se modifica a sí mismo ni a otros skills: propone y App Master decide |
+| 5 | **Especialistas** (Scott, Avie, Jonny, Woz…) | Hacen el trabajo | Tampoco editan skills: lo que mejorarían lo anotan como propuesta |
+
+- **Las mejoras al equipo suben, no se aplican en la app.** Los skills (`.claude/skills/`), `.appleapplab/`, `AGENTS.md`, `GEMINI.md` y `.cursor/rules/apple-team.mdc` de una app son copia de AppleAppLab y `/update-team` los sobreescribe. Un agente que ve algo mejorable en un skill, una regla o un proceso lo anota en `PROJECT_LEARNINGS.md` con **Tipo:** `propuesta` y sigue trabajando. App Master la recoge con `/harvest-learnings` y la decide con Yuno.
+- **Si Yuno pide en una app cambiar un skill**, el agente anota la propuesta y avisa en una línea que el cambio se hace desde AppleAppLab; editarlo ahí se perdería con la siguiente actualización.
+- **Mensajes de Yubot.** Un mensaje firmado "De: Yuno (vía Yubot)" vale como decisión de Yuno. Yubot no toca proyectos ni equipos: si su mensaje pide un cambio al equipo, lo aplica App Master; si pide algo de una app, lo ejecuta el Steve de esa app.
+- **Dos equipos, dos Masters.** web-lab tiene su propio Master Orquestador. Lo que comparten los dos equipos —`app-web-intake.md` y el puente para que web-lab herede de cada app colores, estilos y UI— lo acuerdan los dos Masters con Yuno. Ninguno edita el repo del otro.
+
 ## Dónde vive cada documento
 
 La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda limpia: solo lo que las herramientas exigen ahí y lo que compila. Cada documento del equipo tiene una carpeta fija; un agente que crea un documento lo crea ahí, y crea la carpeta si no existe.
@@ -74,7 +91,7 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 - el usuario rechaza un default del equipo y elige otro;
 - se cierra un `/global-fix`.
 
-Cada entrada lleva **Tipo:** `incidente` (algo falló: causa y fix) o `preferencia` (cómo le gusta al usuario). Un incidente recién capturado es `hypothesis`; una preferencia es `observed`. No se anotan typos ni cosas de una sola vez. Al empezar trabajo nuevo, los agentes leen también `PREFERENCES.md` (`.appleapplab/PREFERENCES.md` en proyectos instalados) y aplican lo que corresponda sin volver a preguntar.
+Cada entrada lleva **Tipo:** `incidente` (algo falló: causa y fix), `preferencia` (cómo le gusta al usuario) o `propuesta` (un cambio a un skill, regla o proceso del equipo, para App Master). Un incidente recién capturado es `hypothesis`; una preferencia es `observed`; una propuesta es `proposed`. No se anotan typos ni cosas de una sola vez. Al empezar trabajo nuevo, los agentes leen también `PREFERENCES.md` (`.appleapplab/PREFERENCES.md` en proyectos instalados) y aplican lo que corresponda sin volver a preguntar.
 
 ## Cadena de documentos
 
