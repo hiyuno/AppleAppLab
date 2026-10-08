@@ -2185,6 +2185,48 @@ Al terminar el diseño y cuando el icono y el logo existan como archivos, escrib
 
 Tú lideras la rutina (`.claude/skills/app-brand-package/SKILL.md`). Eliges las 3–6 pantallas clave en `Docs/Design/key-screens.json` y la plataforma principal (`--primary`, anotada en `STYLE_BRIEF.md`); dejas `brand-package/assets/logo/logo.svg` (vectorial, `currentColor` o con variante `logo-on-dark.svg`) si hay logo aparte del ícono; escribes `brand-package/icons.map.json` (SF Symbol → Lucide/Phosphor) si las pantallas muestran SF Symbols; exportas a mano el ícono de macOS si viene de Icon Composer. Cuando el generador encuentra una diferencia entre el tema, tus `DESIGN_*.md` y el código, se la traduces a Yuno en una pregunta simple, y si pierde tu documento lo corriges ahí. Confirmas la versión que calcula el generador. El paquete describe la app tal como sale: nada se ajusta "para la web" — eso es de Frost en web-lab.
 
+## Archivo nuevo de Figma o Pen — siempre empieza por el sistema
+
+**Regla fija.** Cada vez que se crea un archivo de diseño nuevo, en Figma o en Pen, lo primero que haces es el sistema, **antes de la primera pantalla**. No se dibuja ninguna pantalla en un archivo sin tokens. Si te piden "diseña la pantalla X" en un archivo vacío, primero armas el sistema y lo dices en una línea: "Primero armo los tokens y componentes del archivo; después la pantalla."
+
+**Fuente de los valores.** El tema de la app (`Themes/<tema>.json`, o `.appleapplab/Themes/` en proyectos instalados) y `STYLE_BRIEF.md`. Los valores se copian de ahí, no se inventan. Si la app aún no tiene tema, primero se elige uno (fase visual de Steve) y se aplican `PREFERENCES.md` del usuario, sobre todo el material de ventana.
+
+**Nombres iguales al código.** Cada variable y cada componente lleva el nombre del campo del tema o del componente `Lab*` que lo usa (`backgroundColor`, `accentColor`, `cornerStyle`, `windowMaterial`, `LabButton`, `LabTextField`…). Así `/update-ui` compara diseño y código uno a uno, y un JSON exportado desde Dev Tools se vuelca al archivo sin traducir.
+
+### El orden, siempre el mismo
+
+| # | Página o colección | Qué lleva | Desde el tema |
+|---|--------------------|-----------|---------------|
+| 1 | **Portada** | Nombre de la app, tema y su versión o fecha, plataformas, y las duraciones de animación anotadas (no se dibujan) | `name`, `motionSpeedMultiplier`, `duration` de cada patrón |
+| 2 | **Color** | Primitivos, luego semánticos: fondo, superficie, texto primario/secundario/terciario, acento, separador, destructivo. Modos claro y oscuro | `backgroundColor`, `accentColor`, `secondaryColor`, `tertiaryColor`, colores de contorno, `appearanceMode` |
+| 3 | **Tipografía** | Los estilos de texto de Apple (Large Title → Caption 2) en SF Pro / SF Pro Rounded. Ningún tamaño inventado, para respetar Dynamic Type | `fontDesign`, `fontWeight` |
+| 4 | **Espaciado** | Escala fija 4 · 8 · 12 · 16 · 20 · 24 · 32 · 48. Los valores sueltos del tema (15.3, 7.26 de los deslizadores) se redondean al paso más cercano y se anota el redondeo | `spacing` de cada patrón |
+| 5 | **Esquinas** | Radios continuos (squircle) y la regla `r_inner = r_outer − padding` con un ejemplo anidado. Cápsula para pills | `cornerStyle`, `cornerRadius` de cada patrón |
+| 6 | **Materiales y profundidad** | Material de ventana, transparencia, elevación, sombras y fondo de pantalla. Se fija aquí, no al final | `windowMaterial`, `transparency`, `elevation`, `wallpaper`, `titleBarStyle` |
+| 7 | **Iconos** | SF Symbols con el modo de render del tema; en Pen, el equivalente `lucide`/`phosphor` con su SF Symbol anotado | `iconRenderingMode` |
+| 8 | **Componentes** | Uno por cada `Lab*` que use la app, con el mismo nombre y **todos sus estados**: normal, hover (macOS), presionado, deshabilitado, **foco** y error si aplica. El foco del campo de texto es obligatorio: es un problema que se repite en las apps del usuario. Controles del sistema no se redibujan: en Figma, kit oficial de Apple de iOS/macOS | `patternOverrides` por componente |
+| 9 | **Pantallas** | Al final, armadas **solo** con componentes e instancias. Cada pantalla es un frame raíz con el mismo nombre que la vista SwiftUI | — |
+
+**Si una pantalla necesita un valor que no existe**, primero se agrega como token o como variante del componente, y luego se usa. Nunca un hex, radio o espaciado suelto en una capa.
+
+### Cómo se crea en cada herramienta
+
+- **Figma** (MCP de Figma, `use_figma`): colecciones de variables `Color` (modos Light/Dark), `Spacing`, `Radius` y `Material`; estilos de texto con los nombres de Apple; componentes con variantes por estado. `get_variable_defs` es lo que lee `/update-ui`.
+- **Pen** (MCP `pencil`): `SetVariables` con temas `mode: light/dark` para color y valores numéricos para espaciado, radios y opacidades; componentes `reusable: true` con una instancia por estado; pantallas con `ref`. Lee la skill `pen-dev` antes de empezar.
+
+### Antes de la primera pantalla — checklist
+
+- [ ] Portada con tema y fecha
+- [ ] Color en claro y oscuro, con nombres del tema
+- [ ] Estilos de texto de Apple
+- [ ] Escala de espaciado y radios continuos
+- [ ] Material de ventana y transparencia según el tema y `PREFERENCES.md`
+- [ ] Componentes de la app con todos sus estados, incluido el foco
+
+Al terminar lo dices en una línea: "Sistema listo en el archivo: N colores, N estilos de texto, N componentes. Empiezo con la pantalla X."
+
+**Archivos que ya existen sin sistema.** No se rehacen de golpe. La próxima vez que se toquen, armas primero las páginas 1–8 con los valores del tema y vas cambiando las capas sueltas por variables e instancias a medida que trabajas cada pantalla.
+
 ## Pen (pen.dev) como fuente de diseño
 
 Además de Figma, el equipo acepta **Pen** — la app de escritorio `Pen.app` con archivos `.pen` que se leen y escriben solo por el MCP `pencil` (están cifrados; nunca `Read`/`Grep`). Si el proyecto diseña en Pen: el `.pen` vive en `Docs/Design/` del repo; los tokens del `STYLE_BRIEF.md` se declaran como variables del documento (`SetVariables`, con temas `mode: light/dark`) para que `/update-ui` los lea con `GetVariables()` en vez de hexes sueltos; cada pantalla es un frame raíz con el **mismo nombre** que la vista SwiftUI (`Home`, `Settings — Startup`) para que Steve la ubique por nombre; los componentes repetidos son `reusable: true` e instancias `ref`; los iconos son de `lucide`/`phosphor` y tú anotas su SF Symbol equivalente en `DESIGN_LIQUID.md` la primera vez. Antes de diseñar en el canvas lee la skill `pen-dev` del MCP (`read_skill`) — el `.pen` no es CSS: `fill_container`/`fit_content`, sin porcentajes, sin margin. Cuando `/update-ui` encuentre algo ambiguo o incompleto en el diseño, quien lo corrige en Pen eres tú; la rutina solo toca código.
