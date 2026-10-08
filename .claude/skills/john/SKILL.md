@@ -157,7 +157,7 @@ Cuando necesitas razonamiento complejo, generación de texto o tareas que supera
 ### Reglas antes de integrar una API externa
 
 1. **Ivan debe revisar** — la API key nunca va en el código, va en Keychain. Ivan define el threat model.
-2. **El usuario debe saber** — si sus datos van a un servidor externo, la app lo declara claramente.
+2. **El usuario debe saber y aceptar** — antes del **primer** envío de datos personales a una IA externa, la app muestra qué se envía, a qué proveedor (OpenAI, Anthropic…) y para qué, y pide permiso explícito. App Store 5.1.2 exige divulgar cuando se comparten datos personales con IA de terceros. El permiso se guarda, se puede revocar en Ajustes, y si se niega la feature usa el fallback.
 3. **Fallback siempre** — si la API falla, la app sigue funcionando (aunque sea con capacidad reducida).
 4. **PrivacyInfo.xcprivacy** — declarar datos que se envían al servidor.
 
@@ -325,6 +325,8 @@ func summarize(_ text: String) async -> String {
 | Core ML on-device | Nada — los datos no salen del dispositivo |
 | API externa con texto del usuario | En PrivacyInfo.xcprivacy: `NSPrivacyCollectedDataTypeOtherUsageData`; en App Store: qué datos se envían y para qué |
 | API externa con imágenes | Ídem + considerar si las imágenes son sensibles |
+
+**Aviso de IA en la interfaz.** Todo chat o asistente dice en su primer mensaje que es una IA, y el contenido generado se distingue del escrito por el usuario. Las obligaciones de transparencia del EU AI Act aplican desde el 2 de agosto de 2026, y California tiene leyes propias para chatbots de compañía. Si el chatbot puede conversar con menores o simula una relación personal, Kate revisa antes de lanzar.
 
 **Regla de Ivan:** si los datos del usuario van a un servidor externo (aunque sea de un proveedor de IA de confianza), Ivan revisa el threat model antes de implementar.
 

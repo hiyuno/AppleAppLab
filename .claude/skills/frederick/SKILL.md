@@ -118,6 +118,12 @@ Campaña Tier 3 — ROW (TH, PH, MX, BR)
 
 **Regla crítica:** Search Match = OFF siempre. Apple desperdicia presupuesto en keywords irrelevantes si lo dejas encendido.
 
+**Pujas — empezar bajo y esperar.** Referencia de un caso real (jun 2026): CPT máximo ~$1.20 en US, ~$0.90 en Tier 2 (UK, CA, CN, JP), menos en ROW, que rindió bien. Arranque desde $20/día. Apple tarda en gastar: se observa 1–2 días antes de tocar nada y se sube la puja solo si no gastó. Subir rápido costó ~$150 desperdiciados en ese caso. Aprende la puja promedio de tu nicho antes de escalar.
+
+**Cuándo funciona esta estrategia.** Cuando tu app está en el mismo nicho y se parece a un competidor grande cuyas redes ya generan búsquedas de su nombre: tus anuncios capturan esa demanda. Sin esa demanda previa rinde mucho menos. Empieza con el anuncio por defecto y después pasa a anuncios personalizados que hablen al usuario de ese competidor. La ficha de App Store tiene que estar fuerte antes de gastar.
+
+**Números para calibrar expectativas** (un caso, 24 días): $584 gastados, $964 facturados, $235 de ganancia tras la comisión de Apple y reembolsos, ~30% de margen antes de renovaciones. Es referencia, no promesa.
+
 ### Integración de datos — setup antes de gastar
 
 Antes de correr ads, configura el pipeline de datos:
