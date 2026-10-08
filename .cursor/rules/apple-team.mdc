@@ -50,6 +50,7 @@ Cuando el flujo requiera un agente, lee su skill file y adopta ese rol completam
 | `/link-todocky <code>` (comando) | `.claude/skills/link-todocky/SKILL.md` | Enlace inverso repo ↔ proyecto de Todocky con el código de "Copy project number" (un solo uso): `link_repo_to_project` con ruta absoluta y `external_key` de Steve §0.5; guarda `projectId` en `.claude/todocky-link.json`; habilita "Implement with Claude". Requiere el MCP de Todocky | `.claude/todocky-link.json` (cache local) |
 | `/global-fix` (rutina) | `.claude/skills/global-fix/SKILL.md` | Bugs que no caen con una revisión pequeña: reproducir + test rojo (Bertrand), mapa del flujo y todas las causas falsadas con evidencia (Avie), fix de raíz un commit por causa (Woz), verificación con reproducción ×N y dispositivo mínimo (Bertrand, Chris, Ivan), simplificación en commit aparte, entrada en `PROJECT_LEARNINGS.md`. Dos checkpoints; `auto` sin parar | entrada en `PROJECT_LEARNINGS.md` |
 | `/add-developer-tools [tema\|check]` (rutina) | `.claude/skills/add-developer-tools/SKILL.md` | Instala Dev Tools y tema central en un proyecto: Steve sonda y elige tema, Woz empaqueta `Themes/<tema>.json`, cablea `LabThemeStore` + `.labTheme` + `.labDevTools` y sustituye `PatternConfig(...)` por `labTheme.config(for: XPattern.self)` con script de referencia; Bertrand compila iOS/macOS y abre el panel; Ivan verifica `nm | grep LabDevTools` = 0 en Release; Larry reporta literales visuales restantes. Idempotente; `check` solo audita | `TRD.md` + `STYLE_BRIEF.md` actualizados |
+| `/app-brand-package [check\|screens\|status]` (rutina) | `.claude/skills/app-brand-package/SKILL.md` | Paquete de marca para web-lab (contrato v1, web-lab `docs/app-brand-package.md`): Jonny lidera; el generador `lab-brand-package` (AppleAppLabUI) produce manifest y tokens DTCG desde el tema, los assets y el código; Yuno contesta cada diferencia entre tema, `DESIGN_*.md` y código (no se publica con diferencias abiertas); Woz captura 3–6 pantallas clave con `-LabSeedData` en cada modo de la app; el generador calcula el semver y Jonny lo confirma; Ivan revisa privacidad; Steve escribe `CHANGELOG.md`, el campo *Brand package* del intake y hace el commit. `check` solo diagnostica |
 | `/global-audit` (rutina paraguas) | `.claude/skills/global-audit/SKILL.md` | Steve hace triage por etapa del proyecto (nuevo, en construcción, pre-lanzamiento, publicada, heredada) y omite o posterga con razón las rutinas que no hacen falta; corre las necesarias en diagnóstico silencioso (solo las desactualizadas) compartiendo inventarios, Avie reconcilia hallazgos cruzados y colisiones entre etapas, Steve entrega un tablero con los cuatro veredictos y una secuencia global de `go` en rondas arquitectura → limpieza → performance → App Store con re-sincronización al cerrar cada ronda; `go <n>` delega a la rutina dueña; `status` refresca sin re-auditar | `GLOBAL_AUDIT.md` |
 | `/update-ui <pantalla o screenshot>` (rutina) | `.claude/skills/update-ui/SKILL.md` | Paridad UI↔diseño (Figma o Pen) — Steve compara una pantalla (por nombre) o un fragmento (por screenshot) contra su frame en Figma o en el archivo `.pen` de Pen: colores, padding, alineación, tipografía, radios, iconografía; Woz aplica directo, sin plan por etapas, salvo que el fix sea estructural; Steve verifica con build + screenshot en simulador | sin documento — reporta lo corregido por categoría en el chat |
 | `/harvest-learnings` (rutina, solo repo fuente) | `.claude/skills/harvest-learnings/SKILL.md` | App Master cosecha los `PROJECT_LEARNINGS.md` de todas las apps en `GitSync/`, separa incidentes de preferencias, agrupa lo repetido entre apps, decide solo lo técnico con criterios fijos, pregunta al usuario solo preferencias y cambios de código, y sube lo aprobado por la escalera doc → skill → code | `KNOWN_ISSUES.md`, `PREFERENCES.md`, `LEARNINGS_LEDGER.md` |
@@ -90,6 +91,7 @@ Agregar según necesidad:
 - **Localización** → Kim → Woz (fixes) → Kim (re-verifica) → Phil
 - **Finanzas personales / score crediticio** → Sam → Avie/Jonny → Woz
 - **Legal** → Kate → Steve presenta hallazgos al usuario → usuario aprueba → agentes implementan
+- **Paquete de marca para web-lab** → Jonny (pantallas clave, logo, mapa de íconos) → Woz (`-LabSeedData`, capturas) → `lab-brand-package check` → Yuno (cada diferencia) → Jonny/Woz (corrigen el origen) → Jonny (confirma versión) → Ivan (privacidad) → Steve (`write`, CHANGELOG, intake, commit)
 
 ## Jerarquía — quién decide qué
 
@@ -106,7 +108,7 @@ Una escalera: nadie se salta niveles.
 - **Las mejoras al equipo suben, no se aplican en la app.** Los skills (`.claude/skills/`), `.appleapplab/`, `AGENTS.md`, `GEMINI.md` y `.cursor/rules/apple-team.mdc` de una app son copia de AppleAppLab y `/update-team` los sobreescribe. Un agente que ve algo mejorable en un skill, una regla o un proceso lo anota en `PROJECT_LEARNINGS.md` con **Tipo:** `propuesta` y sigue trabajando. App Master la recoge con `/harvest-learnings` y la decide con Yuno.
 - **Si Yuno pide en una app cambiar un skill**, el agente anota la propuesta y avisa en una línea que el cambio se hace desde AppleAppLab; editarlo ahí se perdería con la siguiente actualización.
 - **Mensajes de Yubot.** Un mensaje firmado "De: Yuno (vía Yubot)" vale como decisión de Yuno. Yubot no toca proyectos ni equipos: si su mensaje pide un cambio al equipo, lo aplica App Master; si pide algo de una app, lo ejecuta el Steve de esa app.
-- **Dos equipos, dos Masters.** web-lab tiene su propio Master Orquestador. Lo que comparten los dos equipos —`app-web-intake.md` y el puente para que web-lab herede de cada app colores, estilos y UI— lo acuerdan los dos Masters con Yuno. Ninguno edita el repo del otro.
+- **Dos equipos, dos Masters.** web-lab tiene su propio Master Orquestador. Lo que comparten los dos equipos —`app-web-intake.md` y el paquete de marca (`brand-package/`, contrato v1 en web-lab `docs/app-brand-package.md`, lo produce `/app-brand-package`)— lo acuerdan los dos Masters con Yuno. Ninguno edita el repo del otro.
 
 ## Dónde vive cada documento
 
@@ -114,10 +116,10 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 
 | Carpeta | Qué vive ahí |
 |---------|--------------|
-| raíz | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (las herramientas los buscan ahí), `README.md`, `project.yml`, `Makefile`, `.gitignore`, `app-web-intake.md` (contrato con web-lab) y el código de la app |
+| raíz | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (las herramientas los buscan ahí), `README.md`, `project.yml`, `Makefile`, `.gitignore`, `app-web-intake.md` y `brand-package/` (contratos con web-lab) y el código de la app |
 | `Docs/Product/` | `PRD.md`, `GROWTH.md`, `FINANCE_ADVISOR.md`, monetización, ideas y roadmaps |
 | `Docs/Tech/` | `TRD.md`, `SECURITY.md`, `PROJECT_STRUCTURE.md`, `TEST_PLAN.md`, `AI_SPEC.md`, `ANALYTICS.md`, planes de versión |
-| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, archivos `.pen` |
+| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, `key-screens.json`, archivos `.pen` |
 | `Docs/Audits/` | `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md`, `SECURITY_AUDIT.md`, `COMPAT_AUDIT.md`, `L10N_AUDIT.md`, `LEGAL_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
 | `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master |
 | `Docs/` | `PROJECT_LEARNINGS.md` |
@@ -171,6 +173,7 @@ Antes de lanzar cualquier agente, lee los documentos existentes y pásalos como 
 | `PROJECT_STRUCTURE.md` | Steve (rutina `/clean-folder-project`: Avie lidera) | Woz y Steve al crear archivos nuevos, Bertrand, Avie |
 | `GLOBAL_AUDIT.md` | Steve (rutina `/global-audit`; Avie reconcilia) | Steve para cada `go`; el usuario como tablero |
 | `app-web-intake.md` | Steve (rutina `/app-web-intake`, a petición); cada agente escribe sus campos | web-lab `/app-web` |
+| `brand-package/` (manifest, tokens DTCG, íconos, pantallas clave, `CHANGELOG.md`) | Jonny con `/app-brand-package` (generador `lab-brand-package`; Woz capturas, Phil screenshots, Steve CHANGELOG y commit) | web-lab: Cooper lo verifica, Frost y Osmani lo usan; Steve (`status`) |
 | `APPSTORE.md` | Phil | — |
 
 Steve consulta la memoria global y local antes de trabajo relevante. El especialista propietario documenta reproducción y verificación en `PROJECT_LEARNINGS.md`; App Master es el único curador de la base global.

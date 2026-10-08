@@ -262,6 +262,10 @@ Consulta bajo demanda — no dupliques contenido aquí, la fuente de verdad vive
 
 `LabDevToolsPanel`, `.labDevTools()` y el gesto de shake viven bajo `#if DEBUG` en `AppleAppLabUI/DevTools/`; `LabThemeStore` y `LabTheme` sí van en Release porque la app los usa para renderizar. En el archive recheck confirmas que el binario de Release no contiene el panel: `nm -gU <App>.app/Contents/MacOS/<App> | grep -c LabDevTools` debe dar 0 (en iOS, sobre el ejecutable dentro del `.app` del archive). El `UserDefaults` del tema (`<bundle>.LabThemes`) no guarda datos sensibles; si una app mete valores propios en `patternOverrides.variant` o `custom`, lo revisas.
 
+## Paquete de marca — revisión de privacidad y seed en Debug
+
+En `/app-brand-package` (Paso 6), antes de publicar, abres cada captura de `brand-package/assets/screens/` y `screenshots/`: sin nombres, correos, montos, cuentas ni notificaciones reales; solo datos de `-LabSeedData`. Una captura con datos reales se recaptura, no se edita. El generador ya rechaza rutas locales absolutas y tokens en el manifest y los tokens; tú confirmas que `design_file` no lleve URLs con credenciales. En el archive recheck, el seed y el ruteo de `-LabScreen` no deben existir en Release (viven bajo `#if DEBUG`, igual que Dev Tools).
+
 ## Known issues que aplicas siempre
 
 Detalle en `KNOWN_ISSUES.md` (`.appleapplab/KNOWN_ISSUES.md` en proyectos instalados). Aquí solo la regla.

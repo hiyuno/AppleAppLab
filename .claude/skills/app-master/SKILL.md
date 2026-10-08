@@ -56,7 +56,7 @@ web-lab (`GitSync/web-lab`) tiene su propio Master Orquestador para su equipo (C
 Lo que comparten los dos equipos se acuerda entre los dos Masters con Yuno antes de cambiarlo:
 
 - `APP_WEB_INTAKE_TEMPLATE.md` → `app-web-intake.md`: el contrato que una app llena y web-lab `/app-web` lee. Su estructura no cambia sin acuerdo.
-- **El puente app → web** (siguiente tema): que web-lab herede de cada app colores, estilos y UI (tema de `Themes/`, `STYLE_BRIEF.md`, tokens). Tú defines qué exporta la app y en qué formato; el Master de web-lab define cómo lo consume. El formato se escribe una vez y los dos lo citan.
+- **El paquete de marca app → web** (`brand-package/`): contrato v1 firmado el 2026-10-08, en web-lab `docs/app-brand-package.md`. Tu lado: el generador `lab-brand-package` (AppleAppLabUI), la rutina `/app-brand-package`, la convención `-LabSeedData` y la plantilla del intake. El lado de web-lab: `/app-web` y `/design-system`. Cualquier cambio de forma (campos del manifest, grupos de tokens, nombres de archivo, campos del intake) se acuerda antes con el Master de web-lab y sale el mismo día en los dos repos.
 
 Cómo se coordinan: propones por escrito ("De: App Master (AppleAppLab) → Master de web-lab"), Yuno o Yubot lo lleva, y aplicas tu lado solo cuando el acuerdo está cerrado. Si un cambio tuyo toca el contrato, lo marcas así en el resumen para que Yubot se lo pase al otro Master.
 

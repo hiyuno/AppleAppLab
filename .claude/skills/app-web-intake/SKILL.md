@@ -37,6 +37,7 @@ Rutina del equipo, no un agente. Existe para un solo propósito: cuando esta app
 
 | Campo del template | Lo escribe | Fuente | Cuándo | Tipo |
 |--------------------|-----------|--------|--------|------|
+| App repo (cabecera) | Steve | ruta local del repo en la Mac (`pwd` de la raíz de la app) | creación del intake | auto |
 | **Round A** | | | | |
 | Platforms | Scott | `PRD.md` plataforma target; `TRD.md` targets | cierre de concepto | auto |
 | App Store URL · Mac App Store URL | Phil | App Store Connect tras aprobación | post-lanzamiento; antes: `not published yet` o link público de TestFlight si existe | post-launch |
@@ -62,9 +63,9 @@ Rutina del equipo, no un agente. Existe para un solo propósito: cuando esta app
 | Do docs or a support channel already exist? | **usuario**, Phil lo registra | — (Phil necesita la support URL para App Store Connect de todos modos) | creación del intake | ask |
 | **Round E** | | | | |
 | Target domain · Already owned? | **usuario** | — (Kate necesita URL pública para la Privacy Policy) | creación del intake | ask |
-| Logo file(s) · App icon file(s) | Jonny → Woz | rutas en `Assets.xcassets/AppIcon.appiconset`, carpeta de diseño | construcción | auto |
-| Primary/accent brand color (hex) | Steve / Jonny | `STYLE_BRIEF.md` (accent del tema elegido) | fase de estilo visual | auto |
-| Available screenshots | Phil | `/app-store-ready` Fase 4, carpeta de screenshots | pre-lanzamiento | auto |
+| Brand package | Steve | `brand-package/brand-package.json` → `package_version`; lo escribe `/app-brand-package` al publicar cada versión | cada versión del paquete; antes: `TBD` | auto |
+| Logo file(s) · App icon file(s) | Jonny → Woz | `in brand package` cuando existe; si no, rutas en `Assets.xcassets/AppIcon.appiconset`, carpeta de diseño | construcción | auto |
+| Available screenshots | Phil | `in brand package` cuando hay screenshots en `brand-package/assets/screenshots/`; si no, `/app-store-ready` Fase 4 | pre-lanzamiento | auto |
 | App Store badge language/localization | Scott / Kim | `PRD.md` mercado; `L10N_AUDIT.md` | cierre de concepto | auto |
 | **Open questions / notes** | Frederick, Scott, Avie | `GROWTH.md` competidores; `PRD.md` features del roadmap no construidas; `TRD.md` restricciones | cuando existan | auto |
 
@@ -74,7 +75,7 @@ Rutina del equipo, no un agente. Existe para un solo propósito: cuando esta app
 
 ## Fase 1 — Creación (`/app-web-intake`)
 
-1. **Copiar el template** de `.appleapplab/app-web-intake-template.md` a `app-web-intake.md` en la raíz. Sustituir `[app name]` por el nombre del PRD. `Date started` = hoy.
+1. **Copiar el template** de `.appleapplab/app-web-intake-template.md` a `app-web-intake.md` en la raíz. Sustituir `[app name]` por el nombre del PRD. `Date started` = hoy. `App repo` = la ruta local de la raíz de la app (web-lab lee `brand-package/` ahí).
 2. **Derivar todo lo `auto` que ya exista.** Steve lee los documentos presentes y escribe cada campo en inglés. Lo que su documento fuente aún no existe queda `TBD` — no se adelanta.
 3. **Preparar las propuestas que el usuario confirma:** Scott redacta *First two minutes* a partir del core loop del PRD y propone los *Feature pillars* (3–6, una frase cada uno) a partir de las features P0; si hay `GROWTH.md`, Frederick afina los claims al posicionamiento.
 4. **Preguntar en un solo mensaje** — solo lo que toca ahora:
@@ -104,8 +105,8 @@ Una vez que `app-web-intake.md` existe en la raíz, **cada agente escribe sus ca
 |--------------|---------|
 | Scott · `PRD.md` | Platforms · propuesta de First two minutes y Feature pillars (marcadas *proposed — confirm*) · badge language por mercado · features del roadmap no construidas en Open questions |
 | Avie · `TRD.md` | Sign-in y provider · restricciones técnicas relevantes en Open questions |
-| Steve · `STYLE_BRIEF.md` | Primary/accent brand color (hex del tema) |
-| Jonny · `DESIGN_*.md` | Logo file(s) · App icon file(s) — rutas reales |
+| Steve · `/app-brand-package` | Brand package (versión publicada) · Logo, App icon y Available screenshots pasan a `in brand package` cuando el paquete los trae |
+| Jonny · `DESIGN_*.md` | Logo file(s) · App icon file(s) — rutas reales, mientras no haya paquete |
 | Kara · StoreKit | Pricing model · Pricing tiers · Trial length |
 | Frederick · `GROWTH.md` | Competidores en Open questions · afina claims de los pilares · post-lanzamiento: Proof, rating, installs con fuente |
 | Kate · `PRIVACY_POLICY.md` | What the app collects and where it is stored — concreto, con Ivan (`SECURITY.md`) y Tim (`ANALYTICS.md`) |
@@ -126,7 +127,7 @@ Cuando el usuario diga que va a construir el sitio, Steve corre `/app-web-intake
 
 > "`app-web-intake.md` listo para `/app-web`: 19 campos llenos, 4 `TBD` (rating, installs, proof, usuarios — no hay datos reales todavía), 0 pendientes de ti. Cooper solo te preguntará esos cuatro."
 
-El archivo viaja **dentro del repo de la app** en la raíz; web-lab lo lee desde ahí.
+El archivo viaja **dentro del repo de la app** en la raíz; web-lab lo lee desde ahí, junto con `brand-package/` si existe (contrato: web-lab `docs/app-brand-package.md`). Si la app no tiene paquete todavía, Steve propone `/app-brand-package` antes de entregar: sin paquete, web-lab parte solo del logo y el ícono.
 
 ---
 

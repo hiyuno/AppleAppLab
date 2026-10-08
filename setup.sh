@@ -58,7 +58,7 @@ else
   echo ""
 fi
 SKILLS_DIR=".claude/skills"
-SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick sam update-team update-feature update-ui optimize-app architecture-audit app-store-ready clean-folder-project global-audit global-fix app-web-intake link-todocky add-developer-tools)
+SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick sam update-team update-feature update-ui optimize-app architecture-audit app-store-ready clean-folder-project global-audit global-fix app-web-intake app-brand-package link-todocky add-developer-tools)
 # app-master y harvest-learnings no se instalan: operan sobre la memoria global de AppleAppLab (KNOWN_ISSUES.md, PREFERENCES.md), no sobre proyectos
 REMOTE_VERSION=$(curl -sf "$RAW/VERSION" | tr -d '[:space:]')
 
@@ -265,6 +265,7 @@ echo "  /frederick → Growth: nicho, pricing, Apple Search Ads, análisis de me
   /global-audit → Las cuatro auditorías + reconciliación: un tablero y una secuencia global de go en rondas
   /global-fix <error> → Bugs que vuelven: reproducir, mapa del flujo, todas las causas, fix por causa, verificar, simplificar (auto sin checkpoints)
   /app-web-intake → Intake del sitio web para web-lab: app-web-intake.md se llena mientras construimos (solo a petición)
+  /app-brand-package → Paquete de marca para web-lab: colores, tipografía, íconos y pantallas clave de la app (check solo diagnostica)
   /link-todocky <code> → Enlaza este repo a su proyecto en Todocky (código de 'Copy project number'; requiere el MCP)
   /add-developer-tools [tema] → Instala el panel de Dev Tools y el tema central (LabThemeStore) en el proyecto"
 echo ""

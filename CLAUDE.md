@@ -34,6 +34,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/link-todocky <code>` | — | Cierra el enlace inverso repo ↔ proyecto de Todocky con el código de "Copy project number" (un solo uso); guarda el `projectId` en `.claude/todocky-link.json`; con eso "Implement with Claude" funciona desde Todocky. Requiere el MCP de Todocky. El enlace directo (repo → tablero, tasks por etapa) lo hace Steve solo, §0.5 |
 | `/global-fix` | — | Rutina para bugs que no caen con una revisión pequeña — reproduce y test rojo primero; Avie mapea el flujo completo y falsa todas las causas con evidencia; Woz corrige la raíz, un commit por causa; Bertrand verifica con la reproducción y regresión; pasada aparte de simplificación que deja solo lo necesario; documenta en `PROJECT_LEARNINGS.md`. `auto` corre todo sin checkpoints |
 | `/add-developer-tools [tema|check]` | — | Instala el panel de Dev Tools y el tema central en un proyecto: empaqueta `Themes/<tema>.json`, cablea `LabThemeStore` + `.labTheme` + `.labDevTools`, sustituye los `PatternConfig(...)` hardcodeados por `labTheme.config(for:)`, compila iOS/macOS, verifica Release sin DevTools y Larry reporta literales visuales. Idempotente |
+| `/app-brand-package` | — | Paquete de marca para web-lab (contrato v1 firmado con web-lab) — Jonny lidera; el generador `lab-brand-package` saca manifest y tokens DTCG del tema, los assets y el código; te pregunta cada diferencia entre tema, `DESIGN_*.md` y código y no publica con diferencias abiertas; Woz captura 3–6 pantallas clave con `-LabSeedData`; semver calculado, Jonny confirma; Steve escribe `CHANGELOG.md`, el campo *Brand package* del intake y hace el commit; `check` solo diagnostica |
 | `/update-feature` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 | `/update-ui <pantalla o screenshot>` | — | Rutina de paridad UI↔diseño (Figma o Pen) — compara colores, padding, alineación, tipografía y radios de una pantalla (o un fragmento, por screenshot) contra su frame en Figma o en el archivo `.pen` de Pen y corrige el código; sin plan por etapas, Woz aplica directo salvo que el fix sea estructural |
 | `/harvest-learnings` | — | Rutina de memoria (solo en este repo, App Master) — junta los `PROJECT_LEARNINGS.md` de todas tus apps, separa incidentes de preferencias, agrupa lo repetido, decide solo lo técnico, te pregunta solo preferencias y cambios de código, y sube lo aprobado por la escalera: `KNOWN_ISSUES.md` / `PREFERENCES.md` → regla en el skill → default en código; `LEARNINGS_LEDGER.md` evita repetir preguntas |
@@ -63,6 +64,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **"Está desordenado", "no encuentro nada", "¿dónde va este archivo?", basura en git, quiero que se vea profesional** → `/clean-folder-project` (inventario, estructura objetivo, tabla archivo → destino, plan por etapas con `git mv`; `go <n>` aplica cada una; deja `PROJECT_STRUCTURE.md` como convención viva)
 - **"¿Cómo está el proyecto?", "audítalo todo", "¿qué le falta?", heredé esta app, quiero dejarla bien antes de lanzar** → `/global-audit` (las cuatro auditorías + reconciliación + un tablero y una secuencia global de `go` en rondas; `/global-audit status` para saber qué `go` sigue)
 - **La app va a tener sitio web (web-lab)** → `/app-web-intake` (crea y mantiene `app-web-intake.md` en la raíz mientras se construye la app; `status` dice qué falta y quién lo llena; `prelaunch` hace las preguntas del foro)
+- **El sitio de la app debe heredar sus colores, estilos y pantallas; "pásale la marca a web-lab"; cambió el diseño de una app que ya tiene paquete** → `/app-brand-package` (`check` para ver qué saldría sin escribir)
 - **Pegas un código de Todocky, "enlaza este repo a Todocky", "Implement with Claude no funciona"** → `/link-todocky <code>` (requiere el MCP de Todocky conectado; el código se copia desde "Copy project number" y es de un solo uso)
 - **"Ya lo arreglé tres veces y vuelve", bug intermitente, varias causas, "nadie sabe cómo debería funcionar esto"** → `/global-fix <error>` (reproducir + test rojo → mapa del flujo → todas las causas falsadas → fix por causa → verificación → simplificación → `PROJECT_LEARNINGS.md`; `auto` sin checkpoints). Un bug simple sigue en el flujo normal Avie → Woz → Bertrand
 - **"Agrega dev tools", "quiero controlar la UI en vivo", "los colores/opacidades están hardcodeados", app nueva** → `/add-developer-tools [tema]` (instala tema + panel y sustituye configs; `check` solo audita)
@@ -106,7 +108,7 @@ Una escalera: nadie se salta niveles.
 - **Las mejoras al equipo suben, no se aplican en la app.** Los skills (`.claude/skills/`), `.appleapplab/`, `AGENTS.md`, `GEMINI.md` y `.cursor/rules/apple-team.mdc` de una app son copia de AppleAppLab y `/update-team` los sobreescribe. Un agente que ve algo mejorable en un skill, una regla o un proceso lo anota en `PROJECT_LEARNINGS.md` con **Tipo:** `propuesta` y sigue trabajando. App Master la recoge con `/harvest-learnings` y la decide con Yuno.
 - **Si Yuno pide en una app cambiar un skill**, el agente anota la propuesta y avisa en una línea que el cambio se hace desde AppleAppLab; editarlo ahí se perdería con la siguiente actualización.
 - **Mensajes de Yubot.** Un mensaje firmado "De: Yuno (vía Yubot)" vale como decisión de Yuno. Yubot no toca proyectos ni equipos: si su mensaje pide un cambio al equipo, lo aplica App Master; si pide algo de una app, lo ejecuta el Steve de esa app.
-- **Dos equipos, dos Masters.** web-lab tiene su propio Master Orquestador. Lo que comparten los dos equipos —`app-web-intake.md` y el puente para que web-lab herede de cada app colores, estilos y UI— lo acuerdan los dos Masters con Yuno. Ninguno edita el repo del otro.
+- **Dos equipos, dos Masters.** web-lab tiene su propio Master Orquestador. Lo que comparten los dos equipos —`app-web-intake.md` y el paquete de marca (`brand-package/`, contrato v1 en web-lab `docs/app-brand-package.md`, lo produce `/app-brand-package`)— lo acuerdan los dos Masters con Yuno. Ninguno edita el repo del otro.
 
 ## Dónde vive cada documento
 
@@ -114,10 +116,10 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 
 | Carpeta | Qué vive ahí |
 |---------|--------------|
-| raíz | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (las herramientas los buscan ahí), `README.md`, `project.yml`, `Makefile`, `.gitignore`, `app-web-intake.md` (contrato con web-lab) y el código de la app |
+| raíz | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (las herramientas los buscan ahí), `README.md`, `project.yml`, `Makefile`, `.gitignore`, `app-web-intake.md` y `brand-package/` (contratos con web-lab) y el código de la app |
 | `Docs/Product/` | `PRD.md`, `GROWTH.md`, `FINANCE_ADVISOR.md`, monetización, ideas y roadmaps |
 | `Docs/Tech/` | `TRD.md`, `SECURITY.md`, `PROJECT_STRUCTURE.md`, `TEST_PLAN.md`, `AI_SPEC.md`, `ANALYTICS.md`, planes de versión |
-| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, archivos `.pen` |
+| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, `key-screens.json`, archivos `.pen` |
 | `Docs/Audits/` | `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md`, `SECURITY_AUDIT.md`, `COMPAT_AUDIT.md`, `L10N_AUDIT.md`, `LEGAL_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
 | `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master |
 | `Docs/` | `PROJECT_LEARNINGS.md` |

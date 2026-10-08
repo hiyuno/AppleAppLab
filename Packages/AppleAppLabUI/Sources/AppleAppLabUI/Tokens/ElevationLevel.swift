@@ -15,7 +15,7 @@ public enum ElevationLevel: String, CaseIterable, Identifiable, Sendable, Codabl
         }
     }
 
-    var shadowOpacity: Double {
+    public var shadowOpacity: Double {
         switch self {
         case .flat: 0
         case .subtle: 0.08
@@ -23,7 +23,7 @@ public enum ElevationLevel: String, CaseIterable, Identifiable, Sendable, Codabl
         }
     }
 
-    var shadowRadius: CGFloat {
+    public var shadowRadius: CGFloat {
         switch self {
         case .flat: 0
         case .subtle: 8
@@ -31,7 +31,7 @@ public enum ElevationLevel: String, CaseIterable, Identifiable, Sendable, Codabl
         }
     }
 
-    var shadowY: CGFloat {
+    public var shadowY: CGFloat {
         switch self {
         case .flat: 0
         case .subtle: 2

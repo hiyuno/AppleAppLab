@@ -250,6 +250,35 @@ Se abre con **shake** en iOS, **⌥⌘D** en Mac, o el botón flotante. Tres pes
 
 **Ciclo:** afinas en la app → Exportar JSON → lo pegas en `Themes/<nombre>.json` → Jonny lo adopta en `STYLE_BRIEF.md` → PatternLibrary y el resto de apps lo ven con `/update-team`. El panel y todo `DevTools/` están bajo `#if DEBUG`: no existen en el archive de Release, e Ivan lo verifica en `/app-store-ready`.
 
+## Datos de prueba — `LabSeedData` (`-LabSeedData`, `-LabScreen <id>`)
+
+Interruptor compartido para arrancar la app con datos ficticios. Cada app pone su seed y su ruteo; el paquete solo da el nombre de los argumentos.
+
+```swift
+@main struct MyApp: App {
+    let store: DataStore = {
+        #if DEBUG
+        if LabSeedData.isEnabled { return .inMemory(seed: .demo) }   // nunca toca el store real
+        #endif
+        return .live
+    }()
+
+    var body: some Scene {
+        WindowGroup {
+            RootView()
+                #if DEBUG
+                .onAppear { if let id = LabSeedData.screen { router.open(keyScreen: id) } }   // ids de Docs/Design/key-screens.json
+                #endif
+        }
+    }
+}
+```
+
+- **Para qué:** capturas de pantallas clave del paquete de marca (`/app-brand-package`), screenshots de App Store y UI tests. Siempre los mismos datos, nunca los del usuario.
+- **Seed:** nombres, montos, fechas y correos inventados y verosímiles. Nada copiado de datos reales.
+- **Release:** el seed y el ruteo viven bajo `#if DEBUG`; Ivan lo verifica en el archive como con Dev Tools.
+- **Lanzar:** macOS `open -n MyApp.app --args -LabSeedData -LabScreen home -AppleInterfaceStyle Dark` · iOS `xcrun simctl launch --terminate-running-process <udid> <bundle> -LabSeedData -LabScreen home`.
+
 ## Tokens del sistema
 
 ```swift

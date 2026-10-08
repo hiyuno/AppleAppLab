@@ -7,6 +7,7 @@ blank. When you start this app's marketing site in web-lab, hand this file to Cl
 matching field below is still empty or `TBD`.
 
 Date started: [yyyy-mm-dd] · Last updated: [yyyy-mm-dd]
+App repo: [ ] (local path of this app's repo on the Mac, e.g. ~/Documents/GitSync/MyApp; web-lab reads brand-package/ there)
 
 ---
 
@@ -98,16 +99,15 @@ permission to quote it stays out too.
 
 ## Round D · Domain and brand assets
 
+- **Brand package:** [ ] — version of brand-package/ at this repo's root (e.g. 1.0.0). Leave TBD until /app-brand-package has generated one. When set, it is the source for colors, type, shape, materials, motion, logo, icon and key screens.
+
 - **Target domain:** [ ] · **Already owned?** [yes/no]
   Decides what the launch phase sets up and whether a domain purchase sits on the critical path.
 
-- **Logo file(s):** [ ] (file name or where to find it)
-- **App icon file(s):** [ ] (file name or where to find it)
+- **Logo file(s):** [ ] (file name or where to find it; "in brand package" when it has one)
+- **App icon file(s):** [ ] (file name or where to find it; "in brand package" when it has one)
 
-- **Primary/accent brand color (hex), if already chosen:** [ ] — optional. Leave `TBD` if there
-  isn't one yet; the design phase can derive a palette from scratch instead.
-
-- **Available screenshots:** [ ] (file names or a one-line description per screen, or `TBD`)
+- **Available screenshots:** [ ] (file names or a one-line description per screen, "in brand package", or TBD)
 
 - **App Store badge language/localization needed for the target market:** [ ] (e.g. Spanish for
   Mexico)

@@ -320,6 +320,10 @@ Cuando el usuario elige distribuir fuera del App Store, Phil lidera esta decisi�
 
 Eres quien más campos escribe. Al terminar `APPSTORE.md`: **Current App Store description / tagline (verbatim)** — pegado tal cual, no parafraseado; **Where do release notes come from today?** (App Store what's-new que tú escribes, o el appcast de `/update-feature`); **Do docs or a support channel already exist?** con la support URL que de todos modos necesitas para App Store Connect. En `/app-store-ready` Fase 4: **Available screenshots** y la columna *Screenshot/video status* de los pilares con lo que ya capturaste; y **preguntas al usuario**, en el mismo mensaje en que pides support URL y privacy policy URL, las tres cosas diferidas del intake: quién modera el foro del sitio y con qué tiempo de respuesta, si habrá comentarios o solo votos, y cuál pilar es el flagship demo (con la recomendación de Frederick). Post-lanzamiento: **App Store URL** / **Mac App Store URL** cuando la app esté aprobada — antes, `not published yet` o el link público de TestFlight si existe — y **rating e install count** solo con los números reales de App Store Connect, nunca estimados.
 
+## Paquete de marca — screenshots de App Store
+
+Si la app tiene `brand-package/` (`/app-brand-package`), desde pre-lanzamiento dejas ahí los screenshots crudos de App Store: `brand-package/assets/screenshots/<locale>/<modo>/<nombre>.png`, a los tamaños de App Store, hechos con `-LabSeedData` (nunca datos reales). Agregarlos o cambiarlos saca una versión MINOR del paquete; en el intake, *Available screenshots* pasa a `in brand package`.
+
 ## `asc` — App Store Connect desde la terminal
 
 Si `which asc && asc auth status --validate` responde bien, casi todo lo que antes era "abre App Store Connect y…" lo haces tú desde la terminal, con `--output json` para leer y `--dry-run` antes de cualquier `--confirm`. Referencia completa: `Research/asc-cli/00-index.md`. Lo tuyo:

@@ -251,10 +251,10 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 
 | Carpeta | Qué vive ahí |
 |---------|--------------|
-| raíz | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (las herramientas los buscan ahí), `README.md`, `project.yml`, `Makefile`, `.gitignore`, `app-web-intake.md` (contrato con web-lab) y el código de la app |
+| raíz | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (las herramientas los buscan ahí), `README.md`, `project.yml`, `Makefile`, `.gitignore`, `app-web-intake.md` y `brand-package/` (contratos con web-lab) y el código de la app |
 | `Docs/Product/` | `PRD.md`, `GROWTH.md`, `FINANCE_ADVISOR.md`, monetización, ideas y roadmaps |
 | `Docs/Tech/` | `TRD.md`, `SECURITY.md`, `PROJECT_STRUCTURE.md`, `TEST_PLAN.md`, `AI_SPEC.md`, `ANALYTICS.md`, planes de versión |
-| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, archivos `.pen` |
+| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, `key-screens.json`, archivos `.pen` |
 | `Docs/Audits/` | `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md`, `SECURITY_AUDIT.md`, `COMPAT_AUDIT.md`, `L10N_AUDIT.md`, `LEGAL_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
 | `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master |
 | `Docs/` | `PROJECT_LEARNINGS.md` |
@@ -389,10 +389,6 @@ Cuando Scott y Avie han cerrado el concepto (PRD.md y TRD.md entregados y verifi
 > Brief visual preparado por Steve a partir de referencias del usuario.
 > Fecha: [fecha]
 
-## `app-web-intake.md` — si existe, se mantiene
-
-Steve **nunca** crea `app-web-intake.md` por su cuenta: solo con `/app-web-intake`, cuando el usuario lo pide. Si el usuario menciona sitio, landing, web-lab, `/app-web` o dominio, Steve lo propone **una vez** y no insiste. Cuando el archivo existe en la raíz, Steve es su dueño: al cerrar la fase de estilo visual escribe *Primary/accent brand color* (hex del tema de `STYLE_BRIEF.md`) en inglés; mantiene `Last updated`; recuerda a cada agente que escriba sus campos al entregar su documento (tabla en `.claude/skills/app-web-intake/SKILL.md`); y antes de entregar el repo a web-lab corre `/app-web-intake status`. Nada se inventa: `TBD` antes que un dato supuesto.
-
 ## Tono general
 
 [1–2 frases sobre la intención visual: sobrio/vibrante, juguetón/serio, denso/espacioso]
@@ -427,6 +423,15 @@ Steve **nunca** crea `app-web-intake.md` por su cuenta: solo con `/app-web-intak
 ```
 
 Este archivo lo produce **Steve** (síntesis de lo que el usuario indica), no Jonny. Jonny lo lee como brief de entrada y lo interpreta con criterio de diseño.
+
+
+## `app-web-intake.md` — si existe, se mantiene
+
+Steve **nunca** crea `app-web-intake.md` por su cuenta: solo con `/app-web-intake`, cuando el usuario lo pide. Si el usuario menciona sitio, landing, web-lab, `/app-web` o dominio, Steve lo propone **una vez** y no insiste. Cuando el archivo existe en la raíz, Steve es su dueño: escribe *App repo* (ruta local) al crearlo y *Brand package* (versión) cada vez que `/app-brand-package` publica; mantiene `Last updated`; recuerda a cada agente que escriba sus campos al entregar su documento (tabla en `.claude/skills/app-web-intake/SKILL.md`); y antes de entregar el repo a web-lab corre `/app-web-intake status`. Nada se inventa: `TBD` antes que un dato supuesto.
+
+## `brand-package/` — la marca de la app para web-lab
+
+El paquete de marca (`/app-brand-package`, contrato v1 con web-lab) lo lidera Jonny; tú lo propones **una vez** cuando existe `app-web-intake.md` y no hay `brand-package/`, y cada vez que Jonny cierra un cambio de colores, tipografía, esquinas o pantallas clave en una app que ya lo tiene. En la rutina corres el generador, le llevas a Yuno cada diferencia como una pregunta simple, y al final escribes `CHANGELOG.md`, el campo *Brand package* del intake y haces el commit. Si una diferencia la pierde el tema (`.appleapplab/Themes/`), no lo editas: anotas una `propuesta` para App Master.
 
 ---
 
