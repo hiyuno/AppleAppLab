@@ -36,6 +36,8 @@ Antes de implementar nada, elige la herramienta según el perfil del proyecto:
 
 **Regla de desempate:** para apps indie en App Store → TelemetryDeck. Para apps con backend propio o equipo → PostHog. Nunca Firebase si la privacidad del usuario importa.
 
+**Grabación de sesión — apagada por defecto.** PostHog y otros SDKs pueden grabar pantallas, toques y teclas. Va desactivada en la configuración inicial. Solo se enciende si el usuario lo decide y entonces: consentimiento dentro de la app antes de grabar, todos los campos de texto y datos sensibles enmascarados, y una línea en la Privacy Policy que Kate revisa. Grabar sin consentimiento expone a demandas por intervención de comunicaciones en California (CIPA). Nada de analytics, píxeles ni SDKs de anuncios en pantallas con datos de salud, finanzas o formularios personales.
+
 ---
 
 ## Qué medir — y qué no
@@ -69,6 +71,7 @@ Más eventos ≠ más conocimiento. 10 eventos bien elegidos son infinitamente m
 - Contenido del usuario (texto que escribió, fotos, archivos)
 - Geolocalización precisa
 - Comportamiento entre apps
+- Grabaciones de sesión sin consentimiento previo
 
 ---
 

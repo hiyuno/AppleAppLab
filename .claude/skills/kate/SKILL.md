@@ -116,7 +116,7 @@ Si la app usa APIs externas, cada proveedor tiene TOS que limita el uso:
 | **App icon e imágenes** | Origen de cada asset — stock con licencia comercial, original, o atribución requerida |
 | **Fuentes tipográficas** | Las fuentes del sistema son libres; fuentes custom requieren licencia de embedding |
 | **Iconos y símbolos** | SF Symbols: uso libre. Iconos de terceros: verificar licencia de uso en apps |
-| **Contenido de terceros** | Si la app muestra contenido de usuarios, necesita DMCA safe harbor clause en TOS |
+| **Contenido de terceros** | Si la app muestra contenido de usuarios, necesita la cláusula DMCA en los TOS **y un agente designado registrado** en la Oficina de Copyright de EE.UU. (copyright.gov/dmca-directory, cuota baja, se renueva cada 3 años). Sin el registro no hay safe harbor aunque la cláusula exista. Página `/dmca` en el sitio con el contacto del agente |
 
 #### 7. Features de alto riesgo legal
 
@@ -130,7 +130,33 @@ Algunas features activan regulaciones adicionales automáticamente:
 | Localización persistente o en background | Disclosure explícito obligatorio; GDPR la clasifica como dato sensible |
 | Reconocimiento facial o biométrico | BIPA (Illinois), GDPR Artículo 9, leyes biométricas en varios estados |
 | Contenido generado por usuarios | DMCA, moderación de contenido, potencial de responsabilidad editorial |
-| Suscripciones | Disclosure de precio, período de prueba, cancelación — App Store Guidelines 3.1.2 |
+| Suscripciones | Disclosure de precio, período de prueba, cancelación — App Store Guidelines 3.1.2. Si se cobra **fuera de Apple** (Stripe, web): términos de renovación junto al botón de pagar, email de confirmación con cómo cancelar y cancelación en línea tan fácil como la compra (ley de renovación automática de California, ROSCA federal) |
+| IA externa o chatbot | Avisar con qué IA se comparten datos personales y pedir permiso explícito antes del primer envío (App Store 5.1.2); un chat dice en su primer mensaje que es IA (EU AI Act, obligaciones de transparencia desde el 2 ago 2026; leyes de chatbots en California). Detalle con John |
+| Analytics con grabación de sesión | Apagada por defecto. Si se activa: consentimiento antes de grabar, campos de texto enmascarados, mencionada en la Privacy Policy. Grabar sin consentimiento expone a demandas por intervención de comunicaciones (CIPA, California). Detalle con Tim |
+| Píxeles o SDKs de anuncios | Nunca en pantallas o páginas con datos sensibles (salud, finanzas, formularios). Los acuerdos de GoodRx y BetterHelp con la FTC salieron de eso |
+| Correos de marketing | Enlace para darse de baja, dirección postal física y bajas atendidas en 10 días hábiles (CAN-SPAM), también en B2B. Los correos transaccionales no son marketing |
+| Registro o contenido para todo público | Si hay registro o la app puede atraer menores: Kate decide si hace falta pedir edad o usar Declared Age Range de Apple; nunca recolectar datos de menores de 13 sin consentimiento parental (COPPA) |
+
+#### 7b. Riesgos que el código hecho con IA no ve — checklist fija
+
+Las herramientas de IA construyen rápido pero no revisan cumplimiento. Kate corre estos diez puntos en **toda** auditoría, con archivo y línea cuando el hallazgo está en el código. Cada uno es 🔴 si aplica y falta.
+
+| # | Riesgo | Dónde mira | Dueño del fix |
+|---|--------|-----------|---------------|
+| 1 | Base de datos abierta: tablas sin RLS, policies `using (true)` en datos de usuario, claves de servicio en código del cliente | Migraciones SQL, `.env*`, código del cliente | Ivan → Woz |
+| 2 | Sin Privacy Policy enlazada en la app, en el registro y en el sitio | App, App Store Connect, footer del sitio | Kate |
+| 3 | Menores: registro sin criterio de edad en apps que pueden atraerlos | Onboarding, clasificación por edad | Kate → Jonny |
+| 4 | Grabación de sesión o rastreo antes del consentimiento | SDKs de analytics, configuración por defecto | Tim → Woz |
+| 5 | Píxeles de anuncios en pantallas o páginas sensibles | SDKs, scripts del sitio | Tim |
+| 6 | Correos de marketing sin baja ni dirección postal | Plantillas de email | Kate |
+| 7 | Renovación automática escondida en cobros fuera de Apple | Checkout web | Kara |
+| 8 | IA o chatbot sin aviso | Features de IA, primer mensaje del chat | John |
+| 9 | Accesibilidad básica: etiquetas, texto alternativo, teclado | App y sitio | Sarah (app), web-lab (sitio) |
+| 10 | Contenido de usuarios sin agente DMCA registrado | TOS, `/dmca`, copyright.gov | Kate |
+
+En el **sitio web** de la app se suman dos puntos que le tocan a web-lab: fuentes servidas desde el propio dominio, no desde Google Fonts (un tribunal alemán multó por exponer la IP del visitante), y lista de scripts de terceros con su justificación.
+
+Los montos de multas que circulan en redes varían y no se citan como hechos: lo que importa es que se cobran **por usuario, sesión o correo**, y por eso una app pequeña puede acumular mucho. Kate no da asesoría legal; ante un caso real, recomienda abogado.
 
 #### 8. Export Compliance (siempre requerido)
 
