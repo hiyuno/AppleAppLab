@@ -35,6 +35,13 @@ public struct KeyScreenSpec: Sendable {
     public let states: [String]
 }
 
+/// A finished 3D asset listed in `Docs/Design/3d-assets.json` (contract v1.1).
+public struct ThreeDSpec: Sendable {
+    public let id: String
+    public let title: String
+    public let use: [String]
+}
+
 public struct ImageInfo: Sendable {
     public let url: URL
     public let width: Int
@@ -88,6 +95,11 @@ public struct RepoSnapshot: Sendable {
     public var keyScreens: [KeyScreenSpec]
     public var keyScreensSpecError: String?
     public var screenFiles: [String]
+    public var threeDSpecPath: String?
+    public var threeDSpecs: [ThreeDSpec]
+    public var threeDSpecError: String?
+    /// Every file under `brand-package/assets/3d/`, relative to `brand-package/`.
+    public var threeDFiles: [String]
     public var screenshotFiles: [String]
 
     public var problems: [String]
@@ -267,6 +279,28 @@ public enum RepoProbe {
             }
             break
         }
+        var threeDPath: String?
+        var threeDSpecs: [ThreeDSpec] = []
+        var threeDError: String?
+        for candidate in ["Docs/Design/3d-assets.json", "3d-assets.json"] {
+            let url = root.appendingPathComponent(candidate)
+            guard FileManager.default.fileExists(atPath: url.path) else { continue }
+            threeDPath = candidate
+            do {
+                let json = try JSONValue.parse(Data(contentsOf: url))
+                for item in json["assets"]?.arrayValue ?? [] {
+                    guard let id = item["id"]?.stringValue, let title = item["title"]?.stringValue else {
+                        threeDError = "Cada asset en `\(candidate)` necesita `id` y `title`."
+                        continue
+                    }
+                    threeDSpecs.append(ThreeDSpec(id: id, title: title, use: item["use"]?.arrayValue?.compactMap(\.stringValue) ?? []))
+                }
+            } catch {
+                threeDError = "`\(candidate)` no es JSON válido: \(error.localizedDescription)"
+            }
+            break
+        }
+        let threeDFiles = listFiles(root.appendingPathComponent("\(packageDir)/assets/3d"), base: root.appendingPathComponent(packageDir), extensions: ["png", "webp", "mp4", "glb"])
         let screens = listFiles(root.appendingPathComponent("\(packageDir)/assets/screens"), base: root.appendingPathComponent(packageDir))
         let screenshots = listFiles(root.appendingPathComponent("\(packageDir)/assets/screenshots"), base: root.appendingPathComponent(packageDir))
 
@@ -279,7 +313,8 @@ public enum RepoProbe {
             logoSVG: logo, logoOnDarkSVG: logoDark, logoProblems: logoProblems,
             hasIconsMap: hasMap, iconsMapValid: mapValid, designFile: designFile,
             keyScreensSpecPath: specPath, keyScreens: specs, keyScreensSpecError: specError,
-            screenFiles: screens, screenshotFiles: screenshots, problems: problems
+            screenFiles: screens, threeDSpecPath: threeDPath, threeDSpecs: threeDSpecs, threeDSpecError: threeDError,
+            threeDFiles: threeDFiles, screenshotFiles: screenshots, problems: problems
         )
     }
 
@@ -419,10 +454,10 @@ public enum RepoProbe {
         walk(root).filter { ["colorset", "appiconset", "icon"].contains($0.pathExtension) }
     }
 
-    static func listFiles(_ dir: URL, base: URL) -> [String] {
+    static func listFiles(_ dir: URL, base: URL, extensions: Set<String> = ["png"]) -> [String] {
         guard let e = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]) else { return [] }
         var out: [String] = []
-        for case let url as URL in e where url.pathExtension.lowercased() == "png" {
+        for case let url as URL in e where extensions.contains(url.pathExtension.lowercased()) {
             out.append(relative(url, to: base))
         }
         return out.sorted()

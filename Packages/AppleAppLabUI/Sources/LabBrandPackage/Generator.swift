@@ -36,7 +36,7 @@ public struct Plan: Sendable {
 }
 
 public enum Generator {
-    public static let schemaVersion = "1.0"
+    public static let schemaVersion = "1.1"
 
     @MainActor
     public static func plan(_ options: ProbeOptions, requireClean: Bool, today: Date = Date()) -> Plan {
@@ -120,6 +120,11 @@ public enum Generator {
                                    ("states", .array(spec.states.map { .string($0) })), ("files", .array(files))))
         }
 
+        // 3D assets (contract v1.1, optional)
+        if let error = snap.threeDSpecError { blocking.append(error) }
+        let threeD = threeDEntries(snap.threeDSpecs, files: snap.threeDFiles, modes: builder.modes)
+        blocking.append(contentsOf: threeD.problems)
+
         // Icons map
         if snap.hasIconsMap && !snap.iconsMapValid { blocking.append("`icons.map.json` no es JSON válido.") }
         if !snap.hasIconsMap && snap.iconSystem != "custom" {
@@ -130,6 +135,7 @@ public enum Generator {
         // Manifest
         var assets: [(String, JSONValue)] = [("logo", logo), ("icon", .object(iconJSON))]
         if !snap.screenshotFiles.isEmpty { assets.append(("screenshots", .array(snap.screenshotFiles.map { .string($0) }))) }
+        if !threeD.entries.isEmpty { assets.append(("three_d", .array(threeD.entries))) }
         var icons: [(String, JSONValue)] = [("app_system", .string(snap.iconSystem))]
         if snap.hasIconsMap { icons.append(("map", "icons.map.json")) }
 
@@ -176,6 +182,44 @@ public enum Generator {
         return Plan(snapshot: snap, manifest: manifest, tokens: tokens, copies: copies, differences: differences,
                     blocking: blocking, warnings: warnings, previousVersion: versioning.previous,
                     version: version, bump: versioning.previous == nil ? .major : versioning.bump, reasons: versioning.reasons)
+    }
+
+    /// `assets.three_d` (contract v1.1): a render per app mode always; a poster per mode
+    /// whenever the asset has a model or a video. Files live in `assets/3d/<id>/`.
+    static func threeDEntries(_ specs: [ThreeDSpec], files: [String], modes: [Mode]) -> (entries: [JSONValue], problems: [String]) {
+        var entries: [JSONValue] = []
+        var problems: [String] = []
+        for spec in specs {
+            let dir = "assets/3d/\(spec.id)/"
+            if RepoProbe.kebab(spec.id) != spec.id { problems.append("El id 3D `\(spec.id)` debe ir en kebab-case.") }
+            let own = files.filter { $0.hasPrefix(dir) }
+            var renders: [JSONValue] = [], posters: [JSONValue] = []
+            for mode in modes {
+                let png = "\(dir)\(spec.id)-\(mode.rawValue).png"
+                if own.contains(png) { renders.append(.string(png)) } else { problems.append("Falta el render 3D `\(png)` (Ed).") }
+                let webp = "\(dir)\(spec.id)-\(mode.rawValue).webp"
+                if own.contains(webp) { renders.append(.string(webp)) }
+            }
+            let video = own.first { $0 == "\(dir)\(spec.id).mp4" }
+            let model = own.first { $0 == "\(dir)\(spec.id).glb" }
+            if video != nil || model != nil {
+                for mode in modes {
+                    let poster = "\(dir)\(spec.id)-poster-\(mode.rawValue).webp"
+                    if own.contains(poster) { posters.append(.string(poster)) } else { problems.append("Falta el póster `\(poster)`: es obligatorio cuando hay modelo o video (Ed).") }
+                }
+            }
+            var filePairs: [(String, JSONValue)] = [("renders", .array(renders))]
+            if !posters.isEmpty { filePairs.append(("posters", .array(posters))) }
+            if let video { filePairs.append(("video", .string(video))) }
+            if let model { filePairs.append(("model", .string(model))) }
+            entries.append(obj(("id", .string(spec.id)), ("title", .string(spec.title)),
+                               ("use", .array(spec.use.map { .string($0) })), ("files", .object(filePairs))))
+        }
+        let listed = Set(specs.map { "assets/3d/\($0.id)/" })
+        for file in files where !listed.contains(where: { file.hasPrefix($0) }) {
+            problems.append("`\(file)` no corresponde a ningún asset de `Docs/Design/3d-assets.json`.")
+        }
+        return (entries, problems)
     }
 
     static let secretPatterns: [(String, String)] = [

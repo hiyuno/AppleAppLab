@@ -25,6 +25,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/john` | John | Core ML & AI — on-device vs API, Core ML, LLMs, fallbacks (solo si hay features de IA) |
 | `/frederick` | Frederick | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de mercado |
 | `/sam` | Sam | Asesor de Finanzas Personales & Score Crediticio — umbrales, fórmulas y estrategias con fuentes reales |
+| `/ed` | Ed | Director técnico de 3D con Blender — assets de marca con look Apple; brief 3D en rondas con tus sketches y fotos antes de modelar; previews Eevee, final Cycles a pedido |
 | `/optimize-app` | — | Rutina de performance — Bertrand mide, Avie revisa el código, Steve entrega plan por etapas; `go <n>` aplica cada etapa |
 | `/architecture-audit` | — | Rutina de arquitectura — Avie mapea la estructura real vs TRD y roadmap, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración por etapas; `go <n>` aplica cada etapa |
 | `/app-store-ready` | — | Rutina de preparación para App Store — Phil lidera; verifica cuenta, build, Privacy Manifest, entitlements, guidelines y App Store Connect; veredicto LISTA / NO LISTA / NO VIABLE, plan por etapas y opciones de distribución alternativas; `go <n>` aplica cada etapa |
@@ -57,6 +58,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **Features de IA o ML** → `/john` (solo cuando hay inteligencia real en la app)
 - **Actualizaciones automáticas fuera del App Store** → `/update-feature`
 - **Validación de nicho, pricing, Apple Search Ads, análisis de competidores** → `/frederick`
+- **Ícono en 3D, fondos o héroes 3D para el App Store o la web, render en Blender, modelo para imprimir** → `/ed` (primero el brief con tus referencias; sin brief aprobado no modela)
 - **Estrategia de score crediticio, fórmulas de deuda/interés, técnicas de finanzas personales** → `/sam` (antes de que Avie diseñe el modelo o Jonny defina el indicador)
 - **App lenta, se traba, loops, código repetido, auditoría de performance** → `/optimize-app` (entrega plan por etapas; `/optimize-app go <n>` aplica cada una)
 - **"Cada feature me cuesta", "no sé dónde va esto", refactor, ¿aguanta meter sync/widget?, auditoría de arquitectura** → `/architecture-audit` (veredicto + plan de migración por etapas; `go <n>` aplica cada una)
@@ -119,7 +121,7 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 | raíz | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (las herramientas los buscan ahí), `README.md`, `project.yml`, `Makefile`, `.gitignore`, `app-web-intake.md` y `brand-package/` (contratos con web-lab) y el código de la app |
 | `Docs/Product/` | `PRD.md`, `GROWTH.md`, `FINANCE_ADVISOR.md`, monetización, ideas y roadmaps |
 | `Docs/Tech/` | `TRD.md`, `SECURITY.md`, `PROJECT_STRUCTURE.md`, `TEST_PLAN.md`, `AI_SPEC.md`, `ANALYTICS.md`, planes de versión |
-| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, `key-screens.json`, archivos `.pen` |
+| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, `key-screens.json`, `3d-assets.json`, archivos `.pen`, `3D/<asset>/` (brief, referencias, `.blend`, renders) |
 | `Docs/Audits/` | `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md`, `SECURITY_AUDIT.md`, `COMPAT_AUDIT.md`, `L10N_AUDIT.md`, `LEGAL_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
 | `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master |
 | `Docs/` | `PROJECT_LEARNINGS.md` |

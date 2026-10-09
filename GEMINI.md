@@ -32,6 +32,7 @@ Cuando el usuario necesite un agente específico, lee su skill file y adopta ese
 | John | `.claude/skills/john/SKILL.md` | Core ML & AI — on-device vs API, LLMs (solo si hay features de IA) | `AI_SPEC.md` |
 | Frederick | `.claude/skills/frederick/SKILL.md` | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de competidores | `GROWTH.md` |
 | Sam | `.claude/skills/sam/SKILL.md` | Asesor de Finanzas Personales & Score Crediticio — umbrales, fórmulas de deuda/interés y estrategias con fuentes reales | `FINANCE_ADVISOR.md` |
+| Ed | `.claude/skills/ed/SKILL.md` | Director técnico de 3D con Blender — assets de marca (ícono, screenshots del App Store, héroe web) con look Apple; brief 3D aprobado por Yuno en rondas con sus referencias antes de modelar; MCP oficial de Blender Lab, previews Eevee, final Cycles solo a pedido; PNG/WebP, MP4, STL, glTF | `Docs/Design/3D/<asset>/BRIEF_3D.md` |
 | `/optimize-app` (rutina) | `.claude/skills/optimize-app/SKILL.md` | Auditoría de performance — Bertrand mide, Avie revisa código, Steve entrega plan por etapas; `go <n>` aplica cada etapa | `PERFORMANCE_AUDIT.md` |
 | `/architecture-audit` (rutina) | `.claude/skills/architecture-audit/SKILL.md` | Auditoría de arquitectura — Avie mapea estructura vs TRD y roadmap, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración por etapas; `go <n>` aplica cada etapa | `ARCHITECTURE_AUDIT.md` |
 | `/app-store-ready` (rutina) | `.claude/skills/app-store-ready/SKILL.md` | Preparación para App Store — Phil lidera; build, Privacy Manifest, entitlements, guidelines de rechazo, App Store Connect y gates cruzados; veredicto LISTA / NO LISTA / NO VIABLE, plan por etapas y opciones de distribución alternativas; `go <n>` aplica cada etapa | `APP_STORE_READINESS.md` |
@@ -71,7 +72,7 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 | raíz | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (las herramientas los buscan ahí), `README.md`, `project.yml`, `Makefile`, `.gitignore`, `app-web-intake.md` y `brand-package/` (contratos con web-lab) y el código de la app |
 | `Docs/Product/` | `PRD.md`, `GROWTH.md`, `FINANCE_ADVISOR.md`, monetización, ideas y roadmaps |
 | `Docs/Tech/` | `TRD.md`, `SECURITY.md`, `PROJECT_STRUCTURE.md`, `TEST_PLAN.md`, `AI_SPEC.md`, `ANALYTICS.md`, planes de versión |
-| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, `key-screens.json`, archivos `.pen` |
+| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, `key-screens.json`, `3d-assets.json`, archivos `.pen`, `3D/<asset>/` (brief, referencias, `.blend`, renders) |
 | `Docs/Audits/` | `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md`, `SECURITY_AUDIT.md`, `COMPAT_AUDIT.md`, `L10N_AUDIT.md`, `LEGAL_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
 | `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master |
 | `Docs/` | `PROJECT_LEARNINGS.md` |
@@ -112,6 +113,7 @@ Cada agente produce un documento y los siguientes lo leen:
 | `TEST_PLAN.md` | Bertrand | Phil |
 | `COMPAT_AUDIT.md` | Chris | Ivan (archive recheck), Phil |
 | `STYLE_BRIEF.md` | Steve (síntesis de referencias del usuario) | Jonny |
+| `Docs/Design/3D/<asset>/BRIEF_3D.md` | Ed, en rondas con Yuno y sus referencias; Yuno lo aprueba | Ed (no modela sin él), Jonny (revisa el final), Phil, `/app-brand-package` |
 | `LEGAL_AUDIT.md` | Kate | Steve → usuario → agentes |
 | `PRIVACY_POLICY.md` | Kate | Phil |
 | `ANALYTICS.md` | Tim | Woz |

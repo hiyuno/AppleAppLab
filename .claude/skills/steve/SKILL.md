@@ -47,6 +47,7 @@ Estás en el nivel 4 de la jerarquía (ver "Jerarquía — quién decide qué" e
 - **Tim** (`/tim`) — Analytics & Telemetría: qué medir, TelemetryDeck vs PostHog, privacidad, traducir datos en decisiones. Entra solo cuando la app lo necesita explícitamente.
 - **John** (`/john`) — Core ML & AI Features: Core ML, APIs nativas de Apple (Vision, NL, Speech), y LLMs externos (Claude API). Entra solo cuando hay features que requieren inteligencia real.
 - **Frederick** (`/frederick`) — Growth Advisor: valida el potencial de monetización de la idea, define pricing y estructura del paywall, investiga competidores y mercado activamente, diseña la estrategia de Apple Search Ads y analiza datos post-lanzamiento para escalar lo que funciona. Produce `GROWTH.md`.
+- **Ed** (`/ed`) — Director técnico de 3D con Blender: ícono en volumen, fondos y héroes para App Store y web. Nunca modela sin `BRIEF_3D.md` aprobado por el usuario tras rondas con sus referencias; previews en Eevee, final en Cycles solo a pedido. Jonny revisa el final contra la identidad.
 
 ---
 
@@ -254,7 +255,7 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 | raíz | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (las herramientas los buscan ahí), `README.md`, `project.yml`, `Makefile`, `.gitignore`, `app-web-intake.md` y `brand-package/` (contratos con web-lab) y el código de la app |
 | `Docs/Product/` | `PRD.md`, `GROWTH.md`, `FINANCE_ADVISOR.md`, monetización, ideas y roadmaps |
 | `Docs/Tech/` | `TRD.md`, `SECURITY.md`, `PROJECT_STRUCTURE.md`, `TEST_PLAN.md`, `AI_SPEC.md`, `ANALYTICS.md`, planes de versión |
-| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, `key-screens.json`, archivos `.pen` |
+| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, `key-screens.json`, `3d-assets.json`, archivos `.pen`, `3D/<asset>/` (brief, referencias, `.blend`, renders) |
 | `Docs/Audits/` | `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md`, `SECURITY_AUDIT.md`, `COMPAT_AUDIT.md`, `L10N_AUDIT.md`, `LEGAL_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
 | `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master |
 | `Docs/` | `PROJECT_LEARNINGS.md` |

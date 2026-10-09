@@ -19,6 +19,7 @@ brand-package/
     ├── logo/              # logo.svg (+ logo-on-dark.svg) — Jonny; si no hay, same_as_icon
     ├── icon/              # app-icon-ios-1024.png, app-icon-macos-1024.png — generador (o a mano si es Icon Composer)
     ├── screens/           # <id>-<estado>-<modo>@<n>x.png — Woz
+    ├── 3d/<id>/           # opcional, contrato v1.1: renders por modo, póster, mp4, glb — Ed
     └── screenshots/       # App Store, desde pre-lanzamiento — Phil
 ```
 
@@ -46,6 +47,7 @@ brand-package/
 | 6 · Revisión de privacidad | Ivan |
 | 7 · Write, CHANGELOG, intake, commit | Steve |
 | Pre-lanzamiento · screenshots de App Store | Phil |
+| Cuando hay assets 3D para la web · `3d-assets.json` y `assets/3d/<id>/` | Ed |
 
 ---
 
@@ -94,6 +96,10 @@ Capturas: **cada estado × cada modo que la app tiene** (`appearance.app_modes`:
 
 Nombre exacto: `<id>-<estado>-<modo>@<n>x.png`. El generador lista lo que falta.
 
+## Paso 2b — Assets 3D (Ed, opcional)
+
+Si la web debe heredar un asset 3D (héroe, ícono en volumen), Ed lo anota en `Docs/Design/3d-assets.json` y copia los finales a `brand-package/assets/3d/<id>/`: un render `<id>-<modo>.png` por cada modo de la app (`.webp` opcional), y si hay `<id>.mp4` o `<id>.glb`, un póster `<id>-poster-<modo>.webp` por modo, obligatorio. El generador los lista en `assets.three_d` y bloquea si falta un render o un póster. Nunca el `.blend` ni las referencias. Detalle en `.claude/skills/ed/SKILL.md`.
+
 ## Paso 3 — Check y diferencias (Steve → Yuno)
 
 ```bash
@@ -122,8 +128,8 @@ Commit de las correcciones y `check` otra vez hasta que no queden diferencias.
 
 El generador compara con el paquete del último commit (contrato §9):
 
-- **MAJOR** — cambió el matiz del acento, la fuente (`font_design`), el estilo de esquinas, el logo o el ícono; se quitó un modo de apariencia o un token.
-- **MINOR** — cualquier otro cambio de diseño: tokens, material, motion, valores por componente, pantallas o screenshots nuevos o distintos.
+- **MAJOR** — cambió el matiz del acento, la fuente (`font_design`), el estilo de esquinas, el logo o el ícono; se quitó un modo de apariencia, un token o un asset 3D.
+- **MINOR** — cualquier otro cambio de diseño: tokens, material, motion, valores por componente, pantallas, screenshots o assets 3D nuevos o distintos.
 - **PATCH** — solo metadata.
 - **Nada** — si el diseño no cambió no sale versión (código 3), aunque cambien la fecha o el commit.
 

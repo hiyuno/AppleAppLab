@@ -58,7 +58,7 @@ else
   echo ""
 fi
 SKILLS_DIR=".claude/skills"
-SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick sam update-team update-feature update-ui optimize-app architecture-audit app-store-ready clean-folder-project global-audit global-fix app-web-intake app-brand-package link-todocky add-developer-tools)
+SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick sam ed update-team update-feature update-ui optimize-app architecture-audit app-store-ready clean-folder-project global-audit global-fix app-web-intake app-brand-package link-todocky add-developer-tools)
 # app-master y harvest-learnings no se instalan: operan sobre la memoria global de AppleAppLab (KNOWN_ISSUES.md, PREFERENCES.md), no sobre proyectos
 REMOTE_VERSION=$(curl -sf "$RAW/VERSION" | tr -d '[:space:]')
 
@@ -256,6 +256,7 @@ echo "  /kara     → Monetización"
 echo "  /eve      → Widgets y extensiones"
 echo "  /frederick → Growth: nicho, pricing, Apple Search Ads, análisis de mercado
   /sam      → Finanzas personales y estrategia de score crediticio
+  /ed       → 3D con Blender: brief con tus referencias, render Eevee/Cycles, PNG/WebP, MP4, STL, glTF
   /update-team → Sincronizar equipo con la última versión de AppleAppLab
   /update-feature → Sparkle: actualizaciones automáticas fuera del App Store (macOS)
   /optimize-app → Auditoría de performance + plan por etapas (go <n> aplica cada una)

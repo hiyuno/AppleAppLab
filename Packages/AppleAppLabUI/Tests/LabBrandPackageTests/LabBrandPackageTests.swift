@@ -164,3 +164,33 @@ struct RepoHelperTests {
         #expect(LabSeedData.screen(in: ["app", "-LabSeedData", "-LabScreen"]) == nil)
     }
 }
+
+@Suite("3D assets (contract v1.1)")
+struct ThreeDTests {
+    let spec = ThreeDSpec(id: "hero-folder", title: "Hero folder", use: ["hero"])
+
+    @Test("A render per app mode is required; webp is optional")
+    func rendersPerMode() {
+        let ok = Generator.threeDEntries([spec], files: ["assets/3d/hero-folder/hero-folder-dark.png", "assets/3d/hero-folder/hero-folder-dark.webp"], modes: [.dark])
+        #expect(ok.problems.isEmpty)
+        #expect(ok.entries.first?.value(at: "files.renders")?.arrayValue?.count == 2)
+        let missing = Generator.threeDEntries([spec], files: ["assets/3d/hero-folder/hero-folder-dark.png"], modes: [.light, .dark])
+        #expect(missing.problems.count == 1)
+    }
+
+    @Test("Model or video makes the poster per mode mandatory")
+    func posterRequired() {
+        let base = ["assets/3d/hero-folder/hero-folder-dark.png", "assets/3d/hero-folder/hero-folder.glb"]
+        #expect(Generator.threeDEntries([spec], files: base, modes: [.dark]).problems.contains { $0.contains("póster") })
+        let ok = Generator.threeDEntries([spec], files: base + ["assets/3d/hero-folder/hero-folder-poster-dark.webp"], modes: [.dark])
+        #expect(ok.problems.isEmpty)
+        #expect(ok.entries.first?.value(at: "files.model") == .string("assets/3d/hero-folder/hero-folder.glb"))
+        #expect(ok.entries.first?.value(at: "files.posters")?.arrayValue?.count == 1)
+    }
+
+    @Test("Files outside a listed asset are rejected")
+    func strayFiles() {
+        let r = Generator.threeDEntries([], files: ["assets/3d/other/x.png"], modes: [.dark])
+        #expect(r.problems.count == 1)
+    }
+}

@@ -19,7 +19,7 @@ public enum Versioning {
     static let majorFields: Set<String> = ["typography.font_design", "shape.corner_style", "assets.logo"]
     static let minorFields: Set<String> = ["typography.font_weight", "materials.app", "materials.surfaces", "motion.speed_multiplier",
                                            "icons.app_system", "icons.map", "ui.key_screens", "assets.screenshots", "assets.icon",
-                                           "primary_platform", "appearance.app_modes"]
+                                           "primary_platform", "appearance.app_modes", "assets.three_d"]
 
     public static func next(_ previous: String?, _ bump: Bump) -> String {
         guard let previous else { return "1.0.0" }
@@ -115,12 +115,14 @@ public enum Versioning {
         var planned: [String: String] = [:]
         for (dest, source) in copies { planned[dest] = blob(source) }
         let packageDir = snap.appRoot.appendingPathComponent("brand-package")
-        for rel in snap.screenFiles + snap.screenshotFiles + [snap.logoSVG, snap.logoOnDarkSVG].compactMap({ $0 }) {
+        for rel in snap.screenFiles + snap.screenshotFiles + snap.threeDFiles + [snap.logoSVG, snap.logoOnDarkSVG].compactMap({ $0 }) {
             planned[rel] = blob(packageDir.appendingPathComponent(rel))
         }
         for path in Set(committed.keys).union(planned.keys).sorted() where committed[path] != planned[path] {
             if path.hasPrefix("assets/icon/") || path.hasPrefix("assets/logo/") {
                 raise(.major, "cambió `\(path)`")
+            } else if planned[path] == nil, path.hasPrefix("assets/3d/") {
+                raise(.major, "se quitó el asset 3D `\(path)`")
             } else if planned[path] == nil {
                 raise(.minor, "se quitó `\(path)`")
             } else {
