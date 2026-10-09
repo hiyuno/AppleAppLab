@@ -62,6 +62,18 @@ PY
 
 Lee también `KNOWN_ISSUES.md`, `PREFERENCES.md` y el ledger: lo que ya está cubierto no se vuelve a preguntar.
 
+**Recetas 3D de Ed.** Además de las entradas, lista las recetas locales de cada app y su estado; las propuestas `team/recipes3d/<id>` de los learnings apuntan a ellas:
+
+```bash
+for f in ~/Documents/GitSync/*/Docs/Design/3D/recipes/*.md; do
+  [ -e "$f" ] || continue
+  app=$(echo "$f" | sed -E 's#.*/GitSync/([^/]+)/Docs/.*#\1#')
+  echo "$app | $(basename "$f" .md) | $(grep -m1 -oE '\*\*Estado:\*\* *[a-z]+' "$f" | awk '{print $2}') | $(grep -c '^| .* | .* | [0-9-]\{10\} |' "$f") aprobaciones"
+done
+```
+
+Solo lectura: App Master nunca escribe en las recetas de una app.
+
 ## Fase 2 — Separar y agrupar
 
 1. **Tipo.** Cada entrada es un **incidente** (algo falló, tiene causa y fix), una **preferencia** (cómo le gusta al usuario: un material, una opacidad, un orden, un estilo de texto, un flujo) o una **propuesta** (Steve o un especialista propone cambiar un skill, una regla o un proceso del equipo; los agentes de una app no editan skills, ver "Jerarquía" en `CLAUDE.md`). Si la entrada no lo dice, lo decides por el contenido.
@@ -110,6 +122,14 @@ Ejemplos con entradas reales:
 - "Tests de Keychain fallan en el simulador sin firma" → regla 4, se queda, con una regla para Bertrand.
 - "Hardened runtime bloquea Python de yt-dlp", `hypothesis` en una app → regla 3, se difiere.
 
+### Recetas 3D (Ed)
+
+Una receta local sube a `Recipes3D/` (global) cuando está `verified` en **dos o más assets**, de una app o de varias, o cuando Yuno la marcó con "siempre" (⭐ en `RECIPE.md`). Si dos apps tienen recetas que hacen lo mismo, se fusionan en una con los parámetros que más veces se aprobaron, y el rango probado queda en la tabla.
+
+- **Técnica** (`export`, `render`, `shape` de topología: presets de glTF/STL, settings de Cycles, bevel squircle): la decide App Master con la tabla de arriba, como un incidente verificado.
+- **De gusto** (`light`, `material`, `camera`, `scene`): se le pregunta a Yuno, con el render final del asset donde se aprobó y en lenguaje simple: *"En NewProject y Fintrol te gustó la luz de estudio suave con la principal grande arriba a la izquierda. ¿La dejo como la luz de partida para todos los renders?"*
+- Una preferencia `pref/3d/<tema>` vista en dos apps va a `PREFERENCES.md` como cualquier otra preferencia, y si encaja con una receta, se aplica también a la receta.
+
 ### Lo único que se le pregunta al usuario
 
 1. **Preferencias.** Material de ventana, opacidad, tono de textos, orden de pantallas, cualquier gusto. Solo el usuario sabe si es "siempre" o fue cosa de esa app.
@@ -141,6 +161,7 @@ Por cada grupo aprobado, en este orden:
 1. **doc** — entrada nueva o actualizada en `KNOWN_ISSUES.md` (`AAL-*`, formato existente) o `PREFERENCES.md` (`PREF-*`, formato del archivo) + fila en su índice.
 2. **skill** — la regla en una o dos líneas en el skill del agente que la aplica, citando el ID. Sin duplicar el detalle: el skill apunta al documento.
 3. **code** — cambio en `Packages/AppleAppLabUI`, `Themes/` o el scaffold. Antes de tocar código, App Master lo muestra y pide confirmación; después `swift build` y `swift test` del paquete en verde y, si afecta a una app del repo, su build. Si el cambio es grande, queda anotado como pendiente con dueño en lugar de hacerse a medias.
+4. **Receta 3D** — `Recipes3D/<id>.md` (+ `<id>.py` copiado de la app de origen, sin colores de marca fijos) con estado `verified`, *Probada en* con todas las apps de origen y el *Por qué quedó así* de sus `RECIPE.md`; fila nueva en la tabla de `Recipes3D/README.md` y sus archivos en `Recipes3D/INDEX` (lo que `setup.sh` descarga). Si reemplaza a otra, la vieja queda `deprecated` con enlace. Ed la lee desde `.appleapplab/Recipes3D/` tras `/update-team`.
 
 Después:
 

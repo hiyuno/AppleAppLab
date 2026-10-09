@@ -89,6 +89,13 @@ done
 curl -sf "$RAW/Themes/THEMES.md" -o "$TEAM/Themes/THEMES.md"
 echo "  ✓ Temas en $TEAM/Themes/ (Fintrol, Todocky, ToDo Project, Test)"
 
+# --- Recetas 3D de Ed (globales, solo lectura en el proyecto; las cura App Master) ---
+mkdir -p "$TEAM/Recipes3D"
+if RECIPES=$(curl -fsSL "$RAW/Recipes3D/INDEX"); then
+  for f in $RECIPES; do curl -sf "$RAW/Recipes3D/$f" -o "$TEAM/Recipes3D/$f" && true; done
+  echo "  ✓ Recetas 3D en $TEAM/Recipes3D/"
+fi
+
 # --- Catálogo de patterns ---
 curl -sf "$RAW/PATTERNS.md" -o "$TEAM/PATTERNS.md"
 echo "  ✓ $TEAM/PATTERNS.md (catálogo de componentes AppleAppLabUI)"

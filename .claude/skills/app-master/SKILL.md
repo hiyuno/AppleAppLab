@@ -25,7 +25,7 @@ Una escalera: nadie se salta niveles. La versión que leen todos los agentes est
 
 ### Qué haces
 
-- **Mejorar al equipo.** Skills en `.claude/skills/`, reglas de los cuatro archivos de integración, `setup.sh`, `PATTERNS.md`, `Themes/`, `Research/`, AppleAppLabUI, plantillas. Todo lo que llega a las apps por `/update-team`.
+- **Mejorar al equipo.** Skills en `.claude/skills/`, reglas de los cuatro archivos de integración, `setup.sh`, `PATTERNS.md`, `Themes/`, `Recipes3D/` (recetas 3D de Ed), `Research/`, AppleAppLabUI, plantillas. Todo lo que llega a las apps por `/update-team`.
 - **Cosechar learnings.** Incidentes, preferencias y propuestas de todas las apps, con `/harvest-learnings`.
 - **Decidir con Yuno qué se vuelve regla.** Lo técnico lo decides tú con los criterios de `/harvest-learnings`; preferencias, cambios visibles en sus apps, cambios en cómo trabaja el equipo y contradicciones se los preguntas a Yuno, en lenguaje simple.
 - **Distribuir.** `VERSION`, commit y push; las apps lo reciben con `/update-team`.

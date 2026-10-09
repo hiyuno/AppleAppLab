@@ -17,7 +17,7 @@ Ejecuta en bash:
 curl -s https://raw.githubusercontent.com/hiyuno/AppleAppLab/main/setup.sh | bash /dev/stdin --update
 ```
 
-Eso es todo. `setup.sh` sobreescribe los skills, `AGENTS.md` y todo lo de `.appleapplab/` (PATTERNS.md, Themes/, Research/, KNOWN_ISSUES.md) con la versión más reciente de GitHub. Los documentos del proyecto en `Docs/` (PRD, TRD, auditorías, PROJECT_LEARNINGS…) y `CLAUDE.md` con contenido propio no se tocan. A `CLAUDE.md` y `GEMINI.md` existentes solo se les agregan las secciones del equipo que les falten ("Dónde vive cada documento", "Jerarquía — quién decide qué"). Si detecta copias viejas de PATTERNS.md, Themes/ o Research/ en la raíz, avisa para correr `/clean-folder-project docs`.
+Eso es todo. `setup.sh` sobreescribe los skills, `AGENTS.md` y todo lo de `.appleapplab/` (PATTERNS.md, Themes/, Recipes3D/, Research/, KNOWN_ISSUES.md) con la versión más reciente de GitHub. Los documentos del proyecto en `Docs/` (PRD, TRD, auditorías, PROJECT_LEARNINGS…) y `CLAUDE.md` con contenido propio no se tocan. A `CLAUDE.md` y `GEMINI.md` existentes solo se les agregan las secciones del equipo que les falten ("Dónde vive cada documento", "Jerarquía — quién decide qué"). Si detecta copias viejas de PATTERNS.md, Themes/ o Research/ en la raíz, avisa para correr `/clean-folder-project docs`.
 
 Si hay Xcode ≥ 27, también refresca las skills oficiales de Apple en `~/.claude/xcode-skills/` — solo cuando el build de Xcode cambió respecto al sello `.xcode-build` — y las enlaza en `~/.claude/skills/`. Si el MCP `xcode` no está registrado en Claude Code, imprime el comando; no lo registra por ti.
 

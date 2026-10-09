@@ -255,14 +255,14 @@ La raíz del proyecto (o de la carpeta de la app dentro de un monorepo) queda li
 | raíz | `CLAUDE.md`, `AGENTS.md`, `GEMINI.md` (las herramientas los buscan ahí), `README.md`, `project.yml`, `Makefile`, `.gitignore`, `app-web-intake.md` y `brand-package/` (contratos con web-lab) y el código de la app |
 | `Docs/Product/` | `PRD.md`, `GROWTH.md`, `FINANCE_ADVISOR.md`, monetización, ideas y roadmaps |
 | `Docs/Tech/` | `TRD.md`, `SECURITY.md`, `PROJECT_STRUCTURE.md`, `TEST_PLAN.md`, `AI_SPEC.md`, `ANALYTICS.md`, planes de versión |
-| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, `key-screens.json`, `3d-assets.json`, archivos `.pen`, `3D/<asset>/` (brief, referencias, `.blend`, renders) |
+| `Docs/Design/` | `STYLE_BRIEF.md`, `DESIGN_LIQUID.md`, `DESIGN_FROST.md`, `key-screens.json`, `3d-assets.json`, archivos `.pen`, `3D/<asset>/` (brief, `RECIPE.md`, referencias, `.blend`, renders), `3D/recipes/` (recetas locales de Ed) |
 | `Docs/Audits/` | `PERFORMANCE_AUDIT.md`, `ARCHITECTURE_AUDIT.md`, `SECURITY_AUDIT.md`, `COMPAT_AUDIT.md`, `L10N_AUDIT.md`, `LEGAL_AUDIT.md`, `APP_STORE_READINESS.md`, `GLOBAL_AUDIT.md` |
 | `Docs/Release/` | `APPSTORE.md`, `PRIVACY_POLICY.md`, metadata por idioma, icono master |
 | `Docs/` | `PROJECT_LEARNINGS.md` |
-| `.appleapplab/` | Lo que instala el equipo: `PATTERNS.md`, `Themes/`, `Research/`, `KNOWN_ISSUES.md`, `PREFERENCES.md`, `VERSION`, templates |
+| `.appleapplab/` | Lo que instala el equipo: `PATTERNS.md`, `Themes/`, `Recipes3D/`, `Research/`, `KNOWN_ISSUES.md`, `PREFERENCES.md`, `VERSION`, templates |
 | `.claude/` · `.cursor/` | Skills y reglas del equipo |
 
-**Rutas en los skills.** Cuando un skill cita `PATTERNS.md`, `Themes/…` o `Research/…`, en un proyecto instalado se leen en `.appleapplab/` (`.appleapplab/PATTERNS.md`, `.appleapplab/Research/apple-hig/…`). En el repo AppleAppLab son la fuente que se distribuye y se quedan en su raíz.
+**Rutas en los skills.** Cuando un skill cita `PATTERNS.md`, `Themes/…`, `Recipes3D/…` o `Research/…`, en un proyecto instalado se leen en `.appleapplab/` (`.appleapplab/PATTERNS.md`, `.appleapplab/Research/apple-hig/…`). En el repo AppleAppLab son la fuente que se distribuye y se quedan en su raíz.
 
 **Proyectos sin migrar.** Si los documentos todavía están en la raíz, se leen ahí y no se crea un duplicado en `Docs/`. Steve propone `/clean-folder-project docs` una vez.
 
