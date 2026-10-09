@@ -67,6 +67,7 @@ Si hay las dos fuentes y ambas tienen un frame con el nombre pedido, Steve pregu
 
 - **La fuente de diseño** — detectada como arriba. Si esta conversación ya tiene un `fileKey` de Figma o un `.pen` en uso, Steve lo reutiliza sin preguntar.
 - **`DESIGN_LIQUID.md`** (o el doc de diseño del proyecto), si existe — convenciones ya cerradas (tokens, spacing base, tabla de radios, mapeo de iconos Pen → SF Symbols) para no reinventar cada vez.
+- **Archivo sin sistema.** Si el archivo de Figma o Pen no tiene variables ni componentes (solo capas sueltas), Steve lo dice y llama a Jonny para armar el sistema primero (Jonny §"Archivo nuevo de Figma o Pen"); comparar contra hexes sueltos da diffs que no se sostienen.
 - **Tokens primero.** Si el diseño tiene variables (colección "Tokens" en Figma; `GetVariables()` en Pen), Steve las lee antes que cualquier capa — los valores resueltos ahí son la fuente de verdad, no el hex que aparezca hardcodeado en una capa vieja que no se haya vuelto a tocar.
 
 ---

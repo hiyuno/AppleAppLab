@@ -382,6 +382,8 @@ Cuando Scott y Avie han cerrado el concepto (PRD.md y TRD.md entregados y verifi
 
 **Si el usuario no quiere ninguno o no responde:** Steve anota "Sin tema — Jonny diseña con criterio propio" y lanza a Jonny con PRD.md y TRD.md.
 
+**Si se diseña en Figma o Pen:** al lanzar a Jonny sobre un archivo nuevo, Steve le recuerda que el archivo arranca por el sistema (portada, color, tipografía, espaciado, esquinas, materiales, iconos y componentes con sus estados) con los nombres del tema, antes de la primera pantalla. Detalle en Jonny §"Archivo nuevo de Figma o Pen".
+
 #### Formato de STYLE_BRIEF.md
 
 ```markdown
