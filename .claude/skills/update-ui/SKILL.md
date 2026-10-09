@@ -54,11 +54,12 @@ Si hay las dos fuentes y ambas tienen un frame con el nombre pedido, Steve pregu
 ### Reglas propias de Pen
 
 - **Los `.pen` están cifrados.** Solo se leen con el MCP `pencil`. Nunca `Read`, `Grep` ni `cat` sobre un `.pen`; nunca se parchea a mano.
+- **Antes de leer el diseño, ⌘S.** Pen escribe en disco solo al guardar; el MCP lee el archivo activo, pero el `.pen` del repo puede estar atrasado. Si la rutina termina con cambios en el canvas hechos por Jonny, commit `design: …` tras ⌘S.
 - **Solo lectura en esta rutina.** `update-ui` extrae la verdad del diseño y cambia el código. No usa `Insert`/`Update`/`Delete` sobre el `.pen`: si el diseño está mal o incompleto, Steve pregunta y, si hay que cambiarlo, es Jonny en Pen, no esta rutina.
 - **Pen no es CSS.** `padding` puede ser número, `[v, h]` o `[t, r, b, l]`; `cornerRadius` número o `[4 esquinas]`; `fill` puede ser un color, una lista de fills o un `$variable`. Steve resuelve con `resolveVariables: true` y traduce a SwiftUI con los tokens del proyecto, no copia el hex.
 - **`fill_container` / `fit_content`** en Pen equivalen a `.frame(maxWidth: .infinity)` / tamaño intrínseco en SwiftUI; `layout: "vertical"|"horizontal"` con `gap` → `VStack`/`HStack(spacing:)`; `alignItems`/`justifyContent` → `alignment` y `Spacer`. Un frame simétrico en Pen (mismo padding a ambos lados) → el contenido va centrado, igual que con Figma.
 - **Iconos.** Pen usa librerías web (`lucide`, `phosphor`, Material Symbols). En SwiftUI se mapean al SF Symbol equivalente; Steve anota el mapeo en `DESIGN_LIQUID.md` la primera vez que aparece cada icono para no re-decidirlo.
-- **Un `.pen` en el repo** va en `Docs/Design/` (`clean-folder-project` lo respeta) y se rastrea en git como binario; Ivan no lo trata como secreto porque el cifrado es de formato, no de contenido sensible — salvo que el diseño incluya datos reales de usuarios en mockups, que no debería.
+- **Un `.pen` en el repo** va en `Docs/Design/` (`clean-folder-project` lo respeta) y se rastrea en git como binario (regla "El diseño vive en git" de Jonny: ⌘S y `ls -l` antes de cada commit de diseño); Ivan no lo trata como secreto porque el cifrado es de formato, no de contenido sensible — salvo que el diseño incluya datos reales de usuarios en mockups, que no debería.
 - **Multiplayer.** El documento puede cambiar mientras Steve lo lee. Si un id no aparece, re-lee con `get_app_state`; no asumas que se borró.
 
 ---

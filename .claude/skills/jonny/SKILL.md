@@ -2231,6 +2231,19 @@ Al terminar lo dices en una línea: "Sistema listo en el archivo: N colores, N e
 
 Además de Figma, el equipo acepta **Pen** — la app de escritorio `Pen.app` con archivos `.pen` que se leen y escriben solo por el MCP `pencil` (están cifrados; nunca `Read`/`Grep`). Si el proyecto diseña en Pen: el `.pen` vive en `Docs/Design/` del repo; los tokens del `STYLE_BRIEF.md` se declaran como variables del documento (`SetVariables`, con temas `mode: light/dark`) para que `/update-ui` los lea con `GetVariables()` en vez de hexes sueltos; cada pantalla es un frame raíz con el **mismo nombre** que la vista SwiftUI (`Home`, `Settings — Startup`) para que Steve la ubique por nombre; los componentes repetidos son `reusable: true` e instancias `ref`; los iconos son de `lucide`/`phosphor` y tú anotas su SF Symbol equivalente en `DESIGN_LIQUID.md` la primera vez. Antes de diseñar en el canvas lee la skill `pen-dev` del MCP (`read_skill`) — el `.pen` no es CSS: `fill_container`/`fit_content`, sin porcentajes, sin margin. Cuando `/update-ui` encuentre algo ambiguo o incompleto en el diseño, quien lo corrige en Pen eres tú; la rutina solo toca código.
 
+### El diseño vive en git
+
+Un board borrado en Pen sin respaldo no se recupera (pasó en BinGen). Por eso:
+
+1. **En el repo y en git:** `Docs/Design/<App>.pen` y los assets que salen de él (íconos SVG exportados, etc.). Proyectos sin migrar lo tienen en `design/` o `Design/`: se usa ahí y Steve propone `/clean-folder-project docs` una vez.
+2. **`.gitignore`:** `.backup/` (las copias sueltas sobran: git guarda la historia) y `.DS_Store`. **`.gitattributes`:** `*.pen binary`, para que git no intente diffs ni merges de línea sobre un archivo cifrado. `setup.sh` agrega las tres líneas si faltan.
+3. **Guardar antes de cada commit.** Pen solo escribe en disco con ⌘S: el canvas puede verse al día y el archivo tener un día de atraso. Antes de commitear diseño, pides a Yuno ⌘S, confirmas con `ls -l Docs/Design/*.pen` que cambió la fecha, y entonces commit `design: …`. Push cuando Yuno lo pida.
+4. **Cuándo hacer commit:** antes de un cambio grande en el canvas, antes de borrar boards (respaldo, como en `/clean-canvas`) y al terminar cada sesión de diseño.
+5. **Nunca a mano.** El `.pen` solo se lee y se edita con el MCP `pencil`; nunca `cat`, `Read`, `Grep` ni `sed`. `git add`, `git mv` y `cp` sí se valen.
+
+Para ordenar el canvas (guidelines arriba, flujo numerado abajo, exploraciones bajo cada pantalla, borrar lo que no se usa) está `/clean-canvas`; eres su dueño.
+
+
 ## El tema es un JSON, y vuelve del panel
 
 El resultado de la fase visual no es solo `STYLE_BRIEF.md`: es un `Themes/<nombre>.json` (`LabTheme`) que la app empaqueta y carga como default. Si el usuario eligió un tema predefinido, es ese archivo; si pediste algo nuevo, lo creas desde PatternLibrary (Guardar tema → el JSON queda en `UserDefaults`; Exportar) o desde el panel de Dev Tools de cualquier app. Cuando Woz o el usuario te traigan un JSON exportado desde el panel ("así lo dejé afinado"), lo adoptas: va a `Themes/`, actualizas `STYLE_BRIEF.md` con los tokens que cambiaron y `THEMES.md` si es un tema nuevo del equipo. Los `patternOverrides` por componente son parte del tema: no los descartes al normalizar.

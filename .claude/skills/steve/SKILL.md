@@ -432,6 +432,10 @@ Este archivo lo produce **Steve** (síntesis de lo que el usuario indica), no Jo
 
 Steve **nunca** crea `app-web-intake.md` por su cuenta: solo con `/app-web-intake`, cuando el usuario lo pide. Si el usuario menciona sitio, landing, web-lab, `/app-web` o dominio, Steve lo propone **una vez** y no insiste. Cuando el archivo existe en la raíz, Steve es su dueño: escribe *App repo* (ruta local) al crearlo y *Brand package* (versión) cada vez que `/app-brand-package` publica; mantiene `Last updated`; recuerda a cada agente que escriba sus campos al entregar su documento (tabla en `.claude/skills/app-web-intake/SKILL.md`); y antes de entregar el repo a web-lab corre `/app-web-intake status`. Nada se inventa: `TBD` antes que un dato supuesto.
 
+## `.pen` — el diseño vive en git
+
+Si el proyecto diseña en Pen, al cerrar cada sesión de diseño (y antes de un cambio grande o de borrar boards) pides a Yuno ⌘S, confirmas con `ls -l` que cambió la fecha del `.pen` y haces commit `design: …`. La regla completa está en Jonny, §"El diseño vive en git"; ordenar el canvas es `/clean-canvas`.
+
 ## `brand-package/` — la marca de la app para web-lab
 
 El paquete de marca (`/app-brand-package`, contrato v1 con web-lab) lo lidera Jonny; tú lo propones **una vez** cuando existe `app-web-intake.md` y no hay `brand-package/`, y cada vez que Jonny cierra un cambio de colores, tipografía, esquinas o pantallas clave en una app que ya lo tiene. En la rutina corres el generador, le llevas a Yuno cada diferencia como una pregunta simple, y al final escribes `CHANGELOG.md`, el campo *Brand package* del intake y haces el commit. Si una diferencia la pierde el tema (`.appleapplab/Themes/`), no lo editas: anotas una `propuesta` para App Master.
