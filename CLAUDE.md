@@ -26,7 +26,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/frederick` | Frederick | Growth Advisor — validación de nicho, pricing, Apple Search Ads, análisis de mercado |
 | `/sam` | Sam | Asesor de Finanzas Personales & Score Crediticio — umbrales, fórmulas y estrategias con fuentes reales |
 | `/ed` | Ed | Director técnico de 3D con Blender — assets de marca con look Apple; brief 3D en rondas con tus sketches y fotos antes de modelar; previews Eevee, final Cycles a pedido |
-| `/optimize-app` | — | Rutina de performance — Bertrand mide, Avie revisa el código, Steve entrega plan por etapas; `go <n>` aplica cada etapa |
+| `/optimize-app` | — | Rutina de performance — **el pulido final**: cuando la app ya funciona y sus features están estables, nunca en construcción activa; Bertrand mide, Avie revisa el código (incluye concurrencia, capa de datos e imágenes), Steve entrega plan por etapas y gate de rendimiento en CI; `go <n>` aplica cada etapa |
 | `/architecture-audit` | — | Rutina de arquitectura — Avie mapea la estructura real vs TRD y roadmap, veredicto MANTENER/AJUSTAR/CAMBIAR, plan de migración por etapas; `go <n>` aplica cada etapa |
 | `/app-store-ready` | — | Rutina de preparación para App Store — Phil lidera; verifica cuenta, build, Privacy Manifest, entitlements, guidelines y App Store Connect; veredicto LISTA / NO LISTA / NO VIABLE, plan por etapas y opciones de distribución alternativas; `go <n>` aplica cada etapa |
 | `/clean-folder-project` | — | Rutina de limpieza y organización — Avie inventaría y define la estructura objetivo (feature-first según el TRD), tabla archivo → destino, plan por etapas con `git mv`; Woz mueve, Bertrand confirma build y tests; `go <n>` aplica cada etapa |
@@ -61,7 +61,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **Validación de nicho, pricing, Apple Search Ads, análisis de competidores** → `/frederick`
 - **Ícono en 3D, fondos o héroes 3D para el App Store o la web, render en Blender, modelo para imprimir** → `/ed` (primero el brief con tus referencias; sin brief aprobado no modela)
 - **Estrategia de score crediticio, fórmulas de deuda/interés, técnicas de finanzas personales** → `/sam` (antes de que Avie diseñe el modelo o Jonny defina el indicador)
-- **App lenta, se traba, loops, código repetido, auditoría de performance** → `/optimize-app` (entrega plan por etapas; `/optimize-app go <n>` aplica cada una)
+- **App lenta, se traba, loops, código repetido, auditoría de performance** → `/optimize-app` cuando las features ya están estables (en construcción activa Steve la pospone; un síntoma real es un bug) (entrega plan por etapas; `/optimize-app go <n>` aplica cada una)
 - **"Cada feature me cuesta", "no sé dónde va esto", refactor, ¿aguanta meter sync/widget?, auditoría de arquitectura** → `/architecture-audit` (veredicto + plan de migración por etapas; `go <n>` aplica cada una)
 - **"¿Está lista para el App Store?", "quiero subirla", "me rechazaron", "¿esto se puede distribuir?"** → `/app-store-ready` (veredicto + plan por etapas; si no es viable, opciones: Developer ID + Sparkle, TestFlight, Unlisted, Business Manager; `go <n>` aplica cada una)
 - **"Está desordenado", "no encuentro nada", "¿dónde va este archivo?", basura en git, quiero que se vea profesional** → `/clean-folder-project` (inventario, estructura objetivo, tabla archivo → destino, plan por etapas con `git mv`; `go <n>` aplica cada una; deja `PROJECT_STRUCTURE.md` como convención viva)

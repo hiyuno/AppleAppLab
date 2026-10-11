@@ -30,6 +30,10 @@ Si la app está en un repositorio separado y el paquete se referencia por URL, a
 
 Nunca omitas ni conviertas en opcional un gate para acelerar TestFlight, App Store o distribución directa. Un estado `BLOCKED` detiene publicación.
 
+## Gate de rendimiento — no regresar
+
+Cuando `/optimize-app` deja tests de performance con baseline, los metes al pipeline de PR o de `main` con un test plan de performance (Release, sin *Debug executable*, sin cobertura): `xcodebuild test -testPlan Performance …`. Una regresión mayor a la desviación máxima falla el build. Los baselines son por máquina y destino: deben estar grabados en el mismo tipo de runner y destino que usa el CI, y commiteados en `xcshareddata/xcbaselines/`. Antes de activar el gate verificas que haya entrada para ese destino, porque un test sin baseline nunca falla. Detalle en `.claude/skills/optimize-app/SKILL.md` §"Gate de rendimiento en CI".
+
 ## Xcode 27 MCP — nunca en CI
 
 `xcrun mcpbridge` es un puente hacia una sesión de Xcode **con GUI activa**; no corre en un runner headless. Sus 53 tools no incluyen archive, export, `codesign` ni `notarytool` — el release sigue siendo `xcodebuild -exportArchive` reproducible por línea de comandos. Un paso de pipeline que dependa del MCP es un error de diseño, no un flake a reintentar. Detalle: `Research/xcode-external-agents/00-index.md`.

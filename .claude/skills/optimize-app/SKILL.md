@@ -1,6 +1,6 @@
 ---
 name: optimize-app
-description: "Rutina de performance. Bertrand mide con Instruments, Avie revisa el código (loops, trabajo redundante, main thread, leaks, duplicación) y Steve entrega PERFORMANCE_AUDIT.md con un plan por etapas. 'go <n>' aplica cada etapa. Úsalo cuando la app esté lenta, se trabe, se loopee o haya código repetido."
+description: "Rutina de performance — el pulido final. Se corre cuando la app ya funciona y sus features están estables (pre-lanzamiento, o al cerrar una feature grande), nunca durante la construcción activa. Bertrand mide con Instruments, Avie revisa el código (loops, trabajo redundante, main thread, concurrencia, capa de datos, imágenes, leaks, duplicación) y Steve entrega PERFORMANCE_AUDIT.md con un plan por etapas y un gate de rendimiento en CI. 'go <n>' aplica cada etapa. Úsalo cuando la app esté lenta, se trabe, se loopee o haya código repetido."
 ---
 
 # /optimize-app — Auditoría de performance y plan de optimización
@@ -8,6 +8,19 @@ description: "Rutina de performance. Bertrand mide con Instruments, Avie revisa 
 Rutina del equipo, no un agente. Cuando se lanza, Steve orquesta a Bertrand, Avie y Woz para auditar la app completa — medición en dispositivo **y** revisión del código — y entrega `PERFORMANCE_AUDIT.md` con un **plan por etapas** para arreglarlo sin romper la app.
 
 **El skill termina en el plan.** No implementa nada hasta que el usuario apruebe cada etapa explícitamente.
+
+## Cuándo se corre — la cereza del pastel
+
+Esta rutina es el **pulido final**. Su momento es cuando la app ya funciona bien y sus features están estables: antes de lanzar, o cuando una feature grande quedó cerrada. Optimizar código que todavía va a cambiar es desperdicio: el fix se pierde en el siguiente cambio y el baseline deja de valer.
+
+| Estado del proyecto | Qué hace Steve |
+|---------------------|----------------|
+| Nuevo / scaffold, o **en construcción activa** (features entrando, la UI todavía cambia) | **La pospone** con una línea de por qué: *"Todavía estamos construyendo Home y Ajustes; optimizar ahora es trabajo que se tira. La corro cuando las features estén estables."* |
+| Un síntoma real durante la construcción (hang, crash, batería, loop) | No es esta rutina: es un bug y va por el flujo normal (Avie → Woz → Bertrand) o `/global-fix` |
+| Una feature grande quedó cerrada y estable | `/optimize-app <flujo>` solo sobre esa feature |
+| Pre-lanzamiento, o publicada con datos de usuarios | Completa, con dispositivo |
+
+Si el usuario la pide igual, Steve le dice el porqué en una frase y la corre si insiste. Los detalles del triage están en la Fase 0.
 
 ---
 
@@ -48,7 +61,7 @@ Lee si existen:
 
 ## Fase 0 — Preparación (Steve)
 
-> **¿Hace falta?** Antes de lanzar esta rutina — suelta o dentro de `/global-audit` — Steve hace el triage de `.claude/skills/global-audit/SKILL.md` Fase 0 (sonda de 7 comandos → etapa del proyecto). En un proyecto **nuevo o recién generado por Woz desde el TRD** esta rutina no aplica: no hay flujos reales que medir ni código que revisar. Steve lo dice en una línea en vez de correrla; si el usuario insiste, se corre. En construcción, solo por señal y en modo `quick`.
+> **¿Hace falta?** Antes de lanzar esta rutina — suelta o dentro de `/global-audit` — Steve hace el triage de `.claude/skills/global-audit/SKILL.md` Fase 0 (sonda de 7 comandos → etapa del proyecto). En un proyecto **nuevo o recién generado por Woz desde el TRD** esta rutina no aplica: no hay flujos reales que medir ni código que revisar. **En construcción activa tampoco:** se pospone hasta que las features estén estables (ver "Cuándo se corre"); un síntoma real en ese momento es un bug, no una auditoría. Steve lo dice en una línea en vez de correrla; si el usuario insiste, se corre.
 
 1. **Flujos críticos.** Del PRD, elige 3–5: siempre incluye launch y la pantalla principal; añade la lista más larga, el flujo de guardar, y cualquier flujo con red o sync.
 2. **Dispositivo de medición.** El mínimo del target (iPhone SE 3ª gen en iOS 17+; el Mac más viejo soportado en macOS). Nunca el simulador para números finales. Build `Release` con símbolos.
@@ -106,6 +119,13 @@ Por área, con umbral y herramienta. Cada medición se hace en el flujo crítico
 | **Disco** | File Activity | Sin escrituras repetidas | SwiftData guardando por keystroke, logs, cache sin límite |
 | **Energía** | Energy Log | "Low" en 5 min de uso típico | Timers, location, red en background |
 | **Tamaño** | Archive → App Thinning Size Report | Proporcional a la app | Assets sin comprimir, fuentes no usadas, dependencias pesadas |
+| **Concurrencia** | Swift Concurrency (en Instruments 27 incluye el instrumento **Swift executors**) | Ninguna tarea larga en el track del Main Actor durante una interacción; colas de actores que no crecen; nada en estado *Enqueued* por mucho tiempo; sin tareas atoradas en una continuation | Qué tareas ocupan el Main Actor durante un hang, qué pasó al executor global, contención de actores (Swift Actors), total de tareas vivas (fan-out sin límite) |
+| **Imágenes** | Allocations (+ Time Profiler) | La memoria no salta al hacer scroll por una galería; sin decodificación en el main thread | Picos de memoria ≈ ancho × alto × 4 bytes por imagen decodificada a tamaño completo; `ImageIO`/decode en el Main Actor |
+
+**Instruments 27** (WWDC26, sesión 268 "Profile, fix, and verify"):
+- El flujo recomendado es Time Profiler para orientarse, luego el track del Main Actor en Swift executors, después Top Functions para el self-time más pesado, y System Trace si hay hang con CPU en reposo (I/O o locks).
+- **Run Comparisons** compara dos corridas en un mismo documento: en Top Functions marca en rojo lo que regresó y en verde lo que mejoró. Es la forma de demostrar una etapa en la Fase 5.
+- Para comparar, filtra las dos corridas al mismo intervalo de `os_signpost`.
 
 ### Comandos automatizables
 
@@ -148,6 +168,16 @@ func testHomeListScroll() {
 ```
 
 Con el MCP conectado, estos tests se lanzan con `RunSomeTests` (identificadores de `GetTestList`) y su salida se lee con `GetConsoleOutput`; siguen siendo XCTest — `measure` no migra a Swift Testing.
+
+### Gate de rendimiento en CI — no regresar
+
+Un `measure` sin baseline solo mide, no protege. Al cerrar la rutina, cada flujo crítico queda con un test de performance **con baseline**, y el CI falla si alguno regresa. Es el mismo principio de "no regresar" del presupuesto de rendimiento de web-lab.
+
+- **Cómo falla.** Según Apple, el test falla si la métrica registrada es peor que el baseline por más de la desviación estándar máxima. Bertrand fija ambos en Xcode (Report navigator → el test → *Set Baseline*, y la desviación máxima). Las métricas: `XCTClockMetric`, `XCTCPUMetric`, `XCTMemoryMetric`, `XCTStorageMetric`, `XCTApplicationLaunchMetric`, `XCTOSSignpostMetric`. Con `XCTMeasureOptions.iterationCount` se fija cuántas veces corre.
+- **Condiciones de Apple para medir.** Test plan de performance con el scheme en **Release**, *Debug executable* apagado, y cobertura de código y diagnósticos de runtime apagados. Medir en Debug no vale como gate.
+- **Los baselines son por máquina y destino.** Viven en `<proyecto>.xcodeproj/xcshareddata/xcbaselines/` y van commiteados. Un baseline grabado en la Mac de Yuno no aplica en el runner de CI: Bertrand los graba **en el mismo tipo de máquina y destino que usa el CI**. Un test sin baseline para ese destino nunca falla, así que antes de activar el gate Craig comprueba que `xcbaselines/` tenga entrada para el destino de CI.
+- **El pipeline.** Craig agrega el paso `xcodebuild test -testPlan Performance …` al flujo de PR o de `main`. Una regresión rompe el build como cualquier test.
+- **Ruido.** Medir solo flujos que duren decenas de milisegundos o más (los de 1 ms son ruido), en un runner dedicado, y nunca subir el baseline para "arreglar" un rojo: un baseline se re-graba solo cuando una etapa mejoró la métrica a propósito.
 
 Salida de la fase: tabla *flujo → métrica → medido → umbral → estado*.
 
@@ -197,15 +227,15 @@ Patrones que Avie busca uno por uno. Cada uno es un hallazgo con `archivo:línea
 | Computed property cara leída en cada redraw | Leer `var x: T {` con loops o `filter`/`sorted` sin cache |
 | Fetch N+1 en listas | `@Query` o `fetch` dentro de una fila de `ForEach` |
 | Misma `@Query` / `FetchDescriptor` en varias vistas | `grep -n "@Query\|FetchDescriptor"` y comparar predicados |
-| Imagen decodificada en cada render | `UIImage(named:)` / `Image(uiImage:)` con datos crudos en `body` |
+| Imagen decodificada en cada render | `UIImage(named:)` / `Image(uiImage:)` con datos crudos en `body` → el fix es el patrón de 3.9, no solo cachear |
 | `.sorted()` / `.filter` sobre colección grande en `body` | Leer `body` |
 
 ### 3.3 Main thread
 
 - Activar en el scheme **Main Thread Checker** y **Thread Sanitizer** y correr los flujos críticos.
 - `grep -n "try!\|Data(contentsOf\|String(contentsOf\|FileManager.*contents"` — I/O síncrono en vistas o ViewModels.
-- `JSONDecoder().decode` fuera de `Task.detached` o actor.
-- `@MainActor` en clases que hacen trabajo pesado.
+- `JSONDecoder().decode` de payloads grandes en el Main Actor: muévelo a una función `@concurrent` (Swift 6.2) o a un actor; ver 3.7.
+- `@MainActor` en clases que hacen trabajo pesado: el estado de UI se queda en el Main Actor; el cálculo sale.
 
 ### 3.4 Retain cycles
 
@@ -232,6 +262,67 @@ Código muerto *dentro* de un archivo (funciones, propiedades, ramas) se queda a
 - Un `@Observable` por ítem en listas, no toda la lista dependiendo del array. *Fix local por lista → optimize.*
 - Nada volátil (geometría, timers, scroll offset) en `Environment` — cascadea a todas las vistas dependientes. *Fix local → optimize.*
 - `ObservableObject` + `@Published` → `@Observable` evita redraws innecesarios por diseño. *Si es una clase aislada → optimize. Si es el modelo de observación de toda la app → `🏗 arquitectura`.*
+
+### 3.7 Concurrencia como palanca de rendimiento
+
+La concurrencia no es solo corrección (Sendable, aislamiento): mal repartida, es lentitud. **Si está instalado el skill `swift-concurrency-pro`** (plugin de Claude Code), Avie lo carga para revisar la *corrección* del código async; este apartado cubre la *velocidad*. Las dos revisiones se hacen juntas sobre los mismos archivos.
+
+| Patrón | Detección | Fix |
+|--------|-----------|-----|
+| **Trabajo pesado en el Main Actor** (render de miniaturas, parseo, encoding, I/O) | Track del Main Actor en Swift executors durante un hang; `grep` de funciones `async` en tipos `@MainActor` que no tocan UI | `@concurrent` en la función o en el `Task` (Swift 6.2), que lo manda al executor global; o `nonisolated`. El compilador verifica que no haya carreras. En la sesión 268, esto quitó los hangs y además paralelizó el trabajo |
+| **Contención de actor**: muchas tareas esperando el mismo actor | Swift Actors con la cola creciendo; tareas mucho tiempo en *Enqueued* (WWDC22 "Visualize and optimize Swift concurrency") | En el actor solo queda lo que necesita acceso exclusivo a su estado; el cálculo va en funciones `nonisolated` y el actor solo guarda el resultado |
+| **Hops por elemento**: un `await actor.metodo(x)` dentro de un loop sobre miles de elementos | Leer loops con `await` a otro actor | Una sola llamada con el lote (`actor.procesar(items)`), o hacer el trabajo fuera del actor y cruzar una vez con el resultado |
+| **Fan-out sin límite**: `for x in xs { Task { … } }` sobre colecciones grandes | `grep -n "Task {"` dentro de `for`; *Alive Tasks* y memoria disparadas en Instruments | `withTaskGroup` / `withDiscardingTaskGroup` con ventana: arrancar N hijos (≈ núcleos o el límite del servicio) y agregar uno por cada uno que termina; respeta la cancelación |
+| **Prioridad equivocada** | `Task(priority:)` ausente en trabajo de fondo masivo, o `.userInitiated` en prefetch | Trabajo que el usuario espera ver: hereda la prioridad. Prefetch, miniaturas fuera de pantalla, indexado: `.utility` o `.background`. `Task.detached` pierde la prioridad y el contexto: solo si de verdad se quiere eso |
+| **Bloquear el pool**: semáforos, `DispatchGroup.wait`, I/O síncrono dentro de código async | `grep -n "semaphore\|\.wait()\|Data(contentsOf"` en funciones `async` | APIs async para archivo y red; lo inevitablemente bloqueante, en una Dispatch queue con continuation. Un pool agotado puede llegar a deadlock (WWDC22 110350) |
+
+### 3.8 Capa de datos (SwiftData / Core Data)
+
+Pesa en apps con mucho dato (Inspoflow con 5,000+ elementos). Cada API con la versión mínima en que existe; si el target está por debajo, se dice y se usa la alternativa.
+
+| Patrón lento | Fix | Desde |
+|--------------|-----|-------|
+| Traer modelos completos solo para contarlos (`fetch(…).count`, `items.count` de un `@Query` enorme) | `modelContext.fetchCount(descriptor)` — cuenta sin materializar | iOS 17 / macOS 14 |
+| Traer modelos completos para pasar referencias o hacer diffs | `modelContext.fetchIdentifiers(descriptor)` — solo `PersistentIdentifier`s | iOS 17 / macOS 14 |
+| Listas largas cargadas de una vez | `FetchDescriptor` con `fetchLimit` + `fetchOffset` (paginación) y orden estable | iOS 17 / macOS 14 |
+| Filtrar u ordenar en Swift después de traer (`.filter` sobre el resultado) | El filtro va en el `#Predicate` y el orden en `SortDescriptor`, para que lo haga el store | iOS 17 / macOS 14 |
+| Predicados lentos sobre campos muy consultados | `#Index<Modelo>([\.campo], [\.a, \.b])` en los campos de filtros y orden frecuentes | iOS 18 / macOS 15 |
+| Blobs (imágenes, PDFs, audio) dentro de la fila | `@Attribute(.externalStorage)` — el dato vive junto al store, no en la tabla | iOS 17 / macOS 14 |
+| Agrupar en el `body` (`Dictionary(grouping:)` sobre un `@Query`) | `@Query(…, sectionBy: \.campo)` e iterar `_items.sections`. Solo agrupa por `String` | iOS 27 / macOS 27 (WWDC26) |
+| Re-fetch periódico para enterarse de cambios fuera de una vista | `ResultsObserver` / `HistoryObserver` en lugar de polling | iOS 27 / macOS 27 (WWDC26) |
+| Pasar modelos entre actores (no son `Sendable`) | Pasar `PersistentIdentifier`, que **ya es `Sendable`**, o un DTO, y re-leer en el `ModelContext` del actor que recibe (`@ModelActor` para el trabajo en segundo plano) | iOS 17 / macOS 14 |
+
+Ojo: los atributos `@Attribute(.codable)` (iOS 27) son opacos y **no** sirven en predicados ni en orden.
+
+**Core Data** tiene los mismos fixes: `count(for:)`; `resultType = .managedObjectIDResultType`; `fetchBatchSize`, `fetchLimit` y `fetchOffset`; `propertiesToFetch`; índices en el modelo; *Allows External Storage*; contextos privados con `perform` y `NSManagedObjectID` para cruzar hilos.
+
+### 3.9 Imágenes — downsampling fuera del main thread
+
+El hallazgo no es solo "se decodifica en cada render". El patrón correcto es este:
+
+```swift
+import ImageIO
+
+/// Decodes only the pixels the view needs, off the main actor. Cache the result.
+@concurrent
+func downsample(_ url: URL, to pointSize: CGSize, scale: CGFloat) async -> CGImage? {
+    let sourceOptions = [kCGImageSourceShouldCache: false] as CFDictionary   // no decodificar la imagen completa
+    guard let source = CGImageSourceCreateWithURL(url as CFURL, sourceOptions) else { return nil }
+    let maxPixels = max(pointSize.width, pointSize.height) * scale
+    let options = [
+        kCGImageSourceCreateThumbnailFromImageAlways: true,
+        kCGImageSourceShouldCacheImmediately: true,          // decodifica aquí, no al dibujar
+        kCGImageSourceCreateThumbnailWithTransform: true,    // respeta la orientación EXIF
+        kCGImageSourceThumbnailMaxPixelSize: maxPixels
+    ] as CFDictionary
+    return CGImageSourceCreateThumbnailAtIndex(source, 0, options)
+}
+```
+
+- **Caché:** `NSCache` con clave URL + tamaño en píxeles y `totalCostLimit` en bytes (ancho × alto × 4). Así una galería no vuelve a decodificar al hacer scroll de regreso.
+- **Desde `Data`:** `CGImageSourceCreateWithData`, con las mismas opciones.
+- **En iOS 15+, para un `UIImage` ya cargado:** `preparingThumbnail(of:)` o `byPreparingThumbnail(ofSize:)` (async) es la alternativa corta. El patrón de ImageIO sigue siendo mejor cuando la imagen viene de disco o red, porque nunca carga la imagen completa.
+- **Origen:** WWDC18 "Image and graphics best practices". Medición: Allocations antes y después, con Run Comparisons.
 
 Salida de la fase: hallazgos con `archivo:línea`, causa, fix sugerido, severidad.
 
@@ -328,9 +419,11 @@ Si la re-medición **no mejora** o algo se rompe: Woz revierte el commit, Steve 
 Re-medición con comparación directa:
 
 ```bash
-# Instruments 26 — baseline vs. nuevo en un mismo documento, delta en rojo/verde
+# Instruments 27 — Run Comparisons: baseline vs. nuevo en un mismo documento
 open -a Instruments baseline-launch.trace after-launch.trace
 ```
+
+Filtra las dos corridas al mismo intervalo de signpost y usa la comparación de Top Functions: rojo es regresión, verde es mejora. Si la etapa mejoró una métrica a propósito, Bertrand re-graba el baseline del test de performance de ese flujo en el destino de CI y lo commitea en la misma etapa. Nunca se re-graba para tapar una regresión.
 
 ---
 
@@ -452,6 +545,8 @@ open -a Instruments baseline-launch.trace after-launch.trace
 - Bertrand encuentra en TEST_PLAN.md una métrica de performance fuera de umbral y el fix no es trivial
 - Chris reporta en COMPAT_AUDIT.md lentitud o hang en el dispositivo mínimo
 - Antes de un lanzamiento público si nunca se ha corrido — Steve lo propone, no lo impone
+- Al cerrar una feature grande que ya quedó estable — `/optimize-app <flujo>` solo sobre ella
+- **Nunca** durante la construcción activa: Steve la pospone con una línea de por qué (ver "Cuándo se corre")
 
 ## Lo que esta rutina NO hace
 
