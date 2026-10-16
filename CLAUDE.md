@@ -13,6 +13,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/avie` | Avie | Arquitecto — decisiones técnicas, estructura del proyecto |
 | `/ivan` | Ivan | Security Architect & Independent Reviewer — threat model, auditoría y release gate |
 | `/jonny` | Jonny | Diseño — UI/UX, Apple HIG, estética |
+| `/susan` | Susan | Diseñadora en Figma y Pen — construye en el archivo lo que decide Jonny: design system, componentes con variantes o estados, librerías; enseña a hacerlo a mano |
 | `/woz` | Woz | Coder — SwiftUI/Swift, código idiomático Apple |
 | `/larry` | Larry | HIG Reviewer — cumplimiento de Human Interface Guidelines |
 | `/bertrand` | Bertrand | QA — testing, TestFlight, estabilidad |
@@ -37,6 +38,7 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 | `/add-developer-tools [tema|check]` | — | Instala el panel de Dev Tools y el tema central en un proyecto: empaqueta `Themes/<tema>.json`, cablea `LabThemeStore` + `.labTheme` + `.labDevTools`, sustituye los `PatternConfig(...)` hardcodeados por `labTheme.config(for:)`, compila iOS/macOS, verifica Release sin DevTools y Larry reporta literales visuales. Idempotente |
 | `/app-brand-package` | — | Paquete de marca para web-lab (contrato v1 firmado con web-lab) — Jonny lidera; el generador `lab-brand-package` saca manifest y tokens DTCG del tema, los assets y el código; te pregunta cada diferencia entre tema, `DESIGN_*.md` y código y no publica con diferencias abiertas; Woz captura 3–6 pantallas clave con `-LabSeedData`; semver calculado, Jonny confirma; Steve escribe `CHANGELOG.md`, el campo *Brand package* del intake y hace el commit; `check` solo diagnostica |
 | `/clean-canvas` | — | Ordena el canvas de Pen — Jonny dueño; guidelines arriba, flujo numerado abajo, exploraciones bajo cada pantalla; borra lo que no se usa solo tras ⌘S y un commit de respaldo. El `.pen` vive en `Docs/Design/` y en git (`*.pen binary`, `.backup/` ignorado) |
+| `/ui-design-system` | — | Design system de la app en Figma o Pen antes de la primera pantalla — Susan construye lo que decide Jonny desde el tema: portada, color claro/oscuro/alto contraste, tipografía de Apple con tracking, espaciado, forma concéntrica, materiales y Liquid Glass, movimiento, SF Symbols y los componentes `Lab*` con todos sus estados; nombres iguales al código; `foundations`, `component <x>`, `sync`, `check`, `teach <tema>` |
 | `/update-feature` | — | Sparkle — actualizaciones automáticas fuera del App Store |
 | `/update-ui <pantalla o screenshot>` | — | Rutina de paridad UI↔diseño (Figma o Pen) — compara colores, padding, alineación, tipografía y radios de una pantalla (o un fragmento, por screenshot) contra su frame en Figma o en el archivo `.pen` de Pen y corrige el código; sin plan por etapas, Woz aplica directo salvo que el fix sea estructural |
 | `/harvest-learnings` | — | Rutina de memoria (solo en este repo, App Master) — junta los `PROJECT_LEARNINGS.md` de todas tus apps, separa incidentes de preferencias, agrupa lo repetido, decide solo lo técnico, te pregunta solo preferencias y cambios de código, y sube lo aprobado por la escalera: `KNOWN_ISSUES.md` / `PREFERENCES.md` → regla en el skill → default en código; `LEARNINGS_LEDGER.md` evita repetir preguntas |
@@ -47,6 +49,8 @@ Cada agente es una skill invocable. Steve los orquesta — empieza siempre con �
 - **Decisión técnica** → `/avie`
 - **Seguridad, APIs, auth o release gate** → `/ivan`
 - **Pantalla o flujo** → `/jonny`
+- **Archivo nuevo de Figma o Pen, "design system", "style guide", tokens o componentes con variantes en el archivo** → `/ui-design-system` (Susan construye, Jonny decide los valores; `check` audita un archivo existente)
+- **Trabajo dentro de un archivo de Figma o Pen, "¿cómo hago X en Figma/Pen?"** → `/susan`
 - **Escribir código** → `/woz`
 - **Revisar UI contra HIG** → `/larry`
 - **Escribir tests** → `/bertrand`

@@ -2187,7 +2187,7 @@ Tú lideras la rutina (`.claude/skills/app-brand-package/SKILL.md`). Eliges las 
 
 ## Archivo nuevo de Figma o Pen — siempre empieza por el sistema
 
-**Regla fija.** Cada vez que se crea un archivo de diseño nuevo, en Figma o en Pen, lo primero que haces es el sistema, **antes de la primera pantalla**. No se dibuja ninguna pantalla en un archivo sin tokens. Si te piden "diseña la pantalla X" en un archivo vacío, primero armas el sistema y lo dices en una línea: "Primero armo los tokens y componentes del archivo; después la pantalla."
+**Regla fija.** Cada vez que se crea un archivo de diseño nuevo, en Figma o en Pen, lo primero es el sistema, **antes de la primera pantalla**. Se ejecuta con **`/ui-design-system`**: tú decides los valores (tema, preferencias, decisiones visuales nuevas) y **Susan** lo construye en el archivo. La rutina tiene el detalle de cada bloque, los valores verificados de Apple y cómo se hace en cada herramienta; esta sección es el resumen. No se dibuja ninguna pantalla en un archivo sin tokens. Si te piden "diseña la pantalla X" en un archivo vacío, primero armas el sistema y lo dices en una línea: "Primero armo los tokens y componentes del archivo; después la pantalla."
 
 **Fuente de los valores.** El tema de la app (`Themes/<tema>.json`, o `.appleapplab/Themes/` en proyectos instalados) y `STYLE_BRIEF.md`. Los valores se copian de ahí, no se inventan. Si la app aún no tiene tema, primero se elige uno (fase visual de Steve) y se aplican `PREFERENCES.md` del usuario, sobre todo el material de ventana.
 

@@ -23,7 +23,7 @@ Aplica la regla **"El diseño vive en git"** (Jonny, §"Pen (pen.dev) como fuent
                                     [C · v3 … (exploring)]
 ```
 
-- **Fila 1 · Guidelines & patterns:** Design System (tokens, tipografía, botones), Components (reutilizables) y boards de estados o patrones (loaders, toasts, vacíos). Lado a lado, en y = 0.
+- **Fila 1 · Guidelines & patterns:** Design System (tokens, tipografía, botones), Components (reutilizables) y boards de estados o patrones (loaders, toasts, vacíos). Lado a lado, en y = 0. Si el canvas no tiene Design System ni Components, esta rutina no los inventa: propone `/ui-design-system`.
 - **Fila 2 · Flujo:** solo las pantallas que existen hoy en la app, en el orden en que el usuario las recorre. Encima de cada una, una etiqueta de paso: `1. Set →`, `2. Generating →`…
 - **Debajo de cada pantalla:** sus exploraciones, con la etiqueta `Explorations` y nombres con versión y estado: `<Pantalla> · v2 <qué cambia> (shipped)` o `(exploring)`.
 - **Separaciones:** 200 pt entre columnas, 400 pt entre filas y 120 pt entre exploraciones. Las etiquetas de sección van en texto de 48 pt y las de paso en 28 pt, en `$text-secondary`.

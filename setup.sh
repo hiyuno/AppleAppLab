@@ -58,7 +58,7 @@ else
   echo ""
 fi
 SKILLS_DIR=".claude/skills"
-SKILLS=(steve scott avie ivan jonny woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick sam ed update-team update-feature update-ui optimize-app architecture-audit app-store-ready clean-folder-project global-audit global-fix app-web-intake app-brand-package clean-canvas link-todocky add-developer-tools)
+SKILLS=(steve scott avie ivan jonny susan woz larry bertrand sarah chris phil craig kara eve tim john kate kim frederick sam ed update-team update-feature update-ui optimize-app architecture-audit app-store-ready clean-folder-project global-audit global-fix app-web-intake app-brand-package clean-canvas ui-design-system link-todocky add-developer-tools)
 # app-master y harvest-learnings no se instalan: operan sobre la memoria global de AppleAppLab (KNOWN_ISSUES.md, PREFERENCES.md), no sobre proyectos
 REMOTE_VERSION=$(curl -sf "$RAW/VERSION" | tr -d '[:space:]')
 
@@ -70,6 +70,17 @@ for skill in "${SKILLS[@]}"; do
   mkdir -p "$SKILLS_DIR/${skill}"
   curl -s "$RAW/.claude/skills/${skill}/SKILL.md" -o "$SKILLS_DIR/${skill}/SKILL.md"
   rm -f "$SKILLS_DIR/${skill}.md"   # formato plano anterior — Claude Code no lo registra como comando
+done
+# Archivos de apoyo de algunas skills (references/, scripts/): rutas relativas a .claude/skills/
+SKILL_EXTRAS=(
+  ui-design-system/references/apple-elements.md
+  ui-design-system/references/figma-guide.md
+  ui-design-system/references/pen-guide.md
+  ui-design-system/references/pen-app-reference.md
+)
+for extra in "${SKILL_EXTRAS[@]}"; do
+  mkdir -p "$SKILLS_DIR/$(dirname "$extra")"
+  curl -s "$RAW/.claude/skills/${extra}" -o "$SKILLS_DIR/${extra}"
 done
 echo "  ✓ Skills instalados en $SKILLS_DIR"
 
@@ -257,6 +268,7 @@ echo "  /scott    → PM y roadmap"
 echo "  /avie     → Arquitectura"
 echo "  /ivan     → Seguridad y release gate"
 echo "  /jonny    → Diseño UI/UX"
+echo "  /susan    → Diseñadora en Figma y Pen: design system, componentes y estados"
 echo "  /woz      → SwiftUI / Swift"
 echo "  /larry    → HIG Review"
 echo "  /bertrand → QA y testing"
@@ -284,6 +296,7 @@ echo "  /frederick → Growth: nicho, pricing, Apple Search Ads, análisis de me
   /app-web-intake → Intake del sitio web para web-lab: app-web-intake.md se llena mientras construimos (solo a petición)
   /app-brand-package → Paquete de marca para web-lab: colores, tipografía, íconos y pantallas clave de la app (check solo diagnostica)
   /clean-canvas → Ordena el canvas de Pen: guidelines arriba, flujo numerado, exploraciones bajo cada pantalla; commit de respaldo antes de borrar
+  /ui-design-system → Design system en Figma o Pen antes de la primera pantalla: tokens, tipografía, materiales y componentes con estados
   /link-todocky <code> → Enlaza este repo a su proyecto en Todocky (código de 'Copy project number'; requiere el MCP)
   /add-developer-tools [tema] → Instala el panel de Dev Tools y el tema central (LabThemeStore) en el proyecto"
 echo ""
